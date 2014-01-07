@@ -1910,6 +1910,39 @@ public class ClassUtils {
     return new Pair< Boolean, T >( succ, t );
   }
 
+  public static < T > Pair< Boolean, List< T > > coerceList( Object object, Class<T> cls, boolean propagate ) {
+      Pair< Boolean, List< T > > resultPair = new Pair< Boolean, List< T > >( false, null );
+      if ( object == null ) {
+          resultPair.first = true;
+          return resultPair;
+      }
+      Pair< Boolean, T > p = coerce( object, cls, propagate );
+      List< T > result = null;
+      if ( p.first ) {
+          resultPair.first = true;
+          result = Utils.newList( p.second );
+      } else if ( object instanceof Collection ) {
+          Collection<?> coll = (Collection<?>)object;
+          for ( Object oo : coll ) {
+              Pair<Boolean, List<T> > oop = coerceList( oo, cls, propagate );
+              if ( oop.first ) {
+                  List<T> ooResult = oop.second;
+                  if ( !Utils.isNullOrEmpty( ooResult ) ) {
+                      if ( Utils.isNullOrEmpty( result ) ) {
+                          result = ooResult;
+                      } else {
+                          result.addAll( ooResult );
+                      }
+                  }
+                  resultPair.first = true;
+              }
+          
+          }
+      }
+      resultPair.second = result;
+      return resultPair;
+  }
+  
   /**
    * Evaluate/dig or wrap the object of the given type cls from the object o,
    * which may be a Parameter or an Expression.
