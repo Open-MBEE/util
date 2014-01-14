@@ -32,6 +32,7 @@ package gov.nasa.jpl.mbee.util;
 //import gov.nasa.jpl.ae.event.Timepoint;
 //import gov.nasa.jpl.ae.solver.Random;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -475,6 +476,17 @@ public class Utils {
 //    // return p.first;
 //  }
 
+  public static <T1, T2> T2[] toArrayOfType( T1[] source, Class< T2 > newType ) {
+      return toArrayOfType( source, newType, false );
+  }
+  public static <T1, T2> T2[] toArrayOfType( T1[] source, Class< T2 > newType, boolean complain ) {
+      T2[] target = (T2[])Array.newInstance( newType, source.length );
+      boolean succ = toArrayOfType( source, target, newType );
+      if ( complain && !succ ) {
+          Debug.error( "Could not convert array " + toString( source ) + " to " + newType.getSimpleName() + "[]!"); 
+      }
+      return target;
+  }
   public static <T1, T2> boolean toArrayOfType( T1[] source, T2[] target,
                                                 Class< T2 > newType ) {
     boolean succ = true;
@@ -489,6 +501,12 @@ public class Utils {
     return succ;
   }
 
+  public static <T1, T2> T2[] toArrayOfType( Collection<T1> source, Class< T2 > newType ) {
+      return toArrayOfType( source, newType, false );
+  }
+  public static <T1, T2> T2[] toArrayOfType( Collection<T1> source, Class< T2 > newType, boolean complain ) {
+      return toArrayOfType( source.toArray(), newType, complain );
+  }
   public static <T1, T2> boolean toArrayOfType( Collection<T1> source,
                                                 T2[] target,
                                                 Class< T2 > newType ) {
@@ -746,8 +764,23 @@ public class Utils {
    */
   public static < T > ArrayList< T > newList( T... ts ) {
     ArrayList< T > newList = new ArrayList< T >();
-    newList.addAll( Arrays.asList( ts ) );
+    if ( ts != null && ts.length > 0 ) {
+        newList.addAll( Arrays.asList( ts ) );
+    }
     return newList;
+  }
+
+  public static <T> T[] newArrayWithOneNull(Class<T> cls) {
+      @SuppressWarnings( "unchecked" )
+      T[] oneNullArg = (T[])Array.newInstance( cls, 1 );
+      oneNullArg[0] = null;
+      return oneNullArg;
+  }
+  
+  public static < T > ArrayList< T > newListWithOneNull() {
+      ArrayList< T > newList = new ArrayList< T >();
+      newList.add(null);
+      return newList;
   }
 
   protected static final String[] trueStrings = new String[] {"t", "true", "1", "1.0", "yes", "y"};

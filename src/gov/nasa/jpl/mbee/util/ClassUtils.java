@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -443,10 +444,36 @@ public class ClassUtils {
    */
   public static Class<?> mostSpecificCommonSuperclass( Collection< ? > coll ) {
     if ( Utils.isNullOrEmpty( coll ) ) return null; 
-    Class<?> most = null;
+    if ( areClasses( coll ) ) {
+        return mostSpecificCommonSuperclass( Utils.toArrayOfType( coll.toArray(), Class.class ) );
+    }
+    ArrayList< Class<?> > classes = new ArrayList<Class<?> >();
     for ( Object o : coll ) {
-      if ( o == null ) continue;
-      Class<?> cls = getNonPrimitiveClass( o.getClass() );
+        if ( o != null ) classes.add( o.getClass() );
+    }
+    return mostSpecificCommonSuperclass( Utils.toArrayOfType( classes, Class.class ) );
+  }
+  
+    /**
+     * @param classes
+     *            an array of classes
+     * @return the most specific (lowest) common superclass of all classes in
+     *         the array.
+     *         <p>
+     *         For example, If the classes contained Integer.class and Double.class,
+     *         mostSpecificCommonSuperclass( classes ) returns Number.class because
+     *         they both inherit from Number and Object, and Number is lower
+     *         (more specific) than Object.
+     *         <p>
+     *         Note that if the classes implement several common interfaces
+     *         but directly extend Object, Object.class will be returned.
+     */
+  public static Class<?> mostSpecificCommonSuperclass( Class< ? >[] classes ) {
+    if ( Utils.isNullOrEmpty( classes ) ) return null;
+    Class<?> most = null;
+    for ( Class<?> c : classes ) {
+      if ( c == null ) continue;
+      Class<?> cls = getNonPrimitiveClass( c );
       if ( most == null ) {
         most = cls;
         continue;
@@ -886,7 +913,7 @@ public class ClassUtils {
   }
 
   /**
-   * Determines whether the array contain only Class<?> objects possibly with
+   * Determines whether the array contains only Class<?> objects possibly with
    * some (but not all nulls).
    * 
    * @param objects
@@ -906,6 +933,17 @@ public class ClassUtils {
     return !someNotClass && someClass;
   }
 
+  /**
+   * Determines whether the list contains only Class<?> objects possibly with
+   * some (but not all nulls).
+   * 
+   * @param objects
+   * @return
+   */
+  public static boolean areClasses( Collection<?> objects ) {
+      return areClasses( objects.toArray() );
+  }
+  
   public static Constructor< ? > getConstructorForArgs( Class< ? > cls,
                                                           Object[] args ) {
       if ( Debug.isOn() ) Debug.outln( "getConstructorForArgs( " + cls.getName() + ", "
