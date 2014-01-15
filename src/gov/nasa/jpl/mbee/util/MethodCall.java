@@ -49,7 +49,19 @@ public class MethodCall {
         return invoke( true );
     }
     public Pair< Boolean, Object > invoke( boolean suppressErrors ) {
-        return ClassUtils.runMethod( suppressErrors, objectOfCall, method, arguments );
+        boolean objectIsMethodCall = objectOfCall instanceof MethodCall;
+        Pair< Boolean, Object > result =
+                ClassUtils.runMethod( suppressErrors && !objectIsMethodCall,
+                                      objectOfCall, method, arguments );
+        if ( result.first == false && objectIsMethodCall ) {
+            MethodCall objectMethodCall = (MethodCall)objectOfCall;
+            Pair< Boolean, Object > prevResult = objectMethodCall.invoke( suppressErrors );
+            if ( prevResult.first ) {
+                result = ClassUtils.runMethod( suppressErrors && !objectIsMethodCall,
+                                               prevResult.second, method, arguments );
+            }
+        }
+        return result;
     }
     protected void sub( int indexOfArg, Object obj ) {
         if ( indexOfArg < 0 ) Debug.error("bad indexOfArg " + indexOfArg );
@@ -86,7 +98,7 @@ public class MethodCall {
      * @return the subset of objects for which the method call returns true
      */
     public < XX > Collection<XX> filter( Collection< XX > objects,
-                                                int indexOfObjectArgument ) {
+                                         int indexOfObjectArgument ) {
         Collection< XX > coll = new ArrayList< XX >( objects );
         for ( XX o : objects ) {
             sub( indexOfObjectArgument, o );
@@ -110,7 +122,7 @@ public class MethodCall {
     public static < XX > Collection< XX > map( Collection< ? > objects,
                                                MethodCall methodCall,
                                                int indexOfObjectArgument ) {
-        return methodCall.map( objects, methodCall, indexOfObjectArgument );
+        return methodCall.map( objects, indexOfObjectArgument );
     }
     /**
      * @param objects

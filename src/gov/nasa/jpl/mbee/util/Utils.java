@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Formatter;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -81,6 +82,13 @@ public class Utils {
   @SuppressWarnings( "unchecked" )
   public static <T1,T2> Map<T1,T2> getEmptyMap() {
     return (Map< T1, T2 >)emptyMap;
+  }
+
+  public static String toString( List< ? > arr ) {
+    return toString( arr, true );
+  }
+  public static String toString( List< ? > arr, boolean square ) {
+    return toString( arr.toArray(), square );
   }
 
   public static String toString( Object[] arr ) {
@@ -768,6 +776,36 @@ public class Utils {
         newList.addAll( Arrays.asList( ts ) );
     }
     return newList;
+  }
+
+  /**
+   * Creates a new {@link HashMap} and inserts the arguments, {@code pairs}.
+   * @param pairs
+   * @return the new {@link Map}
+   */
+  public static < K, V > HashMap< K, V > newHashMap( Pair< K, V >... pairs ) {
+    HashMap< K, V > map = new HashMap< K, V >();
+    if ( pairs != null && pairs.length > 0 ) {
+        for ( Pair< K, V > pair : pairs ) {
+            map.put(pair.first, pair.second);
+        }
+    }
+    return map;
+  }
+
+  /**
+   * Creates a new {@link HashMap} and inserts the arguments, {@code pairs}.
+   * @param pairs
+   * @return the new {@link Map}
+   */
+  public static < K, V > TreeMap< K, V > newMap( Pair< K, V >... pairs ) {
+    TreeMap< K, V > map = new TreeMap< K, V >(CompareUtils.GenericComparator.instance());
+    if ( pairs != null && pairs.length > 0 ) {
+        for ( Pair< K, V > pair : pairs ) {
+            map.put(pair.first, pair.second);
+        }
+    }
+    return map;
   }
 
   public static <T> T[] newArrayWithOneNull(Class<T> cls) {
