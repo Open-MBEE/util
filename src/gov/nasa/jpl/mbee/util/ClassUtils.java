@@ -1353,6 +1353,20 @@ public class ClassUtils {
   //    double bestScore = Double.MAX_VALUE;
       boolean debugWasOn = Debug.isOn();
       //Debug.turnOff();
+      if ( Debug.isOn() ) Debug.outln( "calling " + cls.getName() + ".class.getMethod(" + callName + ")"  );
+        try {
+            Method method = cls.getMethod( callName, argTypes );
+            if ( method != null ) return method;
+        } catch ( NoSuchMethodException e1 ) {
+        } catch ( SecurityException e1 ) {
+        }
+        try {
+            Method method = cls.getDeclaredMethod( callName, argTypes );
+            if ( method != null ) return method;
+        } catch ( NoSuchMethodException e1 ) {
+        } catch ( SecurityException e1 ) {
+        }
+      
       Method[] methods = null;
       if ( Debug.isOn() ) Debug.outln( "calling getMethods() on class " + cls.getName() );
       try {
@@ -1387,6 +1401,21 @@ public class ClassUtils {
                             + " not found for " + cls.getSimpleName() );
       }
       return (Method)atc.best;
+    }
+
+  
+    /**
+     * @param cls
+     * @return all private, protected, public, static, and non-static methods
+     *         declared in this class or any superclass.
+     */
+    public Set< Method > getAllMethods( Class< ? > cls ) {
+        Set< Method > methods =
+                new TreeSet< Method >( CompareUtils.GenericComparator.instance() );
+        methods.addAll( Arrays.asList( cls.getDeclaredMethods() ) );
+        Class< ? > superCls = cls.getSuperclass();
+        methods.addAll( getAllMethods( superCls ) );
+        return methods;
     }
 
   /**

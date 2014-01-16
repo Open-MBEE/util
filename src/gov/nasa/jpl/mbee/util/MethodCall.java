@@ -86,7 +86,7 @@ public class MethodCall {
     public static < XX > Collection<XX> filter( Collection< XX > objects,
                                                 MethodCall methodCall,
                                                 int indexOfObjectArgument ) {
-        return methodCall.filter( objects, methodCall, indexOfObjectArgument );
+        return methodCall.filter( objects, indexOfObjectArgument );
     }
     /**
      * @param objects

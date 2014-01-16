@@ -78,6 +78,9 @@ public class Utils {
   public static <T> Set<T> getEmptySet() {
     return (Set< T >)emptySet;
   }  
+  public static <T> Set<T> getEmptySetOfType(Class<T> cls) {
+      return (Set< T >)emptySet;
+    }  
   public static final Map<?,?> emptyMap = Collections.EMPTY_MAP;//new TreeMap();
   @SuppressWarnings( "unchecked" )
   public static <T1,T2> Map<T1,T2> getEmptyMap() {
@@ -907,4 +910,24 @@ public class Utils {
     }
     return compString;
   }
+
+    public static < T, C extends Collection< T > > C add( C coll, T... items ) {
+        return plus( coll, items );
+    }
+
+    public static < T, C extends Collection< T > > C plus( C coll, T... items ) {
+        coll.addAll( newList( items ) );
+        return coll;
+    }
+
+    public static < T, C extends Collection< T > > C
+            remove( C coll, T... items ) {
+        return minus( coll, items );
+    }
+
+    public static < T, C extends Collection< T > > C minus( C coll, T... items ) {
+        coll.remove( newList( items ) );
+        return coll;
+    }
+  
 }
