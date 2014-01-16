@@ -3,7 +3,12 @@ package gov.nasa.jpl.mbee.util;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class MethodCall {
     /**
@@ -147,4 +152,107 @@ public class MethodCall {
         }
         return coll;
     }
+    
+    /**
+     * Compute a transitive closure of a set using this MethodCall as a relation from an argument to the return value.
+     * @param initialSet the Set of initial items to be substituted for an argument or the object of this MethodCall
+     * @param indexOfObjectArgument
+     *            where in the list of arguments an object from the set
+     *            is substituted (1 to total number of args or 0 to indicate
+     *            that the objects are each substituted for
+     *            methodCall.objectOfCall).
+     * @param maximumSetSize the size of the resulting set will be limited to the maximum of this argument and the size of initialSet 
+     * @return a new Set that includes the initialSet and the results of applying the methodCall on each item (substituting the argument for the given index) in the new Set  
+     */
+    public < XX > Set< XX > closure( Set< XX > initialSet,
+                                     int indexOfObjectArgument, int maximumSetSize ) {
+        Set< XX > closedSet = new TreeSet< XX >( CompareUtils.GenericComparator.instance() );
+        closedSet.addAll( initialSet );
+        ArrayList< XX > queue =
+                new ArrayList< XX >( initialSet );
+        Set< XX > seen = new HashSet< XX >();
+        while ( !queue.isEmpty() ) {
+            XX item = queue.get( 0 );
+            queue.remove( 0 );
+            sub( indexOfObjectArgument, item );
+            if ( seen.contains( item ) ) continue;
+            seen.add( item );
+            Pair< Boolean, Object > result = invoke( true );
+            if ( !result.first ) continue;
+            Collection< XX > newItems = null;
+            try {
+                if ( result.second instanceof Collection ) {
+                    newItems = (Collection< XX >)result.second;
+                } else {
+                    newItems = (Collection< XX >)Utils.newSet( result.second );
+                }
+            } catch ( ClassCastException e ) {
+                continue;
+            }
+            if ( !Utils.isNullOrEmpty( newItems ) ) {
+                Utils.addN( closedSet, maximumSetSize - closedSet.size(), newItems );
+            }
+        }
+        return closedSet;
+    }
+    
+    /**
+     * Compute a transitive closure of a map using this MethodCall to specify for each key in the map a set of items that should have a superset of related items in the map.
+     * @param initialSet the Set of initial items to be substituted for an argument or the object of this MethodCall
+     * @param indexOfObjectArgument
+     *            where in the list of arguments an object from the set
+     *            is substituted (1 to total number of args or 0 to indicate
+     *            that the objects are each substituted for
+     *            methodCall.objectOfCall).
+     * @param maximumSetSize the size of the resulting set will be limited to the maximum of this argument and the size of initialSet 
+     * @return a new Set that includes the initialSet and the results of applying the methodCall on each item (substituting the argument for the given index) in the new Set  
+     */
+    public < XX, C extends Map< XX, Set< XX > > > C mapClosure( C relationMapToClose, int indexOfObjectArgument, int maximumSetSize ) {
+        ArrayList< XX > queue =
+                new ArrayList< XX >( relationMapToClose.keySet() );
+//        Set< XX > seen = new HashSet< XX >();
+        while ( !queue.isEmpty() ) {
+            XX item = queue.get( 0 );
+            queue.remove( 0 );
+            sub( indexOfObjectArgument, item );
+//            if ( seen.contains( item ) ) continue;
+//            seen.add( item );
+//            Method method =
+//                    ClassUtils.getMethodForArgs( AbstractSystemModel.class, "isA",
+//                                                 item, item );
+//            MethodCall methodCall =
+//                    new MethodCall( null, method,
+//                                    new Object[] { null, item } );
+            Pair< Boolean, Object > result = invoke( true );
+            if ( !result.first ) continue;
+            Collection< XX > isItemSet = null;
+            try {
+                if ( result.second instanceof Collection ) {
+                    isItemSet = (Collection< XX >)result.second;
+                } else {
+                    isItemSet = (Collection< XX >)Utils.newSet( result.second );
+                }
+            } catch ( ClassCastException e ) {
+                continue;
+            }
+            Set< XX > relatedToItem = relationMapToClose.get( item );
+            for ( XX isA : isItemSet ) {
+                Set< XX > related = relationMapToClose.get( isA );
+                int ct = 0;
+                if ( related == null ) {
+                    related = new TreeSet< XX >(CompareUtils.GenericComparator.instance());
+                    relationMapToClose.put( isA, related );
+                } else {
+                    ct = related.size();
+                }
+                related.addAll( relatedToItem );
+                if ( related.size() > ct ) {
+                    queue.add( isA );
+                }
+                if ( relationMapToClose.size() >= maximumSetSize ) break;
+            }
+        }
+        return relationMapToClose;
+    }
+
 }

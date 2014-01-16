@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -915,8 +916,28 @@ public class Utils {
         return plus( coll, items );
     }
 
+    public static < T, C extends Collection< T >, D extends Collection< T > > C add( C coll, D items ) {
+        return plus( coll, items );
+    }
+
+    public static < T, C extends Collection< T > > C addN( C coll, int n, T... items ) {
+        if ( n < items.length ) {
+            return plus( coll, Arrays.copyOf( items, n ) );
+        }
+        return plus( coll, items );
+    }
+
+    public static < T, C extends Collection< T >, D extends Collection< T > > C addN( C coll, int n, D items ) {
+        return addN( coll, n, (T[])items.toArray() );
+    }
+
     public static < T, C extends Collection< T > > C plus( C coll, T... items ) {
         coll.addAll( newList( items ) );
+        return coll;
+    }
+
+    public static < T, C extends Collection< T >, D extends Collection< T > > C plus( C coll, D items ) {
+        coll.addAll( items );
         return coll;
     }
 
@@ -930,4 +951,26 @@ public class Utils {
         return coll;
     }
   
+    public static < T, C extends Collection< T >, D extends Collection< T > > C remove( C coll, D items ) {
+        return minus( coll, items );
+    }
+    public static < T, C extends Collection< T >, D extends Collection< T > > C minus( C coll, D items ) {
+        return minus( coll, (T[])items.toArray() );
+    }
+    
+    public static <T> Collection<T> truncate( Collection<T> coll, int maximumSize ) {
+        if ( coll.size() > maximumSize ) try {
+            Iterator<T> iter = coll.iterator();
+            for ( int i = 0; i < maximumSize; ++i ) {
+                iter.next();
+            }
+            while (iter.hasNext()) {
+                iter.next();
+                iter.remove();
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return coll;
+    }
 }
