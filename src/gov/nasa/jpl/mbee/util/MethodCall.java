@@ -104,7 +104,7 @@ public class MethodCall {
      */
     public < XX > Collection<XX> filter( Collection< XX > objects,
                                          int indexOfObjectArgument ) {
-        Collection< XX > coll = new ArrayList< XX >( objects );
+        Collection< XX > coll = new ArrayList< XX >();
         for ( XX o : objects ) {
             sub( indexOfObjectArgument, o );
             Pair< Boolean, Object > result = invoke();
@@ -253,6 +253,10 @@ public class MethodCall {
             }
         }
         return relationMapToClose;
+    }
+    
+    static void main( String args[] ) {
+        
     }
 
 }
