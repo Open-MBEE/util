@@ -1135,7 +1135,7 @@ public class ClassUtils {
           bestLength = length;
         }
       }
-      System.out.println( "Best class " + bestCls.getCanonicalName()
+      Debug.outln( "Best class " + bestCls.getCanonicalName()
                           + " has length, " + bestLength
                           + ", and common prefix length of packages, "
                           + bestLengthOfCommonPkgPrefix + ", pkg="
