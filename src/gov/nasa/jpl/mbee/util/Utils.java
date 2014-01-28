@@ -451,8 +451,10 @@ public class Utils {
       List<V> list = new ArrayList< V >();
       for ( T t : c ) {
           if (t == null || cls == null || cls.isAssignableFrom( t.getClass() ) ) {
-              V v = cls.cast( t );
-              list.add( v );
+              try {
+                  V v = cls.cast( t );
+                  list.add( v );
+              } catch ( ClassCastException e ) {}
           }
       }
       return list;
@@ -947,7 +949,7 @@ public class Utils {
     }
 
     public static < T, C extends Collection< T > > C minus( C coll, T... items ) {
-        coll.remove( newList( items ) );
+        coll.removeAll( newList( items ) );
         return coll;
     }
   
@@ -972,5 +974,25 @@ public class Utils {
             e.printStackTrace();
         }
         return coll;
+    }
+    
+    public static boolean intersect( Collection< ? > coll1,
+                                     Collection< ? > coll2 ) {
+        if ( isNullOrEmpty( coll1 ) ) return false;
+        if ( isNullOrEmpty( coll2 ) ) {
+            coll1.clear();
+            return false;
+        }
+        Collection<Object> deleteList = new ArrayList<Object>();
+        boolean anySame = false;
+        for ( Object o : coll1 ) {
+            if ( !coll2.contains( o ) ) {
+                deleteList.add( o );
+            } else {
+                anySame = true;
+            }
+        }
+        coll1.removeAll( deleteList );
+        return anySame;
     }
 }
