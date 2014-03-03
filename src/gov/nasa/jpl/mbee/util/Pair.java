@@ -28,7 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.util;
 
-//import gov.nasa.jpl.ae.solver.HasId;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,10 +66,10 @@ public class Pair<A,B> implements Comparable< Pair< A, B > >, Cloneable {
   public int compareTo( Pair< A, B > o, boolean checkId ) {
     if ( this == o ) return 0;
     if ( o == null ) return 1;
-//    boolean bothHaveId = (this instanceof HasId) && (o instanceof HasId);
-//    if ( checkId && bothHaveId ) {
-//      return CompareUtils.compare( ( (HasId)this ).getId(), ( (HasId)o ).getId() );
-//    }
+    boolean bothHaveId = (this instanceof HasId) && (o instanceof HasId);
+    if ( checkId && bothHaveId ) {
+      return CompareUtils.compare( ( (HasId)this ).getId(), ( (HasId)o ).getId() );
+    }
     int compare = CompareUtils.compare( first, o.first, true, true );
     if ( compare != 0 ) return compare;
     return CompareUtils.compare( second, o.second, true, true );

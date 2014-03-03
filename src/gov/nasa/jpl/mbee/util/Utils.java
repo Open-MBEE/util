@@ -403,6 +403,8 @@ public class Utils {
     Method[] methods = c.getMethods();
     for (Method m : methods) {
       if (m.getReturnType() == void.class || m.getReturnType() == null
+          || m.getName().startsWith("set")
+          || m.getName().startsWith("clone")
           || m.getName().startsWith("wait")
           || m.getName().startsWith("notify")
           || m.getName().startsWith("remove")
@@ -565,11 +567,14 @@ public class Utils {
     int ct = 0;
     // TODO -- shouldn't be calling event.Expression here--make
     // Expression.evaluate() work for Wraps and include Wraps in src/util
+    // TODO -- maybe try creating an Evaluatable interface so that evaluate can be overridden to call that of Expression or ClassUtil.
 //    Object v = Expression.evaluate( value, null, false );
+    Object v = ClassUtils.evaluate( value, null, false );
     for ( T o : c ) {
-//      Object ov = Expression.evaluate( o, null, false );
-//      if ( valuesEqual( ov, v ) ) ct++;
-      if ( valuesEqual( o, value ) ) ct++;
+      //Object ov = ClassUtils.evaluate( o, null, false );
+      Object ov = ClassUtils.evaluate( o, null, false );
+      if ( valuesEqual( ov, v ) ) ct++;
+      else if ( valuesEqual( o, value ) ) ct++;
     }
     return ct;
   }
@@ -994,5 +999,14 @@ public class Utils {
         }
         coll1.removeAll( deleteList );
         return anySame;
+    }
+    public static String toCamelCase( String s ) {
+        if ( s == null ) return null;
+        if ( s.isEmpty() || !Character.isLetter( s.codePointAt( 0 ) ) )
+            return s;
+        char prefix = s.charAt( 0 );
+        String suffix = s.substring( 1 ).toLowerCase();
+        prefix = Character.toUpperCase( prefix );
+        return prefix + suffix;
     }
 }

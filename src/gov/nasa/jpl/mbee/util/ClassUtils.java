@@ -44,7 +44,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1192,7 +1191,8 @@ public class ClassUtils {
                            Double.class, Character.class, Boolean.class,
                            String.class,
                            //org.apache.commons.lang.ArrayUtils.class,
-                           Arrays.class };
+                           Arrays.class,
+                           Collections.class };
     for ( Class<?> c : classes ) {
       Method m = getMethodForArgTypes( c, functionName, argTypes );
       if ( m != null ) return m;
@@ -1215,8 +1215,11 @@ public class ClassUtils {
 
   public static Method getMethodForArgs( Class< ? > cls, String callName,
                                            Object... args ) {
-      if ( Debug.isOn() ) Debug.outln( "getMethodForArgs( cls=" + cls.getName() + ", callName="
-          + callName + ", args=" + Utils.toString( args ) + " )" );
+        if ( Debug.isOn() ) Debug.outln( "getMethodForArgs( cls="
+                                         + ( cls == null ? "null"
+                                                         : cls.getName() )
+                                         + ", callName=" + callName + ", args="
+                                         + Utils.toString( args ) + " )" );
       Class< ? > argTypes[] = null;
   //    boolean allClasses = areClasses( args ); 
   //    if ( allClasses ) {
@@ -1343,8 +1346,11 @@ public class ClassUtils {
   //                                             double argMismatchCost,
   //                                             Map< Class< ? >, Map< Class< ? >, Double > > transformCost ) {
       if ( argTypes == null ) argTypes = new Class<?>[] {};
-      if ( Debug.isOn() ) Debug.outln( "getMethodForArgTypes( cls=" + cls.getName() + ", callName="
-                   + callName + ", argTypes=" + Utils.toString( argTypes ) + " )" );
+      String clsName = ( cls == null ? "null" : cls.getName() );
+      if ( Debug.isOn() ) Debug.outln( "getMethodForArgTypes( cls=" + clsName
+                                       + ", callName=" + callName
+                                       + ", argTypes="
+                                       + Utils.toString( argTypes ) + " )" );
   //    Method matchingMethod = null;
   //    boolean gotOkNumArgs = false;
   //    int mostMatchingArgs = 0;
@@ -1353,7 +1359,8 @@ public class ClassUtils {
   //    double bestScore = Double.MAX_VALUE;
       boolean debugWasOn = Debug.isOn();
       //Debug.turnOff();
-      if ( Debug.isOn() ) Debug.outln( "calling " + cls.getName() + ".class.getMethod(" + callName + ")"  );
+      if ( Debug.isOn() ) Debug.outln( "calling " + clsName + ".class.getMethod(" + callName + ")"  );
+      if ( cls != null ) {
         try {
             Method method = cls.getMethod( callName, argTypes );
             if ( method != null ) return method;
@@ -1366,13 +1373,14 @@ public class ClassUtils {
         } catch ( NoSuchMethodException e1 ) {
         } catch ( SecurityException e1 ) {
         }
-      
+      }
       Method[] methods = null;
-      if ( Debug.isOn() ) Debug.outln( "calling getMethods() on class " + cls.getName() );
+      if ( Debug.isOn() ) Debug.outln( "calling getMethods() on class "
+                                       + clsName );
       try {
-        methods = cls.getMethods();
+        methods = cls == null ? null : cls.getMethods();
       } catch ( Exception e ) {
-        System.err.println( "Got exception calling " + cls.getName()
+        System.err.println( "Got exception calling " + clsName
                             + ".getMethod(): " + e.getMessage() );
       }
       if ( Debug.isOn() ) Debug.outln( "--> got methods: " + Utils.toString( methods ) );
@@ -1389,7 +1397,7 @@ public class ClassUtils {
       }
       if ( atc.best != null && !atc.allArgsMatched ) {
       if ( Debug.isOn() ) Debug.errln( "getMethodForArgTypes( cls="
-                                       + cls.getName() + ", callName="
+                                       + clsName + ", callName="
                                        + callName + ", argTypes="
                                        + Utils.toString( argTypes )
                                        + " ): method returned (" + atc.best
@@ -1398,7 +1406,7 @@ public class ClassUtils {
                                        + Utils.toString( argTypes ) );
       } else if ( atc.best == null && complain ) {
         System.err.println( "method " + callName + "(" + Utils.toString( argTypes ) + ")"
-                            + " not found for " + cls.getSimpleName() );
+                            + " not found for " + clsName );
       }
       return (Method)atc.best;
     }
@@ -1412,6 +1420,7 @@ public class ClassUtils {
     public Set< Method > getAllMethods( Class< ? > cls ) {
         Set< Method > methods =
                 new TreeSet< Method >( CompareUtils.GenericComparator.instance() );
+        if ( cls == null ) return methods;
         methods.addAll( Arrays.asList( cls.getDeclaredMethods() ) );
         Class< ? > superCls = cls.getSuperclass();
         methods.addAll( getAllMethods( superCls ) );
@@ -1582,11 +1591,30 @@ public class ClassUtils {
     } catch ( IllegalAccessException e ) {
       ex = e;
     }
-//    if ( f == null && o instanceof gov.nasa.jpl.ae.event.Parameter ) {
-//        return getFieldValue( ( (gov.nasa.jpl.ae.event.Parameter)o ).getValueNoPropagate(),
-//                              fieldName );
-//    }
-    if ( !suppressExceptions && f == null && ex != null ) {
+//  if ( f == null && o instanceof gov.nasa.jpl.ae.event.Parameter ) {
+//  return getFieldValue( ( (gov.nasa.jpl.ae.event.Parameter)o ).getValueNoPropagate(),
+//                        fieldName );
+//}
+    Object result = null;
+    String[] candidateMethodNames = new String[]{ "getMember", "getValueNoPropagate", "getValue", "getField", "get" };
+    for ( String mName : candidateMethodNames ) {
+      Method m = getMethodForArgs( o.getClass(), mName, fieldName );
+      if ( m == null ) m = getMethodForArgs( o.getClass(), mName );
+      if ( m != null ) {
+        try {
+          boolean gotArgs = Utils.isNullOrEmpty( m.getParameterTypes() );
+          Object[] args = gotArgs ? new Object[]{} : new Object[]{ fieldName };
+          result = m.invoke( o, args );
+          if ( !gotArgs ) return getFieldValue( result, fieldName, suppressExceptions );
+          return result;
+        } catch ( IllegalArgumentException e ) {
+            // ex is already non-null, so no need to assign it here.
+        } catch ( IllegalAccessException e ) {
+        } catch ( InvocationTargetException e ) {
+        }
+      }
+    }
+    if ( !suppressExceptions && result == null && ex != null ) {
       // TODO Auto-generated catch block
       ex.printStackTrace();
     }
@@ -1631,11 +1659,32 @@ public class ClassUtils {
       cls = o.getClass();
       f = getField(cls, fieldName, true );
     }
-    // TODO -- remove this and handle from caller!
-//    if ( f == null && o instanceof gov.nasa.jpl.ae.event.Parameter ) {
-//      f = getField( ( (gov.nasa.jpl.ae.event.Parameter)o ).getValueNoPropagate(),
-//                    fieldName, suppressExceptions );
-//    }
+    if ( f != null ) return f;
+//  if ( f == null && o instanceof gov.nasa.jpl.ae.event.Parameter ) {
+//  f = getField( ( (gov.nasa.jpl.ae.event.Parameter)o ).getValueNoPropagate(),
+//                fieldName, suppressExceptions );
+//}
+    Object result = null;
+    String[] candidateMethodNames = new String[]{ "getMember", "getValueNoPropagate", "getValue", "getField", "get" };
+    for ( String mName : candidateMethodNames ) {
+      Method m = getMethodForArgs( o.getClass(), mName, fieldName );
+      if ( m == null ) m = getMethodForArgs( o.getClass(), mName );
+      if ( m != null ) {
+        try {
+          boolean gotArgs = Utils.isNullOrEmpty( m.getParameterTypes() );
+          Object[] args = gotArgs ? new Object[]{} : new Object[]{ fieldName };
+          result = m.invoke( o, args );
+          if ( result instanceof Field ) return (Field)result;
+          if ( !gotArgs ) return getField( result, fieldName, suppressExceptions );
+        } catch ( IllegalArgumentException e ) {
+            // ex is already non-null, so no need to assign it here.
+        } catch ( IllegalAccessException e ) {
+        } catch ( InvocationTargetException e ) {
+        }
+      }
+    }
+    Debug.errorOnNull( suppressExceptions, suppressExceptions,
+                       "Could not get field " + fieldName + " for " + o, f );
     return f;
   }
 

@@ -28,8 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.util;
 
-//import gov.nasa.jpl.ae.solver.HasId;
-
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -42,7 +40,7 @@ public class CompareUtils {
 
   public static class GenericComparator< T > implements Comparator< T > {
 
-    protected static GenericComparator<?> instance = new CompareUtils.GenericComparator();
+    protected static GenericComparator<?> instance = new GenericComparator();
     
     @Override
     public int compare( T o1, T o2 ) {
@@ -56,6 +54,35 @@ public class CompareUtils {
 
   }
   
+  public static class MappedValueComparator< K, V > implements Comparator< K > {
+
+    protected Map<K, V> map = null;
+    protected Comparator< V > valueComparator = null;  
+    public MappedValueComparator( Map<K, V> map, Comparator< V > valueComparator ) {
+      this.map = map;
+      this.valueComparator = valueComparator;
+    }
+      
+    @Override
+    public int compare( K A, K B ) {
+        if ( A == B ) return 0;
+        if ( A == null ) return -1;
+        if ( B == null ) return 1;
+        if ( map == null ) return GenericComparator.instance().compare( A, B );
+        V resultA = map.get(A);
+        V resultB = map.get(B);
+        return getValueComparator().compare( resultA, resultB );
+    }
+
+    protected Comparator< V > getValueComparator() {
+      if ( valueComparator == null ) {
+        valueComparator = GenericComparator.instance();
+      }
+      return valueComparator;
+    }
+      
+  }
+  
   public static <T1, T2> int compare( T1 o1, T2 o2, boolean checkComparable ) {
     return compare( o1, o2, checkComparable, false );
   }
@@ -65,9 +92,9 @@ public class CompareUtils {
     if ( o1 == o2 ) return 0;
     if ( o1 == null ) return -1;
     if ( o2 == null ) return 1;
-//    if ( useId && o1 instanceof HasId && o2 instanceof HasId ) {
-//      return CompareUtils.compare( ( (HasId)o1 ).getId(), ( (HasId)o2 ).getId() );
-//    }
+    if ( useId && o1 instanceof HasId && o2 instanceof HasId ) {
+      return CompareUtils.compare( ( (HasId)o1 ).getId(), ( (HasId)o2 ).getId() );
+    }
     int compare = o1.getClass().getName().compareTo( o2.getClass().getName() );
     if ( compare != 0 ) return compare;
     if ( checkComparable ) {

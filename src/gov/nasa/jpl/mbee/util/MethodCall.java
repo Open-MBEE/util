@@ -1,11 +1,16 @@
 package gov.nasa.jpl.mbee.util;
 
 
+import gov.nasa.jpl.mbee.util.CompareUtils.MappedValueComparator;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -116,9 +121,9 @@ public class MethodCall {
     }
     /**
      * @param objects
-     * @param methodCall
+     * @param methodCall the MethodCall to invoke on each object in the Collection
      * @param indexOfObjectArgument
-     *            where in the list of arguments an object from the collection
+     *            where in the list of arguments an Object from the Collection
      *            is substituted (1 to total number of args or 0 to indicate
      *            that the objects are each substituted for
      *            methodCall.objectOfCall).
@@ -132,14 +137,14 @@ public class MethodCall {
     /**
      * @param objects
      * @param indexOfObjectArgument
-     *            where in the list of arguments an object from the collection
+     *            where in the list of arguments an object from the Collection
      *            is substituted (1 to total number of args or 0 to indicate
      *            that the objects are each substituted for
      *            methodCall.objectOfCall).
      * @return the results of the methodCall on each of the objects
      */
     public  < XX > Collection< XX > map( Collection< ? > objects,
-                                               int indexOfObjectArgument ) {
+                                         int indexOfObjectArgument ) {
         Collection< XX > coll = new ArrayList<XX>();
         for ( Object o : objects ) {
             sub( indexOfObjectArgument, o );
@@ -153,6 +158,139 @@ public class MethodCall {
         return coll;
     }
     
+    /**
+     * Inductively combine the results of applying the method to each of the
+     * elements and the return results for the prior element.
+     * <p>
+     * For example, fold() is used below to sum an array of numbers.<br>
+     * {@code int plus(int a, int b) ( return a+b; )} <br>
+     * {@code MethodCall plusCall = new MethodCall( null, ClassUtils.getMethodForName(this.getClass(), "plus"), 0, 0} <br>
+     * {@code int[] array = new int[] ( 2, 5, 6, 5 );}<br>
+     * {@code int result = fold(Arrays.asList(array), 0, 1, 2); // result = 18}
+     * 
+     * @param objects collection of Objects
+     * @param methodCall the MethodCall to invoke on each Object in the Collection 
+     * @param initialValue
+     *            an initial value to act as the initial argument to the first
+     *            invocation of this MethodCall.
+     * @param indexOfObjectArgument
+     *            where in the list of arguments an Object from the Collection
+     *            is substituted (1 to total number of args) or 0 to indicate
+     *            that the elements are each substituted for
+     *            methodCall.objectOfCall.
+     * @param indexOfPriorResultArgument
+     *            where in the list of arguments the prior result value is
+     *            substituted (1 to total number of args or 0 to indicate that
+     *            the prior results are each substituted for methodCall.objectOfCall).
+     * @return the result of calling the method on the last Object after calling
+     *         the method on each prior Object (in order), passing the prior
+     *         return value into the call on each element.
+     */
+     public static < XX > XX fold( Collection< ? > objects, MethodCall methodCall, XX initialValue,
+                             int indexOfObjectArgument, int indexOfPriorResultArgument ) {
+         return methodCall.fold( objects, initialValue, indexOfObjectArgument, indexOfPriorResultArgument );
+     }
+     
+    /**
+     * Inductively combine the results of applying the method to each of the
+     * elements and the return results for the prior element.
+     * <p>
+     * For example, fold() is used below to sum an array of numbers.<br>
+     * {@code int plus(int a, int b) ( return a+b; )} <br>
+     * {@code MethodCall plusCall = new MethodCall( null, ClassUtils.getMethodForName(this.getClass(), "plus"), 0, 0} <br>
+     * {@code int[] array = new int[] ( 2, 5, 6, 5 );}<br>
+     * {@code int result = fold(Arrays.asList(array), 0, 1, 2); // result = 18}
+     * 
+     * @param objects collection of Objects
+     * @param initialValue
+     *            an initial value to act as the initial argument to the first
+     *            invocation of this MethodCall.
+     * @param indexOfObjectArgument
+     *            where in the list of arguments an Object from the collection
+     *            is substituted (1 to total number of args) or 0 to indicate
+     *            that the elements are each substituted for
+     *            methodCall.objectOfCall.
+     * @param indexOfPriorResultArgument
+     *            where in the list of arguments the prior result value is
+     *            substituted (1 to total number of args or 0 to indicate that
+     *            the prior results are each substituted for methodCall.objectOfCall).
+     * @return the result of calling the method on the last Object after calling
+     *         the method on each prior Object (in order), passing the prior
+     *         return value into the call on each element.
+     */
+     public  < XX > XX fold( Collection< ? > objects, XX initialValue,
+                             int indexOfObjectArgument, int indexOfPriorResultArgument ) {
+        XX priorResult = initialValue;
+        for ( Object o : objects ) {
+            sub( indexOfPriorResultArgument, priorResult );
+            sub( indexOfObjectArgument, o );
+            Pair< Boolean, Object > result = invoke();
+            if ( result.first ) {
+                priorResult = (XX)result.second;
+            } 
+        }
+        return priorResult;
+    }
+    
+    /**
+     * Sort and return a copy of the input Collection of Objects according to
+     * the results of invoking the MethodCall on each Object.
+     * 
+     * @param objects
+     *            to be sorted
+     * @param comparator
+     *            specifies precedence relation on a pair of methodCall return
+     *            values; null defaults to {@link CompareUtils.GenericComparator}.
+     * @param methodCall
+     *            a MethodCall to invoke on each Object
+     * @param indexOfElementArgument
+     *            where in the list of arguments an Object from the collection
+     *            is substituted (1 to total number of args or 0 to indicate
+     *            that the Objects are each substituted for
+     *            methodCall.objectOfCall).
+     * @return the input Objects in a new Collection sorted according to the
+     *         method and comparator
+     */
+    public static < XX > Collection< XX > sort( Collection< XX > objects,
+                                                Comparator< ? > comparator,
+                                                MethodCall methodCall,
+                                                int indexOfElementArgument ) {
+        return methodCall.sort( objects, comparator, indexOfElementArgument );
+    }
+
+    /**
+     * Sort and return a copy of the input Collection of Objects according to
+     * the results of invoking this MethodCall on each Object.
+     * 
+     * @param objects
+     *            to be sorted
+     * @param comparator
+     *            specifies precedence relation on a pair of MethodCall return
+     *            values; null defaults to {@link CompareUtils.GenericComparator}.
+     * @param indexOfElementArgument
+     *            where in the list of arguments an Object from the collection
+     *            is substituted (1 to total number of args or 0 to indicate
+     *            that the Objects are each substituted for
+     *            methodCall.objectOfCall).
+     * @return the input Objects in a new Collection sorted according to the
+     *         method and comparator
+     */
+    public < K, V > Collection< K > sort( Collection< K > objects,
+                                          Comparator< V > comparator,
+                                          int indexOfObjectArgument ) {
+        List< K > result = new ArrayList< K >( objects );
+        Map< K, V > map = new HashMap< K, V >();
+        for ( K o : objects ) {
+            sub( indexOfObjectArgument, o );
+            Pair< Boolean, Object > r = invoke();
+            map.put( o, (V)r.second );
+        }
+        MappedValueComparator< K, V > mapComparator =
+                new CompareUtils.MappedValueComparator< K, V >( map, comparator );
+        Collections.sort( result, mapComparator );
+        return result;
+    }
+         
     /**
      * Compute a transitive closure of a set using this MethodCall as a relation from an argument to the return value.
      * @param initialSet the Set of initial items to be substituted for an argument or the object of this MethodCall
@@ -256,7 +394,7 @@ public class MethodCall {
     }
     
     static void main( String args[] ) {
-        
+        // TODO -- put tests here or in JUnit tests
     }
 
 }
