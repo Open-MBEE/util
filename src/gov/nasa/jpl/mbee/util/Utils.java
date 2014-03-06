@@ -443,6 +443,14 @@ public class Utils {
     return list;
   }
 
+  public static <V, T> List<V> asList( Object o, Class<V> cls ) {
+      if ( o == null ) return null;
+      if ( o instanceof Collection ) {
+          return asList( (Collection<?>)o, cls );
+      }
+      return asList( newList( o ), cls );
+  }
+
   /**
    * @param c
    * @param cls
