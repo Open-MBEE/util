@@ -73,6 +73,15 @@ public class MethodCall {
         }
         return result;
     }
+    
+    /**
+     * Substitute an object for a specified argument in this MethodCall.
+     * 
+     * @param indexOfArg
+     *            the index of the argument to be replaced
+     * @param obj
+     *            the replacement for the argument
+     */
     protected void sub( int indexOfArg, Object obj ) {
         if ( indexOfArg < 0 ) Debug.error("bad indexOfArg " + indexOfArg );
         else if ( indexOfArg == 0 ) objectOfCall = obj;
@@ -83,6 +92,7 @@ public class MethodCall {
                                                                + " arguments!" );
         else arguments[indexOfArg-1] = obj;
     }
+    
     /**
      * @param objects
      * @param methodCall
