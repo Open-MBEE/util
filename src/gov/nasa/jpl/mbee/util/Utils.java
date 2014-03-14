@@ -1013,8 +1013,19 @@ public class Utils {
         if ( s.isEmpty() || !Character.isLetter( s.codePointAt( 0 ) ) )
             return s;
         char prefix = s.charAt( 0 );
-        String suffix = s.substring( 1 ).toLowerCase();
         prefix = Character.toUpperCase( prefix );
+
+        String suffix = s.substring( 1 );
+        // check to see if suffix has lower case letters, in which case it is
+        // assumed to already be camel case.
+        for ( int i = 0; i < suffix.length(); ++i ) {
+            char c = suffix.charAt( i );
+            if ( Character.isLowerCase( c ) ) {
+                suffix = suffix.toLowerCase();
+                break;
+            }
+        }
+
         return prefix + suffix;
     }
 }
