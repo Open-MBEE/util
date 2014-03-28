@@ -1812,17 +1812,17 @@ public class ClassUtils {
    * @return the converted number or null if the cast fails or an exception is
    *         caught
    */
-  public static Number castNumber( Number n, Class<? extends Number> cls ) {
+  public static <N> N castNumber( Number n, Class<N> cls ) {
     try {
       Class<?> c = ClassUtils.classForPrimitive( cls );
       if ( c == null ) c = cls;
-      if ( c == Long.class ) return (Long)n.longValue(); 
-      if ( c == Short.class ) return (Short)n.shortValue(); 
-      if ( c == Double.class ) return (Double)n.doubleValue(); 
-      if ( c == Integer.class ) return (Integer)n.intValue(); 
-      if ( c == Float.class ) return (Float)n.floatValue(); 
+      if ( c == Long.class ) return (N)(Long)n.longValue(); 
+      if ( c == Short.class ) return (N)(Short)n.shortValue(); 
+      if ( c == Double.class ) return (N)(Double)n.doubleValue(); 
+      if ( c == Integer.class ) return (N)(Integer)n.intValue(); 
+      if ( c == Float.class ) return (N)(Float)n.floatValue(); 
 //          if ( c == Character.class ) return (TT)(Character)n.shortValue();
-//        if ( c == Long.class ) return cls.cast( n.longValue() ); 
+//        if ( c == Long.class ) return cls.cast( n.longValue() );
     } catch ( Exception e ) {
       // ignore
     }
@@ -2074,7 +2074,7 @@ public class ClassUtils {
                                   boolean propagate ) throws ClassCastException {
     if ( object == null ) return null;
     // Check if object is already what we want.
-    if ( cls != null && cls.isInstance( object ) || cls == object.getClass() ) {
+    if ( cls != null && cls.isInstance( object ) || cls.equals( object.getClass() ) ) {
       return (TT)object;
     }
     
@@ -2111,28 +2111,21 @@ public class ClassUtils {
     if ( cls != null && ClassUtils.isNumber( cls ) &&
                 ClassUtils.isNumber( object.getClass() ) ) {
       try {
-//        int f = 5;
-//        Integer t = 3;
-//        f = (int)(Integer)t.intValue();
         Number n = (Number)object;
-        Class<?> c = ClassUtils.classForPrimitive( cls );
-        if ( c == null ) c = cls;
-        // TODO -- instead of returning here, assign to object and reuse try/catch below
-        if ( c == Long.class ) return (TT)(Long)n.longValue(); 
-        if ( c == Short.class ) return (TT)(Short)n.shortValue(); 
-        if ( c == Double.class ) return (TT)(Double)n.doubleValue(); 
-        if ( c == Integer.class ) return (TT)(Integer)n.intValue();
-        if ( c == Float.class ) return (TT)(Float)n.floatValue();
-//        if ( c == Character.class ) return (TT)(Character)n.shortValue();
-//      if ( c == Long.class ) return cls.cast( n.longValue() ); 
-//      if ( c == Short.class ) return cls.cast( n.shortValue() ); 
-//      if ( c == Double.class ) return cls.cast( n.doubleValue() ); 
-//      if ( c == Integer.class ) return cls.cast( n.intValue() ); 
-//      if ( c == Float.class ) return cls.cast( n.floatValue() ); 
-//      if ( c == Character.class ) return cls.cast( n );
+        TT tt = (TT)castNumber( n, cls );
+        if ( tt != null || object == null ) {
+            return tt;
+        }
       } catch ( Exception e ) {
         // ignore
       }
+    }
+
+    // if 
+    if ( cls.equals( String.class ) ) {
+        @SuppressWarnings( "unchecked" )
+        TT r = (TT)object.toString();
+        return r;
     }
 //    else if ( allowWrapping && cls != null ){
 //      // If evaluating doesn't work, maybe we need to wrap the value in a parameter.

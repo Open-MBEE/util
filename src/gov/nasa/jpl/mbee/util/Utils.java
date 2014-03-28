@@ -43,6 +43,7 @@ import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -470,6 +471,34 @@ public class Utils {
       return list;
   }
 
+    /**
+     * @param source
+     * @param newKeyType
+     * @param newValueType
+     * @return a new {@link LinkedHashMap} containing the entries in source map
+     *         that successfully cast to the new key and value types
+     */
+    public static < K1, V1, K2, V2 > Map< K2, V2 >
+            toMap( Map< K1, V1 > source,
+                   Class< K2 > newKeyType,
+                   Class< V2 > newValueType ) {
+        Map< K2, V2 > target = new LinkedHashMap< K2, V2 >();
+        for ( Map.Entry< K1, V1 > e : source.entrySet() ) {
+            Pair< Boolean, K2 > p =
+                    ClassUtils.coerce( e.getKey(), newKeyType, true );
+            if ( p.first ) {
+                K2 k = p.second;
+                Pair< Boolean, V2 > pv =
+                        ClassUtils.coerce( e.getValue(), newValueType, true );
+                if ( pv.first ) {
+                    V2 v = pv.second;
+                    target.put( k, v );
+                }
+            }
+        }
+        return target;
+    }
+  
   /**
    * @param c
    * @return a c if c is a {@link Set} or, otherwise, a {@link LinkedHashSet} containing
