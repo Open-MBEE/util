@@ -1426,7 +1426,7 @@ public class ClassUtils {
         methods.addAll( getAllMethods( superCls ) );
         return methods;
     }
-
+    
   public static String dominantType( String argType1, String argType2 ) {
 	  if ( argType1 == null ) return argType2;
 	  if ( argType2 == null ) return argType1;
@@ -1443,7 +1443,15 @@ public class ClassUtils {
   
   public static Class<?> dominantTypeClass(Class<?> cls1, Class<?> cls2) {
 	  
-	  return dominantType(cls1.getSimpleName(), cls2.getSimpleName()).getClass();
+	  String name1 = cls1.getSimpleName();
+	  String name2 = cls2.getSimpleName();
+
+	  if (name1.equals(dominantType(name1, name2))) {
+		  return cls1;
+	  }
+	  else {
+		  return cls2;
+	  }
   }
   
 /**
