@@ -1427,7 +1427,26 @@ public class ClassUtils {
         return methods;
     }
 
-  /**
+  public static String dominantType( String argType1, String argType2 ) {
+	  if ( argType1 == null ) return argType2;
+	  if ( argType2 == null ) return argType1;
+	  if ( argType1.equals( "String" ) ) return argType1;
+	  if ( argType2.equals( "String" ) ) return argType2;
+	  if ( argType1.toLowerCase().equals( "double" ) ) return argType1;
+	  if ( argType2.toLowerCase().equals( "double" ) ) return argType2;
+	  if ( argType1.toLowerCase().startsWith( "long" ) ) return argType1;
+	  if ( argType2.toLowerCase().startsWith( "long" ) ) return argType2;
+	  if ( argType1.toLowerCase().startsWith( "int" ) ) return argType1;
+	  if ( argType2.toLowerCase().startsWith( "int" ) ) return argType2;
+	  return argType1;
+	}
+  
+  public static Class<?> dominantTypeClass(Class<?> cls1, Class<?> cls2) {
+	  
+	  return dominantType(cls1.getSimpleName(), cls2.getSimpleName()).getClass();
+  }
+  
+/**
    * Find and invoke the named method from the given object with the given
    * arguments.
    * 
