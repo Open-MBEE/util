@@ -1442,7 +1442,8 @@ public class ClassUtils {
 	}
   
   public static Class<?> dominantTypeClass(Class<?> cls1, Class<?> cls2) {
-	  
+	  if ( cls1 == null ) return cls2;
+      if ( cls2 == null ) return cls1;
 	  String name1 = cls1.getSimpleName();
 	  String name2 = cls2.getSimpleName();
 
