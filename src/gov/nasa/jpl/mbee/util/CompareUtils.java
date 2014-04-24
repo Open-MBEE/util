@@ -180,6 +180,9 @@ public class CompareUtils {
     int pos = 0;
     String s1 = o1.toString();
     String s2 = o2.toString();
+    if ( s1 == s2 ) return 0;
+    if ( s1 == null ) return -1;
+    if ( s2 == null ) return 1;
     boolean gotAmp = false;
     for ( pos = 0; pos < Math.min( s1.length(), s2.length() ); ++pos ) {
       char c1 = s1.charAt(pos);
