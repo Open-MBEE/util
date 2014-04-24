@@ -5,6 +5,13 @@
   <version>0.0.1</version>
   <name>gov.nasa.jpl.mbee.util</name>
   <description>MBEE java utilities</description>
+  <distributionManagement>
+      <repository>
+          <id>artifactory</id>
+          <name>releases</name>
+          <url>http://128.149.16.144:8082/artifactory/libs-release-local</url>
+      </repository>
+  </distributionManagement>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <resources>
