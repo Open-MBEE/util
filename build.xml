@@ -25,25 +25,19 @@
     <echo message="finished ${current.time}" />  
   </target>
 
-  <target name="copyjar" depends="dir.check" if="dir.exists">
+  <target name="copyjar">
     <tstamp>
        <format property="current.time" pattern="MM/dd/yyyy hh:mm:ss aa" />
     </tstamp>
     <echo message="started ${current.time}" />
-    <copy todir="${view_repo_web_lib}" file="mbee_util.jar"/>
-    <copy todir="${view_repo_lib}" file="mbee_util.jar"/>
+    <copy todir="${view_repo_web_lib}" file="mbee_util.jar" failonerror="false"/>
+    <copy todir="${view_repo_lib}" file="mbee_util.jar" failonerror="false"/>
     <tstamp>
        <format property="current.time" pattern="MM/dd/yyyy hh:mm:ss aa" />
     </tstamp>
     <echo message="finished ${current.time}" />
   </target>
 
-  <target name="dir.check">
-  	<condition property="dir.exists">
-  		<available file="${view_repo_web_lib}" type="dir"/>
-    </condition>
-  </target>
-	
   <target name="timestamp2">
     <tstamp>
       <format property="current.time" pattern="MM/dd/yyyy hh:mm:ss aa" />

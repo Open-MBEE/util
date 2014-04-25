@@ -6,6 +6,7 @@
   <name>mbee_util</name>
   <description>MBEE java utilities</description>
   <distributionManagement>
+      <!-- use mvn -U deploy -DgeneratePom=true -Dpackaging=jar  -->
       <repository>
           <id>artifactory</id>
           <name>releases</name>
