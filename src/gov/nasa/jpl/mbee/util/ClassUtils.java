@@ -644,6 +644,27 @@ public class ClassUtils {
   public static Map< String, Class< ? > > classCache =
       Collections.synchronizedMap( new HashMap< String, Class< ? > >() );
   
+  public static Class<?> getClassForName(String className, String memberName,
+		  								 String[] packages,  boolean initialize) {
+	  
+      if ( Utils.isNullOrEmpty( className ) ) return null;
+      
+      Class< ?  > cls = null;
+      
+      // Check the packages for the fname:
+      for (String pkg : packages) {
+       
+        Class< ? > foo = ClassUtils.getClassForName( className, memberName, 
+                                                                   pkg, initialize );
+        if (foo != null) {
+          cls = foo;
+          break;
+        }
+      }
+
+      return cls;
+  }
+  
   public static Class<?> getClassForName( String className, String memberName,
                                           String preferredPackage, boolean initialize ) {
     if ( Utils.isNullOrEmpty( className ) ) return null;
