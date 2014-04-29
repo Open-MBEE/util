@@ -567,6 +567,10 @@ public class Utils {
   }
 
   public static <T> String join( Collection<T> things, String delim ) {
+    return join( things.toArray(), delim );
+  }
+
+  public static <T> String join( T[] things, String delim ) {
     StringBuilder sb = new StringBuilder();
     boolean first = true;
     for ( T t : things ) {
