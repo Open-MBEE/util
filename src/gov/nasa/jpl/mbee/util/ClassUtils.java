@@ -1732,7 +1732,7 @@ public class ClassUtils {
         }
       }
     }
-    Debug.errorOnNull( suppressExceptions, suppressExceptions,
+    Debug.errorOnNull( !suppressExceptions, !suppressExceptions,
                        "Could not get field " + fieldName + " for " + o, f );
     return f;
   }
