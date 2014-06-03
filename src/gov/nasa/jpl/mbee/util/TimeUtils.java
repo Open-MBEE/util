@@ -128,6 +128,17 @@ public class TimeUtils {
     public static final String fileTimestampFormat = "yyyy-MM-dd'T'HH.mm.ss.SSSZ";
     public static final String aspenTeeFormat = "yyyy-MM-dd'T'HH:mm:ss";
 
+    /**
+     * Parse the specified timestamp String in tee format and return the
+     * corresponding Date.
+     * 
+     * @param timestamp
+     *            the time in tee format (yyyy-MM-dd'T'HH:mm:ss.SSSZ,
+     *            yyyy-MM-dd'T'HH:mm:ssZ, yyyy-MM-dd'T'HH:mm:ss.SSS,
+     *            yyyy-MM-dd'T'HH:mm:ss, or EEE MMM dd HH:mm:ss zzz yyyy)
+     * @return the Date for the timestamp or null if the timestamp format is not
+     *         recognized.
+     */
     public static Date dateFromTimestamp( String timestamp ) {
         String formatsToTry[] = { TimeUtils.timestampFormat,
                                   TimeUtils.timestampFormat.replace( ".SSS", "" ),
@@ -136,6 +147,7 @@ public class TimeUtils {
                                   "EEE MMM dd HH:mm:ss zzz yyyy" };
     //    ArrayList formatsToTry = new ArrayList();
     //    format
+        if ( Utils.isNullOrEmpty( timestamp ) ) return null;
         int pos = timestamp.lastIndexOf( ':' );
         if ( pos == timestamp.length() - 3
              && timestamp.replaceAll( "[^:]", "" ).length() == 3 ) {
@@ -199,6 +211,10 @@ public class TimeUtils {
       return timeString;
     }
     
+    public static String toTimestamp( Date dateTime ) {
+        return toTimestamp( dateTime.getTime() );
+    }
+
     public static String toAspenTimeString( long millis ) {
       return toAspenTimeString( millis, aspenTeeFormat );
     }
