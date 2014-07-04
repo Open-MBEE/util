@@ -67,14 +67,24 @@ public class Utils {
   
   // empty collection constants
   public static final List<?> emptyList = Collections.EMPTY_LIST;//new ArrayList( 0 );
+  public static final ArrayList<?> emptyArrayList = new ArrayList( 0 );
   @SuppressWarnings( "unchecked" )
   public static <T> List<T> getEmptyList() {
     return (List< T >)emptyList;
   }  
   @SuppressWarnings( "unchecked" )
+  public static < T > ArrayList< T > getEmptyArrayList() {
+    return (ArrayList< T >)emptyArrayList;
+  }
+  @SuppressWarnings( "unchecked" )
   public static <T> List<T> getEmptyList(Class<T> cls) {
     return (List< T >)emptyList;
   }  
+  @SuppressWarnings( "unchecked" )
+  public static <T> ArrayList<T> getEmptyArrayList(Class<T> cls) {
+    return (ArrayList< T >)emptyArrayList;
+  }
+  
   public static final Set<?> emptySet = Collections.EMPTY_SET;//new TreeSet();
   @SuppressWarnings( "unchecked" )
   public static <T> Set<T> getEmptySet() {
@@ -458,8 +468,8 @@ public class Utils {
    * @return a new {@link List} containing
    *         the elements of c cast to type V
    */
-  public static <V, T> List<V> asList( Collection<T> c, Class<V> cls ) {
-      List<V> list = new ArrayList< V >();
+  public static <V, T> ArrayList<V> asList( Collection<T> c, Class<V> cls ) {
+      ArrayList<V> list = new ArrayList< V >();
       for ( T t : c ) {
           if (t == null || cls == null || cls.isAssignableFrom( t.getClass() ) ) {
               try {
