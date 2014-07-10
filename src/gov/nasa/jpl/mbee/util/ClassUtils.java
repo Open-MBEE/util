@@ -1455,6 +1455,8 @@ public class ClassUtils {
 	  if ( argType2.equals( "String" ) ) return argType2;
 	  if ( argType1.toLowerCase().equals( "double" ) ) return argType1;
 	  if ( argType2.toLowerCase().equals( "double" ) ) return argType2;
+      if ( argType1.toLowerCase().equals( "float" ) ) return argType1;
+      if ( argType2.toLowerCase().equals( "float" ) ) return argType2;
 	  if ( argType1.toLowerCase().startsWith( "long" ) ) return argType1;
 	  if ( argType2.toLowerCase().startsWith( "long" ) ) return argType2;
 	  if ( argType1.toLowerCase().startsWith( "int" ) ) return argType1;
