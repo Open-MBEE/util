@@ -1071,4 +1071,30 @@ public class Utils {
 
         return prefix + suffix;
     }
+    /**
+     * Get the differences between two sets as additions and removals of items
+     * of the first to generate the second.
+     * 
+     * @param s1
+     *            first set
+     * @param s2
+     *            second set
+     * @return the difference as a set of additions and a set of removals in a
+     *         Pair.
+     */
+    public static < T > Pair< Set< T >, Set< T > > diff( Set< T > s1, Set< T > s2 ) {
+        Pair< Set< T >, Set< T > > p =
+                new Pair< Set< T >, Set< T > >( new LinkedHashSet< T >(),
+                                                new LinkedHashSet< T >() );
+        LinkedHashSet< T > s3 = new LinkedHashSet< T >(s1);
+        s3.addAll( s2 );
+        for ( T t : s3 ) {
+            boolean c1 = s1.contains( t );
+            boolean c2 = s2.contains( t );
+            if ( c1 && c2 ) continue;
+            if ( c2 ) p.first.add( t );
+            else p.second.add( t );
+        }
+        return p;
+    }
 }
