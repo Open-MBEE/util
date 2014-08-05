@@ -1,29 +1,29 @@
 /*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
+ * Copyright (c) <2013>, California Institute of Technology ("Caltech").
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification, are 
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
- * 
- *  - Redistributions of source code must retain the above copyright notice, this list of 
+ *
+ *  - Redistributions of source code must retain the above copyright notice, this list of
  *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
+ *  - Redistributions in binary form must reproduce the above copyright notice, this list
+ *    of conditions and the following disclaimer in the documentation and/or other materials
  *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
+ *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
+ *    nor the names of its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.util;
@@ -60,18 +60,18 @@ import java.util.regex.Pattern;
  * A set of miscellaneous utility functions.
  */
 public class Utils {
-  
+
   // static members
-  
+
   public static ClassLoader loader = null;
-  
+
   // empty collection constants
   public static final List<?> emptyList = Collections.EMPTY_LIST;//new ArrayList( 0 );
   public static final ArrayList<?> emptyArrayList = new ArrayList( 0 );
   @SuppressWarnings( "unchecked" )
   public static <T> List<T> getEmptyList() {
     return (List< T >)emptyList;
-  }  
+  }
   @SuppressWarnings( "unchecked" )
   public static < T > ArrayList< T > getEmptyArrayList() {
     return (ArrayList< T >)emptyArrayList;
@@ -79,20 +79,20 @@ public class Utils {
   @SuppressWarnings( "unchecked" )
   public static <T> List<T> getEmptyList(Class<T> cls) {
     return (List< T >)emptyList;
-  }  
+  }
   @SuppressWarnings( "unchecked" )
   public static <T> ArrayList<T> getEmptyArrayList(Class<T> cls) {
     return (ArrayList< T >)emptyArrayList;
   }
-  
+
   public static final Set<?> emptySet = Collections.EMPTY_SET;//new TreeSet();
   @SuppressWarnings( "unchecked" )
   public static <T> Set<T> getEmptySet() {
     return (Set< T >)emptySet;
-  }  
+  }
   public static <T> Set<T> getEmptySetOfType(Class<T> cls) {
       return (Set< T >)emptySet;
-    }  
+    }
   public static final Map<?,?> emptyMap = Collections.EMPTY_MAP;//new TreeMap();
   @SuppressWarnings( "unchecked" )
   public static <T1,T2> Map<T1,T2> getEmptyMap() {
@@ -136,7 +136,7 @@ public class Utils {
 
   /**
    * Translate a string s to an Integer.
-   * 
+   *
    * @param s
    *          is the string to parse as an Integer
    * @return the integer translation of string s, or return null if s is not an
@@ -154,7 +154,7 @@ public class Utils {
 
   /**
    * Translate a string s to an Long.
-   * 
+   *
    * @param s
    *          is the string to parse as an Long
    * @return the long translation of string s, or return null if s is not a
@@ -172,7 +172,7 @@ public class Utils {
 
   /**
    * Translate a string s to a Double.
-   * 
+   *
    * @param s
    *          is the string to parse as a Double
    * @return the double translation of string s, or return null if s is not a
@@ -191,7 +191,7 @@ public class Utils {
   /**
    * Generate a string that repeats/replicates a string a specified number of
    * times.
-   * 
+   *
    * @param s
    *          is the string to repeat.
    * @param times
@@ -209,15 +209,15 @@ public class Utils {
   public static String spaces( int n ) {
     return repeat( " ", n );
   }
-  
+
   public static String numberWithLeadingZeroes( int n, int totalChars ) {
     Formatter formatter = new Formatter(Locale.US);
     String suffix = "" + formatter.format( "%0" + totalChars + "d", n );
     formatter.close();
     return suffix;
-  }        
+  }
 
-  
+
   // Check if string has really got something.
   public static boolean isNullOrEmpty( String s ) {
     return ( s == null || s.isEmpty() ||
@@ -228,7 +228,7 @@ public class Utils {
   public static boolean isNullOrEmpty( Object[] s ) {
     return ( s == null || s.length == 0 );
   }
-  
+
   // Check if Collection has really got something.
   public static boolean isNullOrEmpty( Collection< ? > s ) {
     return ( s == null || s.isEmpty() );
@@ -244,7 +244,7 @@ public class Utils {
    * A generic method for putting a triple into a map of a map to emulate
    * map&ltX, map&ltY, Z> >.put(x, y, z). For both keys (x and y), if no entry
    * exists, an entry is created.
-   * 
+   *
    * @param map
    *          the target map to receive the new entry
    * @param t1
@@ -274,7 +274,7 @@ public class Utils {
   /**
    * A generic method for getting a value from a map in a map to emulate
    * map&ltX, map&ltY, Z> >.get(x, y) --> z.
-   * 
+   *
    * @param map
    *          the map of map from which to retrieve the value
    * @param t1
@@ -327,7 +327,7 @@ public class Utils {
   /**
    * Manages a "seen" set for avoiding infinite recursion.
    * @param o is the object visited
-   * @param recursive is whether infinite recursion is possible 
+   * @param recursive is whether infinite recursion is possible
    * @param seen is the set of objects already visited
    * @return whether the object has already been visited
    */
@@ -351,14 +351,14 @@ public class Utils {
     if ( seen != null ) seen.add( o );
     return new Pair< Boolean, Seen< T > >( false, seen );
   }
-  
+
 //  private static long notSeenCt = 0;
 //  private static long seenCt = 0;
-  
+
   /**
    * Manages a "seen" set for avoiding infinite recursion.
    * @param o is the object visited
-   * @param recursive is whether infinite recursion is possible 
+   * @param recursive is whether infinite recursion is possible
    * @param seen is the set of objects already visited
    * @return whether the object has already been visited
    */
@@ -380,9 +380,9 @@ public class Utils {
     if ( seen != null ) seen.add( o );
     return new Pair< Boolean, Set< T > >( false, seen );
   }
-  
+
   /**
-   * Replace the last occurrence of the substring in s with the replacement. 
+   * Replace the last occurrence of the substring in s with the replacement.
    * @param s
    * @param replacement
    * @return the result of the replacement
@@ -394,10 +394,10 @@ public class Utils {
     return s.substring( 0, pos ) + replacement
            + s.substring( pos + substring.length() );
   }
-  
+
   public static String spewObjectPrefix = "* * * * *";
   public static String spewObjectSuffix = spewObjectPrefix;
-  
+
   public static String spewObject( Object o, String indent ) {
     return spewObject( o, indent, spewObjectPrefix, spewObjectSuffix );
   }
@@ -432,9 +432,9 @@ public class Utils {
     return sb.toString();
   }
 
-  
+
   // REVIEW -- consider moving these along with put & get to a CollectionUtils class
-  
+
   /**
    * @param c
    * @return c if c is a {@link List} or, otherwise, an ArrayList containing
@@ -508,7 +508,7 @@ public class Utils {
         }
         return target;
     }
-  
+
   /**
    * @param c
    * @return a c if c is a {@link Set} or, otherwise, a {@link LinkedHashSet} containing
@@ -518,7 +518,7 @@ public class Utils {
       // TODO -- make this and other toX methods use <V, T extends V> like in toList()
     return asSet( c );
   }
-  
+
   /**
    * @param c
    * @return a c if c is a {@link Set} or, otherwise, a {@link LinkedHashSet} containing
@@ -546,7 +546,7 @@ public class Utils {
       T2[] target = (T2[])Array.newInstance( newType, source.length );
       boolean succ = toArrayOfType( source, target, newType );
       if ( complain && !succ ) {
-          Debug.error( "Could not convert array " + toString( source ) + " to " + newType.getSimpleName() + "[]!"); 
+          Debug.error( "Could not convert array " + toString( source ) + " to " + newType.getSimpleName() + "[]!");
       }
       return target;
   }
@@ -629,12 +629,12 @@ public class Utils {
     }
     return ct;
   }
-  
+
 //  /**
 //   * A potentially more efficient addAll() for unordered Collections.
 //   * @param coll1
 //   * @param coll2
-//   * @return the longer of the two collections after adding the shorter to the longer.  
+//   * @return the longer of the two collections after adding the shorter to the longer.
 //   */
 //  public static < T, C extends Collection<T> > C addAll( Collection<T> coll1, Collection<T> coll2 ) {
 //    if ( coll1.size() < coll2.size() ) {
@@ -644,18 +644,18 @@ public class Utils {
 //    coll1.addAll( coll2 );
 //    return (C)coll1;
 //  }
-  
+
   /**
    * A potentially more efficient addAll() for unordered Collections.
    * @param coll1
    * @param coll2
-   * @return the longer of the two collections after adding the shorter to the longer.  
+   * @return the longer of the two collections after adding the shorter to the longer.
    */
   public static < T, C extends Collection<T> > C addAll( Collection<T> coll1,
                                                          Collection<T> coll2 ) {
     if ( coll1 == null ) return (C)coll2;
     if ( coll2 == null ) return (C)coll1;
-    
+
     Collection<T> cSmaller, cBigger;
     if ( coll1.size() < coll2.size() ) {
       cSmaller = coll1;
@@ -676,12 +676,12 @@ public class Utils {
     newList.addAll( cSmaller );
     return (C)newList;
   }
-  
+
   public static final String timestampFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   public static final String fileTimestampFormat = "yyyy-MM-dd'T'HH.mm.ss.SSSZ";
 
   // Converts time offset to a date-time String in Timepoint.timestamp format.
-  // Assumes t is an offset from Timepoint.epoch in Timepoint.units. 
+  // Assumes t is an offset from Timepoint.epoch in Timepoint.units.
   public static String timestampForFile() {
     String timeString =
         new SimpleDateFormat( fileTimestampFormat ).format( System.currentTimeMillis() );
@@ -718,7 +718,7 @@ public class Utils {
     return o.toString().replace( Integer.toHexString(o.hashCode()), "" );
   }
 
-  
+
   /**
    * @param s1
    * @param s2
@@ -730,39 +730,39 @@ public class Utils {
       if ( numMatch < subc.length() ) {
         //subcontextKey = subc;
         numMatch = subc.length();
-        //numDontMatch = subcontext.length() - subc.length(); 
+        //numDontMatch = subcontext.length() - subc.length();
 //      } else if ( numMatch == subc.length() ) {
 //        if ( subcontext.length() - subc.length() < numDontMatch ) {
 //          subcontextKey = subc;
-//          numDontMatch = subcontext.length() - subc.length(); 
+//          numDontMatch = subcontext.length() - subc.length();
 //        }
       }
     } else if ( subc.contains( subcontext ) ) {
       if ( numMatch < subcontext.length() ) {
         //subcontextKey = subcontext;
         numMatch = subcontext.length();
-        //numDontMatch = subc.length() - subcontext.length(); 
+        //numDontMatch = subc.length() - subcontext.length();
 //      } else if ( numMatch == subcontext.length() ) {
 //        if ( subc.length() - subcontext.length() < numDontMatch ) {
 //          subcontextKey = subcontext;
-//          numDontMatch = subc.length() - subcontext.length(); 
+//          numDontMatch = subc.length() - subcontext.length();
 //        }
       }
     }
     return numMatch;
   }
 
-  
+
   /**
    * This implementation appears {@code O(n^2)}. This is slower than a suffix
    * trie implementation, which is {@code O(n+m)}. The code below is copied from
    * wikipedia.
-   * 
+   *
    * @param s1
    * @param s2
    * @return the length of the longest common substring
-   * 
-   * 
+   *
+   *
    */
   public static int longestCommonSubstr( String s1, String s2 ) {
     if ( s1.isEmpty() || s2.isEmpty() ) {
@@ -876,7 +876,7 @@ public class Utils {
       oneNullArg[0] = null;
       return oneNullArg;
   }
-  
+
   public static < T > ArrayList< T > newListWithOneNull() {
       ArrayList< T > newList = new ArrayList< T >();
       newList.add(null);
@@ -938,7 +938,7 @@ public class Utils {
     return true;
   }
   /**
-   * Count the number of occurrences of the regular expression in the string. 
+   * Count the number of occurrences of the regular expression in the string.
    * @param regex
    * @param string
    * @return the number of occurrences of regex in string
@@ -1008,14 +1008,14 @@ public class Utils {
         coll.removeAll( newList( items ) );
         return coll;
     }
-  
+
     public static < T, C extends Collection< T >, D extends Collection< T > > C remove( C coll, D items ) {
         return minus( coll, items );
     }
     public static < T, C extends Collection< T >, D extends Collection< T > > C minus( C coll, D items ) {
         return minus( coll, (T[])items.toArray() );
     }
-    
+
     public static <T> Collection<T> truncate( Collection<T> coll, int maximumSize ) {
         if ( coll.size() > maximumSize ) try {
             Iterator<T> iter = coll.iterator();
@@ -1031,7 +1031,7 @@ public class Utils {
         }
         return coll;
     }
-    
+
     public static boolean intersect( Collection< ? > coll1,
                                      Collection< ? > coll2 ) {
         if ( isNullOrEmpty( coll1 ) ) return false;
@@ -1074,7 +1074,7 @@ public class Utils {
     /**
      * Get the differences between two sets as additions and removals of items
      * of the first to generate the second.
-     * 
+     *
      * @param s1
      *            first set
      * @param s2
@@ -1097,4 +1097,44 @@ public class Utils {
         }
         return p;
     }
+
+    /**
+     * Get the differences between two maps as additions, removals, and updates
+     * of items of the first to generate the second.
+     *
+     * @param map1
+     *            first map
+     * @param map2
+     *            second map
+     * @return the difference as ID sets of additions, removals, and deletions
+     *         in a List.
+     */
+    public static < ID, T > List< Set< ID > > diff( Map< ID, T > map1, Map< ID, T > map2 ) {
+        List< Set< ID > > diffs = new ArrayList< Set<ID> >();
+        Set< ID > added = new LinkedHashSet<ID>();
+        Set< ID > removed = new LinkedHashSet<ID>();
+        Set< ID > updated = new LinkedHashSet<ID>();
+
+        Set<ID> allIDs = new LinkedHashSet<ID>( map1.keySet() );
+        allIDs.addAll( map2.keySet() );
+
+        for ( ID id : allIDs ) {
+            boolean c1 = map1.keySet().contains( id );
+            boolean c2 = map2.keySet().contains( id );
+            T t1 = c1 ? map1.get( id ) : null;
+            T t2 = c2 ? map1.get( id ) : null;
+            if ( c1 && c2 ) {
+                if ( t1 != t2 && ( t1 == null || !t1.equals( t2 ) ) ) {
+                    updated.add( id );
+                }
+            } else if ( c2 ) added.add( id );
+            else removed.add( id );
+        }
+
+        diffs.add( added );
+        diffs.add( removed );
+        diffs.add( updated );
+        return diffs;
+    }
+
 }
