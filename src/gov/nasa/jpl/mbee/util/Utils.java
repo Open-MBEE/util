@@ -1016,6 +1016,34 @@ public class Utils {
         return minus( coll, (T[])items.toArray() );
     }
 
+
+    public static <T> boolean removeAll( Map< T, ? > map, Collection<T> items ) {
+        boolean changed = false;
+        for ( T t : items ) {
+            Object removed = map.remove( t );
+            if ( !changed && removed != null ) changed = true;
+        }
+        return changed;
+    }
+
+    public static < T, M extends Map< T, ? > > M remove( M coll, T... items ) {
+        return minus( coll, items );
+    }
+
+    public static < T, M extends Map< T, ? > > M minus( M coll, T... items ) {
+        removeAll( coll, newList( items ) );
+        return coll;
+    }
+
+    public static < T, M extends Map< T, ? >, D extends Map<T, ?> > M remove( M coll, D items ) {
+        return minus( coll, items );
+    }
+    public static < T, M extends Map< T, ? >, D extends Map< T, ? > > M minus( M coll, D items ) {
+        return minus( coll, (T[])items.keySet().toArray() );
+    }
+
+
+
     public static <T> Collection<T> truncate( Collection<T> coll, int maximumSize ) {
         if ( coll.size() > maximumSize ) try {
             Iterator<T> iter = coll.iterator();

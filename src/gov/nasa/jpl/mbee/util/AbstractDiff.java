@@ -226,16 +226,20 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
 
     @Override
     public T get1( ID tid ) {
+        if ( tid == null ) return null;
         return getMap1().get( tid );
     }
 
     @Override
     public T get2( ID tid ) {
+        if ( tid == null ) return null;
         return getMap2().get( tid );
     }
 
     @Override
     public P get1( ID tid, ID pid ) {
+        if ( tid == null ) return null;
+        if ( pid == null ) return null;
         T t = get1( tid );
         if ( t == null ) return null;
         P p = getProperty(t, pid);
@@ -244,6 +248,8 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
 
     @Override
     public P get2( ID tid, ID pid ) {
+        if ( tid == null ) return null;
+        if ( pid == null ) return null;
         T t = get2( tid );
         if ( t == null ) return null;
         P p = getProperty(t, pid);
@@ -305,5 +311,42 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         }
         return propertyChanges;
     }
+
+    public Map< ID, P > getRemovedProperties(ID id) {
+        if ( id == null ) return null;
+        Map< ID, P > props = getRemovedProperties().get( id );
+        if ( props == null ) {
+            return Utils.newMap();
+        }
+        return props;
+    }
+
+    public Map< ID, P > getAddedProperties(ID id) {
+        if ( id == null ) return null;
+        Map< ID, P > props = getAddedProperties().get( id );
+        if ( props == null ) {
+            return Utils.newMap();
+        }
+        return props;
+    }
+
+    public Map< ID, Pair< P, P >> getUpdatedProperties(ID id) {
+        if ( id == null ) return null;
+        Map< ID, Pair< P, P >> props = getUpdatedProperties().get( id );
+        if ( props == null ) {
+            return Utils.newMap();
+        }
+        return props;
+    }
+
+    public Map< ID, Pair< P, P >> getPropertyChanges(ID id) {
+        if ( id == null ) return null;
+        Map< ID, Pair< P, P >> props = getPropertyChanges().get( id );
+        if ( props == null ) {
+            return Utils.newMap();
+        }
+        return props;
+    }
+
 
 }
