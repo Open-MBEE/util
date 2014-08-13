@@ -133,14 +133,14 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
                 addedProps.put( pid, p2 );
             }
             if ( !ignoreRemovedProperties ) {
-                for ( ID pid : removedIds ) {
+                for ( ID pid : removedPropIds ) {
                     P p1 = get1( id, pid );
                     P p2 = get2( id, pid );
                     propChanges.put( pid, new Pair< P, P >( p1, p2 ) );
                     removedProps.put( pid, p1 );
                 }
             }
-            for ( ID pid : updatedIds ) {
+            for ( ID pid : updatedPropIds ) {
                 P p1 = get1( id, pid );
                 P p2 = get2( id, pid );
                 propChanges.put( pid, new Pair< P, P >( p1, p2 ) );

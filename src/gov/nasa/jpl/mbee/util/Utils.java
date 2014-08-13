@@ -1150,7 +1150,7 @@ public class Utils {
             boolean c1 = map1.keySet().contains( id );
             boolean c2 = map2.keySet().contains( id );
             T t1 = c1 ? map1.get( id ) : null;
-            T t2 = c2 ? map1.get( id ) : null;
+            T t2 = c2 ? map2.get( id ) : null;
             if ( c1 && c2 ) {
                 if ( t1 != t2 && ( t1 == null || !t1.equals( t2 ) ) ) {
                     updated.add( id );
