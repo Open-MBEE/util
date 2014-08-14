@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.util;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,5 +43,15 @@ public interface Diff< T, P, ID > {
     public abstract Map< ID, Map< ID, Pair< P, P > > > getUpdatedProperties();
 
     public abstract Map< ID, Map< ID, Pair< P, P > > > getPropertyChanges();
+
+    public abstract void addPropertyIdsToIgnore( Collection<ID> ids );
+
+    /**
+     * @param ids
+     *            The IDs of properties that should be left out of the property
+     *            diff results. This is not used to filter the objects returned
+     *            by {@link #get1()} and {@link #get2()}.
+     */
+    public abstract Set<ID> getPropertyIdsToIgnore();
 
 }

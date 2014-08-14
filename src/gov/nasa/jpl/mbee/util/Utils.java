@@ -1145,6 +1145,7 @@ public class Utils {
 
         Set<ID> allIDs = new LinkedHashSet<ID>( map1.keySet() );
         allIDs.addAll( map2.keySet() );
+        System.out.println("allIDs " + allIDs);
 
         for ( ID id : allIDs ) {
             boolean c1 = map1.keySet().contains( id );

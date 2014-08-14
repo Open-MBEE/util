@@ -3,11 +3,15 @@
  */
 package gov.nasa.jpl.mbee.util;
 
+import gov.nasa.jpl.mbee.util.CompareUtils.GenericComparator;
+
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * AbstractDiff computes and stores the difference between two sets of objects
@@ -37,11 +41,12 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     public Map< ID, Map< ID, Pair< P, P > > > updatedProperties = null;
     public Map< ID, Map< ID, Pair< P, P > > >  propertyChanges = null;
 
-
     public abstract ID getId( T t );
     public abstract ID getPropertyId( P property );
     public abstract Set< P > getProperties( T t );
     public abstract P getProperty( T t, ID id );
+
+    public Set<ID> propertyIdsToIgnore = new TreeSet<ID>(GenericComparator.instance());
 
     public AbstractDiff( Set<T> s1, Set<T> s2 ) {
         this( s1, s2, null );
@@ -54,7 +59,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         }
         set1 = s1;
         set2 = s2;
-        if ( computeDiffOnConstruction ) diffProperties();
+        if ( computeDiffOnConstruction ) diff();
     }
 
     public AbstractDiff( Map<ID, T> map1, Map<ID, T> map2 ) {
@@ -69,16 +74,17 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         }
         map1 = m1;
         map2 = m2;
-        if ( computeDiffOnConstruction ) diffProperties();
+        if ( computeDiffOnConstruction ) diff();
     }
 
     public Map<ID, P> getPropertyMap( T t ) {
         Set< P > propertiesSet = getProperties( t );
         Map< ID, P > properties = convertPropertySetToMap( propertiesSet );
+        Utils.removeAll( properties, getPropertyIdsToIgnore() );
         return properties;
     }
 
-    protected void diffProperties() {
+    public void diff() {
         // re-initialize members
         added = new LinkedHashSet<T>();
         removed = new LinkedHashSet<T>();
@@ -145,6 +151,9 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
                 P p2 = get2( id, pid );
                 propChanges.put( pid, new Pair< P, P >( p1, p2 ) );
                 updatedProps.put( pid, new Pair< P, P >( p1, p2 ) );
+            }
+            if ( !addedProps.isEmpty() || !removedProps.isEmpty() || !updatedProps.isEmpty() ) {
+                updated.add( get2( id ) );
             }
         }
     }
@@ -259,7 +268,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     @Override
     public Set< T > getRemoved() {
         if ( removed == null ) {
-            diffProperties();
+            diff();
         }
         return removed;
     }
@@ -267,7 +276,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     @Override
     public Set< T > getAdded() {
         if ( added == null ) {
-            diffProperties();
+            diff();
         }
         return added;
     }
@@ -275,7 +284,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     @Override
     public Set< T > getUpdated() {
         if ( updated == null ) {
-            diffProperties();
+            diff();
         }
         return updated;
     }
@@ -283,7 +292,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     @Override
     public Map< ID, Map< ID, P >> getRemovedProperties() {
         if ( removedProperties == null ) {
-            diffProperties();
+            diff();
         }
         return removedProperties;
     }
@@ -291,7 +300,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     @Override
     public Map< ID, Map< ID, P >> getAddedProperties() {
         if ( addedProperties == null ) {
-            diffProperties();
+            diff();
         }
         return addedProperties;
     }
@@ -299,7 +308,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     @Override
     public Map< ID, Map< ID, Pair< P, P >>> getUpdatedProperties() {
         if ( updatedProperties == null ) {
-            diffProperties();
+            diff();
         }
         return updatedProperties;
     }
@@ -307,7 +316,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     @Override
     public Map< ID, Map< ID, Pair< P, P >>> getPropertyChanges() {
         if ( propertyChanges == null ) {
-            diffProperties();
+            diff();
         }
         return propertyChanges;
     }
@@ -339,13 +348,28 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         return props;
     }
 
-    public Map< ID, Pair< P, P >> getPropertyChanges(ID id) {
+    public Map< ID, Pair< P, P > > getPropertyChanges(ID id) {
         if ( id == null ) return null;
-        Map< ID, Pair< P, P >> props = getPropertyChanges().get( id );
+        Map< ID, Pair< P, P > > props = getPropertyChanges().get( id );
         if ( props == null ) {
             return Utils.newMap();
         }
         return props;
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nasa.jpl.mbee.util.Diff#addPropertyIdsToIgnore(java.util.Collection)
+     */
+    @Override
+    public void addPropertyIdsToIgnore( Collection< ID > ids ) {
+        propertyIdsToIgnore.addAll( ids );
+    }
+    /* (non-Javadoc)
+     * @see gov.nasa.jpl.mbee.util.Diff#getPropertyIdsToIgnore()
+     */
+    @Override
+    public Set< ID > getPropertyIdsToIgnore() {
+        return propertyIdsToIgnore;
     }
 
 
