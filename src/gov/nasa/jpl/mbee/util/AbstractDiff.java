@@ -325,7 +325,8 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         if ( id == null ) return null;
         Map< ID, P > props = getRemovedProperties().get( id );
         if ( props == null ) {
-            return Utils.newMap();
+            props = Utils.newMap();
+            getRemovedProperties().put( id , props );
         }
         return props;
     }
@@ -334,7 +335,8 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         if ( id == null ) return null;
         Map< ID, P > props = getAddedProperties().get( id );
         if ( props == null ) {
-            return Utils.newMap();
+            props = Utils.newMap();
+            getAddedProperties().put( id , props );
         }
         return props;
     }
@@ -343,7 +345,8 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         if ( id == null ) return null;
         Map< ID, Pair< P, P >> props = getUpdatedProperties().get( id );
         if ( props == null ) {
-            return Utils.newMap();
+            props = Utils.newMap();
+            getUpdatedProperties().put( id , props );
         }
         return props;
     }
@@ -352,7 +355,8 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         if ( id == null ) return null;
         Map< ID, Pair< P, P > > props = getPropertyChanges().get( id );
         if ( props == null ) {
-            return Utils.newMap();
+            props = Utils.newMap();
+            getPropertyChanges().put( id , props );
         }
         return props;
     }
