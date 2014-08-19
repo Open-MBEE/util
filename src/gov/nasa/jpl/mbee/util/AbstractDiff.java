@@ -68,11 +68,11 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         if ( computeDiffOnConstruction ) diff();
     }
 
-    public AbstractDiff( Map<ID, T> map1, Map<ID, T> map2 ) {
-        this( map1, map2, null );
+    public AbstractDiff( Map<ID, T> map1, Map<ID, T> map2, Comparator<T> comparator ) {
+        this( map1, map2, comparator, null );
     }
 
-    public AbstractDiff( Map<ID, T> m1, Map<ID, T> m2,
+    public AbstractDiff( Map<ID, T> m1, Map<ID, T> m2, Comparator<T> comparator,
                          Boolean ignoreRemovedProperties ) {
         //if ( lazy != null ) this.lazy = lazy;
         if ( ignoreRemovedProperties != null ) {
@@ -80,6 +80,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         }
         map1 = m1;
         map2 = m2;
+        setObjectComparator( comparator );
         if ( computeDiffOnConstruction ) diff();
     }
 
