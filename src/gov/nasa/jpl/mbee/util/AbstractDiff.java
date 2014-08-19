@@ -6,6 +6,7 @@ package gov.nasa.jpl.mbee.util;
 import gov.nasa.jpl.mbee.util.CompareUtils.GenericComparator;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -41,24 +42,29 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     public Map< ID, Map< ID, Pair< P, P > > > updatedProperties = null;
     public Map< ID, Map< ID, Pair< P, P > > >  propertyChanges = null;
 
+    public Comparator<T> objectComparator = null;
+
     public abstract ID getId( T t );
     public abstract ID getPropertyId( P property );
     public abstract Set< P > getProperties( T t );
     public abstract P getProperty( T t, ID id );
 
+
     public Set<ID> propertyIdsToIgnore = new TreeSet<ID>(GenericComparator.instance());
 
-    public AbstractDiff( Set<T> s1, Set<T> s2 ) {
-        this( s1, s2, null );
+    public AbstractDiff( Set<T> s1, Set<T> s2, Comparator<T> comparator ) {
+        this( s1, s2, comparator, null );
     }
 
-    public AbstractDiff( Set<T> s1, Set<T> s2, Boolean ignoreRemovedProperties ) {
+    public AbstractDiff( Set<T> s1, Set<T> s2, Comparator<T> comparator,
+                         Boolean ignoreRemovedProperties ) {
         //if ( lazy != null ) this.lazy = lazy;
         if ( ignoreRemovedProperties != null ) {
             this.ignoreRemovedProperties = ignoreRemovedProperties;
         }
         set1 = s1;
         set2 = s2;
+        setObjectComparator( comparator );
         if ( computeDiffOnConstruction ) diff();
     }
 
@@ -84,11 +90,23 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         return properties;
     }
 
+    protected Set<T> newObjectSet( Collection<T> c ) {
+        Set< T > s = newObjectSet();
+        s.addAll( c );
+        return s;
+    }
+    protected Set<T> newObjectSet() {
+        if ( getObjectComparator() == null ) {
+            return new LinkedHashSet<T>();
+        }
+        return new TreeSet<T>( getObjectComparator() );
+    }
+
     public void diff() {
         // re-initialize members
-        added = new LinkedHashSet<T>();
-        removed = new LinkedHashSet<T>();
-        updated = new LinkedHashSet<T>();
+        added = newObjectSet();
+        removed = newObjectSet();
+        updated = newObjectSet();
 
         propertyChanges = new LinkedHashMap< ID, Map<ID,Pair<P,P>> >();
 
@@ -188,7 +206,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     @Override
     public Set< T > get1() {
         if ( set1 == null  && map1 != null ) {
-            set1 = new LinkedHashSet< T >( map1.values() );
+            set1 = newObjectSet( map1.values() );
         }
         return set1;
     }
@@ -196,7 +214,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     @Override
     public Set< T > get2() {
         if ( set2 == null  && map2 != null ) {
-            set2 = new LinkedHashSet< T >( map2.values() );
+            set2 = newObjectSet( map2.values() );
         }
         return set2;
     }
@@ -374,6 +392,18 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     @Override
     public Set< ID > getPropertyIdsToIgnore() {
         return propertyIdsToIgnore;
+    }
+    /**
+     * @return the objectComparator
+     */
+    public Comparator< T > getObjectComparator() {
+        return objectComparator;
+    }
+    /**
+     * @param objectComparator the objectComparator to set
+     */
+    public void setObjectComparator( Comparator< T > objectComparator ) {
+        this.objectComparator = objectComparator;
     }
 
 
