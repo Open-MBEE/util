@@ -512,6 +512,23 @@ public class Timer implements StopWatch< Vector< Long > > {
     }
     return times;
   }
+  
+  public static Timer startTimer(Timer timer, boolean timeEvents)
+  {
+  	if (timeEvents) {
+  		if (timer == null) timer = new Timer();
+  		timer.start();
+  	}
+  	return timer;
+  }
+  
+  public static void stopTimer(Timer timer, String msg, boolean timeEvents)
+  {
+  	if (timeEvents && timer != null) {
+  		timer.stop();
+        System.out.println(msg+" "+timer);
+  	}
+  }
 
 
 }
