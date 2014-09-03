@@ -30,8 +30,8 @@ package gov.nasa.jpl.mbee.util;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
 import java.util.Vector;
 
 public class Timer implements StopWatch< Vector< Long > > {
@@ -206,7 +206,7 @@ public class Timer implements StopWatch< Vector< Long > > {
   protected SingleTimer cpuTimer;
   protected SingleTimer userTimer;
   protected StopWatch< Long > systemTimer;
-  protected Vector< StopWatch< Long > > timers;
+  protected LinkedHashMap<String, StopWatch< Long > > timers;
   protected boolean lastStartOrStopWasStart = true;
 
   public Timer() {
@@ -222,11 +222,11 @@ public class Timer implements StopWatch< Vector< Long > > {
         new SingleTimer( null, getGetTimeMethod( System.class, "nanoTime" ),
                          emptyObjectArray );
     systemTimer = initSystemTimer();
-    timers = new Vector< StopWatch< Long > >();
-    timers.add( wallClockTimer );
-    timers.add( cpuTimer );
-    timers.add( userTimer );
-    timers.add( systemTimer );
+    timers = new LinkedHashMap< String, StopWatch<Long> >();// Vector< StopWatch< Long > >();
+    timers.put( "wall clock", wallClockTimer );
+    timers.put( "cpu", cpuTimer );
+    timers.put( "user", userTimer );
+    timers.put( "system", systemTimer );
   }
 
   /**
@@ -286,7 +286,7 @@ public class Timer implements StopWatch< Vector< Long > > {
   @Override
   public void reset() {
     lastStartOrStopWasStart = true;
-    for ( StopWatch< Long > t : timers ) {
+    for ( StopWatch< Long > t : timers.values() ) {
       t.reset();
     }
   }
@@ -297,7 +297,7 @@ public class Timer implements StopWatch< Vector< Long > > {
   }
   public Vector< Long > getTime( boolean getCurrentTime ) {
     Vector< Long > times = new Vector< Long >( timers.size() );
-    for ( StopWatch< Long > t : timers ) {
+    for ( StopWatch< Long > t : timers.values() ) {
       Long time;
       if ( t instanceof SingleTimer ) {
         time = ((SingleTimer)t).getTime( getCurrentTime );
@@ -312,7 +312,7 @@ public class Timer implements StopWatch< Vector< Long > > {
   @Override
   public void start() {
     lastStartOrStopWasStart = true;
-    for ( StopWatch< Long > t : timers ) {
+    for ( StopWatch< Long > t : timers.values() ) {
       t.start();
     }
   }
@@ -322,7 +322,7 @@ public class Timer implements StopWatch< Vector< Long > > {
     lastStartOrStopWasStart = false;
     Vector< Long > times = new Vector< Long >( timers.size() );
     //int ctr = 0;
-    for ( StopWatch< Long > t : timers ) {
+    for ( StopWatch< Long > t : timers.values() ) {
       times.add( t.stop() );
     }
     return times;
@@ -334,7 +334,7 @@ public class Timer implements StopWatch< Vector< Long > > {
   }
   public Vector< Long > getTimeSinceLastStart( boolean getCurrentTime ) {
     Vector< Long > times = new Vector< Long >( timers.size() );
-    for ( StopWatch< Long > t : timers ) {
+    for ( StopWatch< Long > t : timers.values() ) {
       Long time;
       if ( t instanceof SingleTimer ) {
         time = ((SingleTimer)t).getTimeSinceLastStart( getCurrentTime );
@@ -352,7 +352,7 @@ public class Timer implements StopWatch< Vector< Long > > {
   }
   public Vector< Long > getTimeSinceLastStop( boolean getCurrentTime ) {
     Vector< Long > times = new Vector< Long >( timers.size() );
-    for ( StopWatch< Long > t : timers ) {
+    for ( StopWatch< Long > t : timers.values() ) {
       Long time;
       if ( t instanceof SingleTimer ) {
         time = ((SingleTimer)t).getTimeSinceLastStop( getCurrentTime );
@@ -370,7 +370,7 @@ public class Timer implements StopWatch< Vector< Long > > {
   }
   public Vector< Long > getTotalTime( boolean getCurrentTime ) {
     Vector< Long > times = new Vector< Long >( timers.size() );
-    for ( StopWatch< Long > t : timers ) {
+    for ( StopWatch< Long > t : timers.values() ) {
       Long time;
       if ( t instanceof SingleTimer ) {
         time = ((SingleTimer)t).getTotalTime( getCurrentTime );
@@ -429,22 +429,22 @@ public class Timer implements StopWatch< Vector< Long > > {
   @Override
   public String toString() {
     StringBuffer sb = new StringBuffer();
-    final String[] timerNames = new String[]{ "wall clock", "cpu", "user", "system" };
+    //final String[] timerNames = new String[]{ "wall clock", "cpu", "user", "system" };
     Vector< String > s = new Vector< String >( timers.size() );
 
     // collect stats before writing the string
     Vector< Long > currentTime = getTime( true );
     Vector< Long > totalTime = getTotalTime( false );
-    Vector< Long > lastTimeStartedOrStopped =
-        lastStartOrStopWasStart ? getTimeSinceLastStart( false )
-                                : getTimeSinceLastStop( false );
-        Vector< Long > timeOfLastClock = getTimeOfLastClock( false );
+//    Vector< Long > lastTimeStartedOrStopped =
+//        lastStartOrStopWasStart ? getTimeSinceLastStart( false )
+//                                : getTimeSinceLastStop( false );
+    Vector< Long > timeOfLastClock = getTimeOfLastClock( false );
 
     // time of last start/stop watch
     if ( !timeOfLastClock.equals( totalTime ) ) {
       s.clear();
       for ( int i = 0; i < timers.size(); ++i ) {
-        s.add( timerNames[ i ] + "="
+        s.add( timers.keySet().toArray()[ i ] + "="
                + writeNanosAsSeconds( timeOfLastClock.get( i ) ) + "s" );
       }
       sb.append( "last time segment: " + s + "\n" );
@@ -453,15 +453,16 @@ public class Timer implements StopWatch< Vector< Long > > {
     // total time
     s.clear();
     for ( int i = 0; i < timers.size(); ++i ) {
-      s.add( timerNames[ i ] + "=" + writeNanosAsSeconds( totalTime.get( i ) )
+      s.add( timers.keySet().toArray()[ i ] + "=" + writeNanosAsSeconds( totalTime.get( i ) )
              + "s" );
     }
     sb.append( "total time: " + s + "\n" );
 
     // current time
+    s.clear();
     if ( !totalTime.equals( currentTime ) ) {
       for ( int i = 0; i < timers.size(); ++i ) {
-        s.add( timerNames[ i ] + "="
+        s.add( timers.keySet().toArray()[ i ] + "="
                + writeNanosAsSeconds( currentTime.get( i ) ) + "s" );
       }
       sb.append( "time since created: " + s + "\n" );
@@ -501,7 +502,7 @@ public class Timer implements StopWatch< Vector< Long > > {
   }
   public Vector< Long > getTimeOfLastClock( boolean getCurrentTime ) {
     Vector< Long > times = new Vector< Long >( timers.size() );
-    for ( StopWatch< Long > t : timers ) {
+    for ( StopWatch< Long > t : timers.values() ) {
       Long time;
       if ( t instanceof SingleTimer ) {
         time = ((SingleTimer)t).getTimeOfLastClock( getCurrentTime );
