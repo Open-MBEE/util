@@ -256,7 +256,7 @@ public class Utils {
    * @return the pre-existing value mapped to t2 in the inner map or null if
    *         there is no such entry/
    */
-  public static < T1 extends Comparable< T1 >, T2 extends Comparable< T2 >, T3 >
+  public static < T1, T2, T3 >
       T3 put( Map< T1, Map< T2, T3 > > map, T1 t1, T2 t2, T3 t3 ) {
     if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
                             map, t1, t2, t3 ) ) {
@@ -264,7 +264,7 @@ public class Utils {
     }
     Map< T2, T3 > innerMap = map.get( t1 );
     if ( innerMap == null ) {
-      innerMap = new TreeMap< T2, T3 >();
+      innerMap = new LinkedHashMap< T2, T3 >();
       map.put( t1, innerMap );
     }
     return innerMap.put( t2, t3 );
@@ -284,7 +284,7 @@ public class Utils {
    * @return the value mapped to t2 in the inner map that is mapped to t1 or
    *         null if either entry does not exist.
    */
-  public static < T1 extends Comparable< T1 >, T2 extends Comparable< T2 >, T3 >
+  public static < T1, T2, T3 >
       T3 get( Map< T1, Map< T2, T3 > > map, T1 t1, T2 t2 ) {
     if ( Debug.errorOnNull( "Error! Called Utils.get() with null argument!",
                             map, t1, t2 ) ) {
@@ -298,21 +298,21 @@ public class Utils {
   }
 
   // generic map< W, map<X, map<Y, Z> >.put(w, x, y, z)
-  public static <T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 extends Comparable<T3>, T4 > T4 put( Map< T1, Map< T2, Map< T3, T4 > > > map, T1 t1, T2 t2, T3 t3, T4 t4 ) {
+  public static <T1, T2, T3, T4 > T4 put( Map< T1, Map< T2, Map< T3, T4 > > > map, T1 t1, T2 t2, T3 t3, T4 t4 ) {
     if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
                             map, t1, t2, t3, t4 ) ) {
       return null;
     }
     Map< T2, Map< T3, T4 > > innerMap = map.get( t1 );
     if ( innerMap == null ) {
-      innerMap = new TreeMap< T2, Map< T3, T4 > >();
+      innerMap = new LinkedHashMap< T2, Map< T3, T4 > >();
       map.put( t1, innerMap );
     }
     return put( innerMap, t2, t3, t4 );
   }
 
   // generic map< W, map<X, map<Y, Z> >.get(w, x, y) --> z
-  public static <T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 extends Comparable<T3>, T4 > T4 get( Map< T1, Map< T2, Map< T3, T4 > > > map, T1 t1, T2 t2, T3 t3 ) {
+  public static <T1, T2, T3, T4 > T4 get( Map< T1, Map< T2, Map< T3, T4 > > > map, T1 t1, T2 t2, T3 t3 ) {
     if ( Debug.errorOnNull( "Error! Called Utils.get() with null argument!",
                             map, t1, t2, t3 ) ) {
       return null;
@@ -320,6 +320,136 @@ public class Utils {
     Map< T2, Map< T3, T4 > > innerMap = map.get( t1 );
     if ( innerMap != null ) {
       return get( innerMap, t2, t3 );
+    }
+    return null;
+  }
+  
+  // generic map< W, map<X, map<Y, Z> >.put(w, x, y, z)
+  public static <T1, T2, T3, T4, T5 >
+      T5 put( Map< T1, Map< T2, Map< T3, Map< T4, T5 > > > > map,
+              T1 t1, T2 t2, T3 t3, T4 t4, T5 t5 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
+                            map, t1, t2, t3, t4 ) ) {
+      return null;
+    }
+    Map< T4, T5 > innerMap = 
+            (Map< T4, T5 >)get( map, t1, t2, t3 );
+    if ( innerMap == null ) {
+      innerMap = new LinkedHashMap< T4, T5 >();
+      put( map, t1, t2, t3, innerMap );
+    }
+    return innerMap.put( t4, t5 );
+  }
+
+  // generic map< W, map<X, map<Y, Z> >.get(w, x, y) --> z
+  public static <T1, T2, T3, T4, T5 >
+      T5 get( Map< T1, Map< T2, Map< T3, Map< T4, T5 > > > > map,
+              T1 t1, T2 t2, T3 t3, T4 t4 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.get() with null argument!",
+                            map, t1, t2, t3, t4 ) ) {
+      return null;
+    }
+    Map< T4, T5 > innerMap = get( map, t1, t2, t3 );
+    if ( innerMap != null ) {
+      return innerMap.get( t4 );
+    }
+    return null;
+  }
+
+  // generic map< W, map<X, map<Y, Z> >.put(w, x, y, z)
+  public static <T1, T2, T3, T4, T5, T6 >
+      T6 put( Map< T1, Map< T2, Map< T3, Map< T4, Map< T5, T6 > > > > > map,
+              T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
+                            map, t1, t2, t3, t4, t5 ) ) {
+      return null;
+    }
+    Map< T4, Map< T5, T6 > > innerMap = 
+            (Map< T4, Map< T5, T6> >)get( map, t1, t2, t3 );
+    if ( innerMap == null ) {
+      innerMap = new LinkedHashMap< T4, Map< T5, T6 > >();
+      put( map, t1, t2, t3, innerMap );
+    }
+    return put( innerMap, t4, t5, t6 );
+  }
+
+  // generic map< W, map<X, map<Y, Z> >.get(w, x, y) --> z
+  public static <T1, T2, T3, T4, T5, T6 >
+      T6 get( Map< T1, Map< T2, Map< T3, Map< T4, Map< T5, T6 > > > > > map,
+              T1 t1, T2 t2, T3 t3, T4 t4, T5 t5 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.get() with null argument!",
+                            map, t1, t2, t3, t4, t5 ) ) {
+      return null;
+    }
+    Map< T4, Map< T5, T6 > > innerMap = get( map, t1, t2, t3 );
+    if ( innerMap != null ) {
+      return get( innerMap, t4, t5 );
+    }
+    return null;
+  }
+
+  // generic map< W, map<X, map<Y, Z> >.put(w, x, y, z)
+  public static <T1, T2, T3, T4, T5, T6, T7 >
+      T7 put( Map< T1, Map< T2, Map< T3, Map< T4, Map< T5, Map<T6, T7> > > > > > map,
+              T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
+                            map, t1, t2, t3, t4 ) ) {
+      return null;
+    }
+    //Map< T1, Map< T2, Map< T3, ? > > > castMap = (Map< T1, Map< T2, Map< T3, ? > > >)toMap(map, Map< T1, Map< T2, Map< T3, ? > > >.class, Object.class);
+    Map< T4, Map< T5, Map< T6, T7 > > > innerMap = 
+            (Map< T4, Map< T5, Map< T6, T7 > > >)get( map, t1, t2, t3 );
+    if ( innerMap == null ) {
+      innerMap = new LinkedHashMap< T4, Map< T5, Map< T6, T7 > > >();
+      put( map, t1, t2, t3, innerMap );
+    }
+    return put( innerMap, t4, t5, t6, t7 );
+  }
+
+  // generic map< W, map<X, map<Y, Z> >.get(w, x, y) --> z
+  public static <T1, T2, T3, T4, T5, T6, T7 >
+      T7 get( Map< T1, Map< T2, Map< T3, Map< T4, Map< T5, Map<T6, T7> > > > > > map,
+              T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.get() with null argument!",
+                            map, t1, t2, t3 ) ) {
+      return null;
+    }
+    Map< T4, Map< T5, Map< T6, T7 > > > innerMap = get( map, t1, t2, t3 );
+    if ( innerMap != null ) {
+      return get( innerMap, t4, t5, t6 );
+    }
+    return null;
+  }
+
+  // generic map< W, map<X, map<Y, Z> >.put(w, x, y, z)
+  public static <T1, T2, T3, T4, T5, T6, T7, T8 >
+      T8 put( Map< T1, Map< T2, Map< T3, Map< T4, Map< T5, Map<T6, Map< T7, T8 > > > > > > > map,
+              T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
+                            map, t1, t2, t3, t4, t5, t6, t7 ) ) {
+      return null;
+    }
+    //Map< T1, Map< T2, Map< T3, ? > > > castMap = (Map< T1, Map< T2, Map< T3, ? > > >)toMap(map, Map< T1, Map< T2, Map< T3, ? > > >.class, Object.class);
+    Map< T4, Map< T5, Map< T6, Map< T7, T8 > > > > innerMap = 
+            (Map< T4, Map< T5, Map< T6, Map< T7, T8 > > > >)get( map, t1, t2, t3 );
+    if ( innerMap == null ) {
+      innerMap = new LinkedHashMap< T4, Map< T5, Map< T6, Map< T7, T8 > > > >();
+      put( map, t1, t2, t3, innerMap );
+    }
+    return put( innerMap, t4, t5, t6, t7, t8 );
+  }
+
+  // generic map< W, map<X, map<Y, Z> >.get(w, x, y) --> z
+  public static <T1, T2, T3, T4, T5, T6, T7, T8 >
+      T8 get( Map< T1, Map< T2, Map< T3, Map< T4, Map< T5, Map<T6, Map< T7, T8 > > > > > > > map,
+              T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.get() with null argument!",
+                            map, t1, t2, t3, t4, t5, t6, t7 ) ) {
+      return null;
+    }
+    Map< T4, Map< T5, Map< T6, Map< T7, T8 > > > > innerMap = get( map, t1, t2, t3 );
+    if ( innerMap != null ) {
+      return get( innerMap, t4, t5, t6, t7 );
     }
     return null;
   }
