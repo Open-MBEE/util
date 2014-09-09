@@ -654,7 +654,6 @@ public class Utils {
   }
   public static <T> Set<T> toSet( T[] tArray ) {
       LinkedHashSet<T> set = new LinkedHashSet< T >( newList( tArray ) );
-      System.out.println("toSet(" + tArray + ") = " + set + " of size " + set.size());
       return set;
   }
 
