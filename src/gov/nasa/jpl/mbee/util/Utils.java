@@ -648,6 +648,15 @@ public class Utils {
       // TODO -- make this and other toX methods use <V, T extends V> like in toList()
     return asSet( c );
   }
+  
+  public static <T> Set<T> asSet( T[] tArray ) {
+      return toSet(tArray);
+  }
+  public static <T> Set<T> toSet( T[] tArray ) {
+      LinkedHashSet<T> set = new LinkedHashSet< T >( newList( tArray ) );
+      System.out.println("toSet(" + tArray + ") = " + set + " of size " + set.size());
+      return set;
+  }
 
   /**
    * @param c
