@@ -34,4 +34,7 @@ package gov.nasa.jpl.mbee.util;
 public final class Random {
   private static final long seed = 3;  // the magic number
   public static final java.util.Random global = new java.util.Random( seed );
+  public static void reset() {
+      global.setSeed( seed );
+  }
 }
