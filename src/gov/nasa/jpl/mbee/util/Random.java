@@ -29,12 +29,19 @@
 package gov.nasa.jpl.mbee.util;
 
 /**
- *
+ * java.Util.Randon wrapper
  */
 public final class Random {
-  private static final long seed = 3;  // the magic number
+  private static long seed = 3;  // the magic number
   public static final java.util.Random global = new java.util.Random( seed );
   public static void reset() {
       global.setSeed( seed );
   }
+  public static long getSeed() {
+      return seed;
+  }
+  public static void setSeed( long newSeed ) {
+      seed = newSeed;
+  }
+  
 }
