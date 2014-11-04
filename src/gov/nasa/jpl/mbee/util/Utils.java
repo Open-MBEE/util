@@ -599,18 +599,36 @@ public class Utils {
    *         the elements of c cast to type V
    */
   public static <V, T> ArrayList<V> asList( Collection<T> c, Class<V> cls ) {
+      return asList(c, cls, true);
+  }
+
+  /**
+   * @param c
+   * @param cls
+   * @return a new {@link List} containing
+   *         the elements of c cast to type V
+   */
+  public static <V, T> ArrayList<V> asList( Collection<T> c, Class<V> cls, boolean allowNull ) {
       ArrayList<V> list = new ArrayList< V >();
       for ( T t : c ) {
           if (t == null || cls == null || cls.isAssignableFrom( t.getClass() ) ) {
-              try {
-                  V v = cls.cast( t );
-                  list.add( v );
-              } catch ( ClassCastException e ) {}
+              if (allowNull && t != null) {
+                  try {
+                      V v;
+                      if (cls != null) {
+                          v = cls.cast( t );
+                      } else {
+                          v = (V) t;
+                      }
+                      list.add( v );
+                  } catch ( ClassCastException e ) {}
+              }
           }
       }
       return list;
   }
-
+  
+  
     /**
      * @param source
      * @param newKeyType
