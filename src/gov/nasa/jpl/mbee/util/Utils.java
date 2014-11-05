@@ -612,7 +612,7 @@ public class Utils {
       ArrayList<V> list = new ArrayList< V >();
       for ( T t : c ) {
           if (t == null || cls == null || cls.isAssignableFrom( t.getClass() ) ) {
-              if (allowNull && t != null) {
+              if (allowNull || t != null) {
                   try {
                       V v;
                       if (cls != null) {
