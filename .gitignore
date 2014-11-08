@@ -1,3 +1,35 @@
-/bin
+# Eclipse
+.settings/
+
+# NetBeans
+nbproject
+
+# IntelliJ
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# maven
+target/
+
+# gradle
+.gradle/
+build/
+
+# vim
+.*.sw[a-p]
+
+# various other potential build files
+/buildassets/map_*.txt
+bin/
+dist/
+manifest.mf
+release/
+
+# Mac filesystem dust
+.DS_Store
+
+# Project Specific Files
 /mbee_util.jar
-/target
+.checkstyle
