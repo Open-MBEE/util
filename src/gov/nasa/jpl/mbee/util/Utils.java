@@ -487,6 +487,39 @@ public class Utils {
     return null;
   }
 
+  // generic map< W, map<X, map<Y, Z> >.put(w, x, y, z)
+  public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10 >
+      T10 put( Map< T1, Map< T2, Map< T3, Map< T4, Map< T5, Map<T6, Map< T7, Map< T8, Map< T9, T10 > > > > > > > > > map,
+              T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
+                            map, t1, t2, t3, t4, t5, t6, t7, t8, t9 ) ) {
+      return null;
+    }
+    //Map< T1, Map< T2, Map< T3, ? > > > castMap = (Map< T1, Map< T2, Map< T3, ? > > >)toMap(map, Map< T1, Map< T2, Map< T3, ? > > >.class, Object.class);
+    Map< T4, Map< T5, Map< T6, Map< T7, Map< T8, Map< T9, T10 > > > > > > innerMap = 
+            (Map< T4, Map< T5, Map< T6, Map< T7, Map< T8, Map< T9, T10 > > > > > >)get( map, t1, t2, t3 );
+    if ( innerMap == null ) {
+      innerMap = new LinkedHashMap< T4, Map< T5, Map< T6, Map< T7, Map< T8, Map< T9, T10 > > > > > >();
+      put( map, t1, t2, t3, innerMap );
+    }
+    return put( innerMap, t4, t5, t6, t7, t8, t9, t10 );
+  }
+
+  // generic map< W, map<X, map<Y, Z> >.get(w, x, y) --> z
+  public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10 >
+      T10 get( Map< T1, Map< T2, Map< T3, Map< T4, Map< T5, Map<T6, Map< T7, Map< T8, Map< T9, T10 > > > > > > > > > map,
+              T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.get() with null argument!",
+                            map, t1, t2, t3, t4, t5, t6, t7, t8, t9 ) ) {
+      return null;
+    }
+    Map< T4, Map< T5, Map< T6, Map< T7, Map< T8, Map< T9, T10 > > > > > > innerMap = get( map, t1, t2, t3 );
+    if ( innerMap != null ) {
+      return get( innerMap, t4, t5, t6, t7, t8, t9 );
+    }
+    return null;
+  }
+
   /**
    * Manages a "seen" set for avoiding infinite recursion.
    * @param o is the object visited
