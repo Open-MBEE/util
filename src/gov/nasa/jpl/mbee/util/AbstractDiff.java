@@ -141,7 +141,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
             Set<ID> addedPropIds = mapDiff.get( 0 );
             Set<ID> removedPropIds = mapDiff.get( 1 );
             Set<ID> updatedPropIds = mapDiff.get( 2 );
-
+           
             LinkedHashMap< ID, P > addedProps = new LinkedHashMap< ID, P >();
             addedProperties.put( id, addedProps );
             LinkedHashMap< ID, P > removedProps = new LinkedHashMap< ID, P >();
@@ -166,6 +166,12 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
                 }
             }
             for ( ID pid : updatedPropIds ) {
+                
+                // Deal with value specs 
+                // If it is a owner of a value spec then need to compare the value spec node ref
+                // with the other workspace:
+                
+                
                 P p1 = get1( id, pid );
                 P p2 = get2( id, pid );
                 propChanges.put( pid, new Pair< P, P >( p1, p2 ) );
