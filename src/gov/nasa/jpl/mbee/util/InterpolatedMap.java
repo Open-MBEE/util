@@ -105,9 +105,15 @@ public class InterpolatedMap< K, V > extends TreeMap< K, V > {
     }
 
     @Override
-    public boolean containsKey( Object key ) {
-        // TODO Auto-generated method stub
-        if ( super.containsKey( key ) ) return true;
+    public boolean containsKey( Object k ) {
+        if ( super.containsKey( k ) ) return true;
+        K key = null;
+        try {
+            key = (K)k;
+        } catch (ClassCastException e) {
+            e.printStackTrace();
+            return false;
+        }
         if ( size() < 2 ) return false;
         if ( interpolation.type == Interpolation.STEP ||
              interpolation.type == Interpolation.LINEAR ||
@@ -127,9 +133,15 @@ public class InterpolatedMap< K, V > extends TreeMap< K, V > {
     }
 
     @Override
-    public boolean containsValue( Object value ) {
-        // TODO Auto-generated method stub
-        if ( super.containsValue( value ) ) return true;
+    public boolean containsValue( Object val ) {
+        if ( super.containsValue( val ) ) return true;
+        V value = null;
+        try {
+            value = (V)val;
+        } catch (ClassCastException e) {
+            e.printStackTrace();
+            return false;
+        }
         if ( interpolation.type == Interpolation.LINEAR ||
                 interpolation.type == Interpolation.RAMP ) {
             boolean before = true;
