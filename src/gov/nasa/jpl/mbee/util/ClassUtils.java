@@ -1,29 +1,29 @@
 /*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
+ * Copyright (c) <2013>, California Institute of Technology ("Caltech").
  * U.S. Government sponsorship acknowledged.
- * 
+ *
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification, are 
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
- * 
- *  - Redistributions of source code must retain the above copyright notice, this list of 
+ *
+ *  - Redistributions of source code must retain the above copyright notice, this list of
  *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
+ *  - Redistributions in binary form must reproduce the above copyright notice, this list
+ *    of conditions and the following disclaimer in the documentation and/or other materials
  *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
+ *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
+ *    nor the names of its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.util;
@@ -59,16 +59,16 @@ public class ClassUtils {
      * Compare argument types to determine how well a function call matches.
      */
     public static class ArgTypeCompare< T > {
-  
+
       //public Class<?>[] candidateArgTypes = null;
       public Class<?>[] referenceArgTypes = null;
   //    public boolean isVarArgs = false;
-  
+
       public int numMatching = 0;
       public int numNull = 0;
       public int numDeps = 0;
       public boolean okNumArgs = false;
-  
+
       public T best = null;
       public boolean gotOkNumArgs = false;
       public int mostMatchingArgs = 0;
@@ -76,7 +76,7 @@ public class ClassUtils {
       public boolean allArgsMatched = false;
       public boolean allNonNullArgsMatched = false;
       public double bestScore = Double.MAX_VALUE;
-  
+
       /**
        * @param argTypes1
        * @param argTypes2
@@ -86,7 +86,7 @@ public class ClassUtils {
         super();
         this.referenceArgTypes = referenceArgTypes;
       }
-  
+
       public void compare( T o, Class<?>[] candidateArgTypes,
                            boolean isVarArgs ) {
         numMatching = 0;
@@ -102,7 +102,7 @@ public class ClassUtils {
         okNumArgs =
             ( candidateArgsLength == referenceArgsLength )
               || ( isVarArgs
-                   && ( candidateArgsLength < referenceArgsLength 
+                   && ( candidateArgsLength < referenceArgsLength
                         || candidateArgsLength == 1 ) );
         if ( Debug.isOn() ) Debug.outln( "okNumArgs = " + okNumArgs );
   //      if ( okNumArgs ) score -= numArgsCost;
@@ -152,7 +152,7 @@ public class ClassUtils {
             || ( !gotOkNumArgs && okNumArgs )
             || ( ( gotOkNumArgs == okNumArgs )
                  && ( ( numMatching > mostMatchingArgs )
-                      || ( ( numMatching == mostMatchingArgs ) 
+                      || ( ( numMatching == mostMatchingArgs )
                            && ( numDeps > mostDeps ) ) ) ) ) {
          best = o;
          gotOkNumArgs = okNumArgs;
@@ -173,10 +173,10 @@ public class ClassUtils {
     // TODO -- this would be useful for TimeVaryingMap.valueFromString();
 //  public static <V> V valueFromString() {
 //    V value = null;
-//    
+//
 //    return value;
 //  }
-    
+
 //    // boolean, byte, char, short, int, long, float, and double
 //    public static Class< ? > primitiveForClass( Class< ? > nonPrimClass ) {
 //      if ( nonPrimClass == Integer.class ) {
@@ -205,7 +205,7 @@ public class ClassUtils {
 //      }
 //      return null;
 //    }
-    
+
   // boolean, byte, char, short, int, long, float, and double
   public static Class< ? > classForPrimitive( Class< ? > primClass ) {
     return getPrimToNonPrim().get( primClass );
@@ -214,13 +214,13 @@ public class ClassUtils {
   public static Class< ? > primitiveForClass( Class< ? > nonPrimClass ) {
     return getNonPrimToPrim().get( nonPrimClass );
   }
-  
-  
+
+
   private static Map<String,Class<?>> nonPrimitives = initializeNonPrimitives();
   private static Map<String,Class<?>> primitives = initializePrimitives();
   private static Map<Class<?>,Class<?>> primToNonPrim = initializePrimToNonPrim();
   private static Map<Class<?>,Class<?>> nonPrimToPrim = initializeNonPrimToPrim();
-  
+
   public static Map<String,Class<?>> getPrimitives() {
     if ( primitives == null ) initializePrimitives();
     return primitives;
@@ -237,7 +237,7 @@ public class ClassUtils {
     if ( nonPrimToPrim == null ) initializeNonPrimToPrim();
     return nonPrimToPrim;
   }
-  
+
   // boolean, byte, char, short, int, long, float, and double
   public static Class< ? > classForPrimitive( String primClass ) {
     return getPrimitives().get( primClass );
@@ -251,7 +251,7 @@ public class ClassUtils {
     }
     return nonPrimitives;
   }
-  
+
   // boolean, byte, char, short, int, long, float, and double
   private static Map< String, Class< ? > > initializePrimitives() {
     primitives = new TreeMap< String, Class<?> >();
@@ -269,7 +269,7 @@ public class ClassUtils {
 //    primitives.put( "void", void.class );
     return primitives;
   }
-  
+
   // boolean, byte, char, short, int, long, float, double, and void
   private static Map< Class< ? >, Class< ? > > initializePrimToNonPrim() {
     primToNonPrim = new HashMap< Class< ? >, Class<?> >();
@@ -322,21 +322,21 @@ public class ClassUtils {
 
   /**
    * @param o
-   * @return whether the object is a primitive class (like int or Integer) or an instance of one 
+   * @return whether the object is a primitive class (like int or Integer) or an instance of one
    */
   public static boolean isPrimitive( Class<?> c ) {
     return ( getNonPrimitives().containsKey( c.getSimpleName() ) ||
              getPrimitives().containsKey( c.getSimpleName() ) );
   }
-  
-  
+
+
   /**
    * @param o
-   * @return whether the object is a primitive class (like int or Integer) or an instance of one 
+   * @return whether the object is a primitive class (like int or Integer) or an instance of one
    */
   public static boolean isPrimitive( Object o ) {
     if ( o instanceof Class ) {
-      return isPrimitive( (Class<?>)o ); 
+      return isPrimitive( (Class<?>)o );
     }
     return isPrimitive( o.getClass() );
   }
@@ -354,7 +354,7 @@ public class ClassUtils {
     }
     return qualifiedName;
   }
-  
+
   public static String getNonPrimitiveClassName( String type ) {
     if ( type == null ) return null;
     String simpleName = simpleName( type );
@@ -364,7 +364,7 @@ public class ClassUtils {
       Class<?> nonPrim = getPrimToNonPrim().get( prim );
       Assert.assertNotNull( nonPrim );
       newName = nonPrim.getSimpleName();
-    }    
+    }
 //    Class< ? > cls = getNonPrimitiveClass( type );
 //    String newName = type;
 //    if ( cls != null ) {
@@ -410,7 +410,7 @@ public class ClassUtils {
     }
     return null;
   }
-  
+
   /**
    * @see gov.nasa.jpl.ae.util.ClassUtil#mostSpecificCommonSuperclass(Collection)
    * @param coll
@@ -426,7 +426,7 @@ public class ClassUtils {
   public static Class<?> leastUpperBoundSuperclass( Collection< ? > coll ) {
     return mostSpecificCommonSuperclass( coll );
   }
-  
+
   /**
    * @param coll
    *          the collection
@@ -442,7 +442,7 @@ public class ClassUtils {
    *         but directly extend Object, Object.class will be returned.
    */
   public static Class<?> mostSpecificCommonSuperclass( Collection< ? > coll ) {
-    if ( Utils.isNullOrEmpty( coll ) ) return null; 
+    if ( Utils.isNullOrEmpty( coll ) ) return null;
     if ( areClasses( coll ) ) {
         return mostSpecificCommonSuperclass( Utils.toArrayOfType( coll.toArray(), Class.class ) );
     }
@@ -452,7 +452,7 @@ public class ClassUtils {
     }
     return mostSpecificCommonSuperclass( Utils.toArrayOfType( classes, Class.class ) );
   }
-  
+
     /**
      * @param classes
      *            an array of classes
@@ -486,8 +486,8 @@ public class ClassUtils {
     }
     return most;
   }
-  
-  public static Class< ? > tryClassForName( String className, 
+
+  public static Class< ? > tryClassForName( String className,
                                             boolean initialize ) {
     return tryClassForName( className, initialize, null );
   }
@@ -496,7 +496,7 @@ public class ClassUtils {
     if (Utils.isNullOrEmpty( className )) return null;
     Thread t = Thread.currentThread();
     Class< ? > cls = null;
-    ClassLoader[] loaders = new ClassLoader[] { t.getContextClassLoader(), 
+    ClassLoader[] loaders = new ClassLoader[] { t.getContextClassLoader(),
                                                 ClassLoader.getSystemClassLoader(),
                                                 ClassUtils.class.getClassLoader() };
     for ( ClassLoader cl : loaders ) {
@@ -517,13 +517,13 @@ public class ClassUtils {
     return cls;
   }
 
-  public static Class< ? > tryClassForName( String className, 
+  public static Class< ? > tryClassForName( String className,
                                             boolean initialize,
                                             ClassLoader myLoader ) {
     if ( Debug.isOn() ) Debug.outln( "trying tryClassForName( " + className + " )");
     Class< ? > classForName = null;
-    if ( myLoader == null ) myLoader = Utils.loader; 
-    //if ( myLoader == null ) myLoader = gov.nasa.jpl.ae.event.Expression.class.getClassLoader(); 
+    if ( myLoader == null ) myLoader = Utils.loader;
+    //if ( myLoader == null ) myLoader = gov.nasa.jpl.ae.event.Expression.class.getClassLoader();
     try {
       classForName = classForName( className );
     } catch ( ClassNotFoundException e1 ) {
@@ -580,7 +580,7 @@ public class ClassUtils {
     }
     return newName.toString();
   }
-  
+
   public static Class<?> getClassOfClass( String longClassName,
                                           String preferredPackageName,
                                           boolean initialize ) {
@@ -619,7 +619,7 @@ public class ClassUtils {
       if ( cls != null ) {
         Class< ? >[] classes = cls.getClasses();
         if ( classes != null ) {
-          String clsName = cls.getName(); 
+          String clsName = cls.getName();
           String clsSimpleName = cls.getSimpleName();
           String longName = clsName + "." + clsOfClsName;
           String shorterName = clsSimpleName + "." + clsOfClsName;
@@ -643,18 +643,18 @@ public class ClassUtils {
   // TODO -- expand to include member names, too: className -> memberName -> Class
   public static Map< String, Class< ? > > classCache =
       Collections.synchronizedMap( new HashMap< String, Class< ? > >() );
-  
+
   public static Class<?> getClassForName(String className, String memberName,
 		  								 String[] packages,  boolean initialize) {
-	  
+
       if ( Utils.isNullOrEmpty( className ) ) return null;
-      
+
       Class< ?  > cls = null;
-      
+
       // Check the packages for the fname:
       for (String pkg : packages) {
-       
-        Class< ? > foo = ClassUtils.getClassForName( className, memberName, 
+
+        Class< ? > foo = ClassUtils.getClassForName( className, memberName,
                                                                    pkg, initialize );
         if (foo != null) {
           cls = foo;
@@ -664,7 +664,7 @@ public class ClassUtils {
 
       return cls;
   }
-  
+
   public static Class<?> getClassForName( String className, String memberName,
                                           String preferredPackage, boolean initialize ) {
     if ( Utils.isNullOrEmpty( className ) ) return null;
@@ -708,7 +708,7 @@ public class ClassUtils {
     return cls;
   }
   //  public static Class<?> getClassForName( String className,
-  //                                          boolean initialize ) {    
+  //                                          boolean initialize ) {
   //    return getClassFromClasses( getClassesForName( className, initialize ) );
   //  }
 
@@ -752,7 +752,7 @@ public class ClassUtils {
                    + strippedClassName );
       boolean strippedWorthTrying = false;
       if ( !Utils.isNullOrEmpty( strippedClassName ) ) {
-        strippedWorthTrying = !strippedClassName.equals( className ); 
+        strippedWorthTrying = !strippedClassName.equals( className );
         if ( strippedWorthTrying ) {
           classForName = tryClassForName( strippedClassName, initialize );//, loader );
           if ( classForName != null ) classList.add( classForName );
@@ -787,7 +787,7 @@ public class ClassUtils {
     }
     return packageStrings;
   }
-  
+
   public static boolean isPackageName( String packageName ) {
     Package[] packages = Package.getPackages();
     for (Package aPackage : packages ) {
@@ -805,7 +805,7 @@ public class ClassUtils {
 //    }
     return false;
   }
-  
+
   /**
    * @param c
    * @param packageName
@@ -872,7 +872,7 @@ public class ClassUtils {
 
   public static List<String> getFullyQualifiedNames(String simpleClassOrInterfaceName, Package[] packages) {
     Collection<String> packageStrings = getPackageStrings( packages );
-  
+
     List<String> fqns = new ArrayList<String>();
     //if ( Debug.isOn() ) Debug.outln( "getFullyQualifiedNames( " + simpleClassOrInterfaceName
     //             + " ): packages = " + packageStrings );
@@ -935,7 +935,7 @@ public class ClassUtils {
   /**
    * Determines whether the array contains only Class<?> objects possibly with
    * some (but not all nulls).
-   * 
+   *
    * @param objects
    * @return
    */
@@ -956,14 +956,14 @@ public class ClassUtils {
   /**
    * Determines whether the list contains only Class<?> objects possibly with
    * some (but not all nulls).
-   * 
+   *
    * @param objects
    * @return
    */
   public static boolean areClasses( Collection<?> objects ) {
       return areClasses( objects.toArray() );
   }
-  
+
   public static Constructor< ? > getConstructorForArgs( Class< ? > cls,
                                                           Object[] args ) {
       if ( Debug.isOn() ) Debug.outln( "getConstructorForArgs( " + cls.getName() + ", "
@@ -975,12 +975,12 @@ public class ClassUtils {
       int mostMatchingArgs = 0;
       boolean allArgsMatched = false;
       Constructor< ? > ctor = null;
-      
+
       for ( Constructor< ? > aCtor : cls.getConstructors() ) {
           int numMatching = 0;
           boolean okNumArgs =
               ( aCtor.getParameterTypes().length == args.length )
-                  || ( aCtor.isVarArgs() 
+                  || ( aCtor.isVarArgs()
                        && ( aCtor.getParameterTypes().length < args.length
                             || aCtor.getParameterTypes().length == 1 ) );
           //if ( !okNumArgs ) continue;
@@ -992,7 +992,7 @@ public class ClassUtils {
             }
           }
           if ( ( ctor == null ) || ( okNumArgs && !gotOkNumArgs )
-               || ( ( okNumArgs && !gotOkNumArgs ) 
+               || ( ( okNumArgs && !gotOkNumArgs )
                     && ( numMatching > mostMatchingArgs ) ) ) {
             ctor = aCtor;
             gotOkNumArgs = okNumArgs;
@@ -1092,7 +1092,7 @@ public class ClassUtils {
 
   public static Constructor< ? >
     getConstructorForArgTypes( Class< ? > cls, String packageName ) {
-    Pair< Constructor< ? >, Object[] > p = 
+    Pair< Constructor< ? >, Object[] > p =
         getConstructorForArgs(cls, new Object[]{}, packageName );
     if ( p == null ) return null;
     return p.first;
@@ -1124,7 +1124,7 @@ public class ClassUtils {
       //boolean bestHasMember = false;
       boolean bestHasSpecifier = false;
       boolean bestInPreferredPackage = false;
-      
+
       for ( Class<?> c : classList ) {
         boolean best = false;
         int lengthOfCommonPkgPrefix = Integer.MAX_VALUE;
@@ -1145,7 +1145,7 @@ public class ClassUtils {
                  ( inPreferredPackage && !bestInPreferredPackage ) ||
                  ( lengthOfCommonPreferredPkgPrefix > bestLengthOfCommonPreferredPkgPrefix ) ||
                  ( ( lengthOfCommonPreferredPkgPrefix == bestLengthOfCommonPreferredPkgPrefix ) &&
-                     ( ( lengthOfCommonPkgPrefix > bestLengthOfCommonPkgPrefix ) || 
+                     ( ( lengthOfCommonPkgPrefix > bestLengthOfCommonPkgPrefix ) ||
                        ( ( lengthOfCommonPkgPrefix == bestLengthOfCommonPkgPrefix ) &&
                          ( length < bestLength ) ) ) ) );
         if ( best ) {
@@ -1190,7 +1190,7 @@ public class ClassUtils {
   //      boolean ok = toArrayOfType( args, argTypes, Class.class );
   //      assert ok;
   //    } else {
-        argTypes = getClasses(args); 
+        argTypes = getClasses(args);
   //    }
       return getJavaMethodForCommonFunction( functionName, argTypes );
     }
@@ -1200,7 +1200,7 @@ public class ClassUtils {
     // REVIEW -- Could use external Reflections library to get all classes in a
     // package:
     //   Reflections reflections = new Reflections("my.project.prefix");
-    //   Set<Class<? extends Object>> allClasses = 
+    //   Set<Class<? extends Object>> allClasses =
     //      reflections.getSubTypesOf(Object.class);
     //   use on:
     //     java.lang
@@ -1242,7 +1242,7 @@ public class ClassUtils {
                                          + ", callName=" + callName + ", args="
                                          + Utils.toString( args ) + " )" );
       Class< ? > argTypes[] = null;
-  //    boolean allClasses = areClasses( args ); 
+  //    boolean allClasses = areClasses( args );
   //    if ( allClasses ) {
   //      //argTypes = (Class< ? >[])args;
   //      boolean ok = toArrayOfType( args, argTypes, Class.class );
@@ -1271,7 +1271,7 @@ public class ClassUtils {
     }
     return i;
   }
-  
+
   public static Method getMethodForArgTypes( String className,
                                              String preferredPackage,
                                              String callName,
@@ -1432,7 +1432,7 @@ public class ClassUtils {
       return (Method)atc.best;
     }
 
-  
+
     /**
      * @param cls
      * @return all private, protected, public, static, and non-static methods
@@ -1447,7 +1447,7 @@ public class ClassUtils {
         methods.addAll( getAllMethods( superCls ) );
         return methods;
     }
-    
+
   public static String dominantType( String argType1, String argType2 ) {
 	  if ( argType1 == null ) return argType2;
 	  if ( argType2 == null ) return argType1;
@@ -1463,7 +1463,7 @@ public class ClassUtils {
 	  if ( argType2.toLowerCase().startsWith( "int" ) ) return argType2;
 	  return argType1;
 	}
-  
+
   public static Class<?> dominantTypeClass(Class<?> cls1, Class<?> cls2) {
 	  if ( cls1 == null ) return cls2;
       if ( cls2 == null ) return cls1;
@@ -1477,11 +1477,11 @@ public class ClassUtils {
 		  return cls2;
 	  }
   }
-  
+
 /**
    * Find and invoke the named method from the given object with the given
    * arguments.
-   * 
+   *
    * @param o
    * @param methodName
    * @param args
@@ -1498,7 +1498,7 @@ public class ClassUtils {
 
   /**
    * Invoke the method from the given object with the given arguments.
-   * 
+   *
    * @param o
    * @param methodName
    * @param args
@@ -1544,7 +1544,7 @@ public class ClassUtils {
     }
     return p;
   }
-  
+
   public static boolean isStatic( Class<?> cls ) {
     if ( cls == null ) return false;
     return ( Modifier.isStatic( cls.getModifiers() ) );
@@ -1558,7 +1558,7 @@ public class ClassUtils {
   /**
    * Find and invoke the named method from the given object with the given
    * arguments.
-   * 
+   *
    * @param o
    * @param methodName
    * @param args
@@ -1576,10 +1576,10 @@ public class ClassUtils {
     Method m = getMethodForArgs( o.getClass(), methodName, args );
     return runMethod( o, m, args );
   }
-  
+
   /**
    * Invoke the method from the given object with the given arguments.
-   * 
+   *
    * @param o
    * @param m
    * @param args
@@ -1602,7 +1602,7 @@ public class ClassUtils {
     p.first = true;
     return p;
   }
-  
+
   /**
    * @param o
    * @param fieldName
@@ -1615,7 +1615,7 @@ public class ClassUtils {
   /**
    * Get the value of the object's field with with the given fieldName using
    * reflection.
-   * 
+   *
    * @param o
    *          the object whose field value is sought
    * @param fieldName
@@ -1685,7 +1685,7 @@ public class ClassUtils {
   /**
    * Get the Field of the Class of the object with the given fieldName using
    * reflection.
-   * 
+   *
    * @param o
    *          the object whose field is sought
    * @param fieldName
@@ -1741,7 +1741,7 @@ public class ClassUtils {
 
   /**
    * Get the Field of the Class with the given fieldName using reflection.
-   * 
+   *
    * @param cls
    *          the Class whose field is sought
    * @param fieldName
@@ -1781,7 +1781,52 @@ public class ClassUtils {
     return has;
   }
 
-  
+  // REVIEW -- consider walking through the fields and methods and matching
+  // lowercase on "get" and "id"; Do the same for getName()
+  // REVIEW -- consider genericizing as getMemberValue()
+  public static Object getId( Object o ) {
+    try {
+        for ( String fieldName : new String[] { "id", "ID", "Id" } ) {
+            Object oId = ClassUtils.getFieldValue( o, fieldName );
+            if ( oId != null ) return oId;
+        }
+        for ( String methodName : new String[] { "getId", "getID", "id", "ID" } ) {
+            Method m = ClassUtils.getMethodForArgs( o.getClass(),
+                                                    methodName, (Object[])null );
+            if ( m != null ) {
+                Object oId = m.invoke( o, (Object[])null );
+                if ( oId != null ) return oId;
+            }
+        }
+    } catch ( Throwable t ) {
+        // ignore
+    }
+    return null;
+  }
+
+  // REVIEW -- consider walking through the fields and methods and matching
+  // lowercase on "get" and "name"; Do the same for getId().
+  // REVIEW -- consider genericizing as getMemberValue()
+  public static Object getName( Object o ) {
+      try {
+          for ( String fieldName : new String[] { "name", "NAME", "Name" } ) {
+              Object oId = ClassUtils.getFieldValue( o, fieldName );
+              if ( oId != null ) return oId;
+          }
+          for ( String methodName : new String[] { "getName", "get_name", "name", "NAME", "Name" } ) {
+              Method m = ClassUtils.getMethodForArgs( o.getClass(),
+                                                      methodName, (Object[])null );
+              if ( m != null ) {
+                  Object oId = m.invoke( o, (Object[])null );
+                  if ( oId != null ) return oId;
+              }
+          }
+      } catch ( Throwable t ) {
+          // ignore
+      }
+      return null;
+    }
+
   public static String parameterPartOfName( String longName ) {
     return parameterPartOfName( longName, true );
   }
@@ -1826,11 +1871,11 @@ public class ClassUtils {
       StringBuffer sb = new StringBuffer();
       String typeName = type.getName();
       if ( typeName != null ) typeName = typeName.replace( '$', '.' );
-      sb.append( ClassUtils.noParameterName( typeName ) 
+      sb.append( ClassUtils.noParameterName( typeName )
                            + ".class" );
       return sb.toString();
   }
-  
+
   /**
    * @param type
    * @return whether the input type is a number class or a number primitive.
@@ -1855,7 +1900,7 @@ public class ClassUtils {
 
   /**
    * Convert a number of one type to a number of another type.
-   * 
+   *
    * @param n
    *            the number to convert
    * @param cls
@@ -1867,11 +1912,11 @@ public class ClassUtils {
     try {
       Class<?> c = ClassUtils.classForPrimitive( cls );
       if ( c == null ) c = cls;
-      if ( c == Long.class ) return (N)(Long)n.longValue(); 
-      if ( c == Short.class ) return (N)(Short)n.shortValue(); 
-      if ( c == Double.class ) return (N)(Double)n.doubleValue(); 
-      if ( c == Integer.class ) return (N)(Integer)n.intValue(); 
-      if ( c == Float.class ) return (N)(Float)n.floatValue(); 
+      if ( c == Long.class ) return (N)(Long)n.longValue();
+      if ( c == Short.class ) return (N)(Short)n.shortValue();
+      if ( c == Double.class ) return (N)(Double)n.doubleValue();
+      if ( c == Integer.class ) return (N)(Integer)n.intValue();
+      if ( c == Float.class ) return (N)(Float)n.floatValue();
 //          if ( c == Character.class ) return (TT)(Character)n.shortValue();
 //        if ( c == Long.class ) return cls.cast( n.longValue() );
     } catch ( Exception e ) {
@@ -1915,7 +1960,7 @@ public class ClassUtils {
   /**
    * @param cls
    * @param methodName
-   * @return whether the Class has a method with the given name 
+   * @return whether the Class has a method with the given name
    */
   public static boolean hasMethod( Class< ? > cls, String methodName ) {
     return !Utils.isNullOrEmpty( getMethodsForName( cls, methodName ) );
@@ -1990,7 +2035,7 @@ public class ClassUtils {
 //    ttList.add( tt.getValue() );
 //    return ttList;
 //  }
-  
+
   public static class A {
     int a;
     public A( int a ) { this.a = a; }
@@ -1999,6 +2044,7 @@ public class ClassUtils {
   public static class B extends A {
     int b;
     public B( int a, int b ) { super(a); this.b = b; }
+    @Override
     public int get() { return b; }
   }
   public static void main( String[] args ) {
@@ -2019,7 +2065,7 @@ public class ClassUtils {
 
     Class< ? extends Collection > clssb = arrListB.getClass().asSubclass( Collection.class );
     System.out.println("arrListB.getClass().asSubclass( Collection.class ) as Class< ? extends Collection > = " + clssb );
-    
+
   }
   public static Field[] getAllFields( Class< ? extends Object > cls ) {
     List<Field> fieldList =  getListOfAllFields( cls );
@@ -2038,10 +2084,10 @@ public class ClassUtils {
     if ( superFields != null ) fieldList.addAll( superFields );
     return fieldList;
   }
-  
+
   /**
    * Try to convert an object into one of the specified class.
-   * 
+   *
    * @param o
    *          the object to convert into type cls
    * @param cls
@@ -2103,17 +2149,17 @@ public class ClassUtils {
                   }
                   resultPair.first = true;
               }
-          
+
           }
       }
       resultPair.second = result;
       return resultPair;
   }
-  
+
   /**
    * Evaluate/dig or wrap the object of the given type cls from the object o,
    * which may be a Parameter or an Expression.
-   * 
+   *
    * @param object
    *          the object to evaluate
    * @param cls
@@ -2128,8 +2174,8 @@ public class ClassUtils {
     if ( cls != null && cls.isInstance( object ) || cls.equals( object.getClass() ) ) {
       return (TT)object;
     }
-    
-    // Try to evaluate object or dig inside to get the object of the right type. 
+
+    // Try to evaluate object or dig inside to get the object of the right type.
     Object value = null;
 
     if ( object instanceof Collection ) {
@@ -2138,14 +2184,14 @@ public class ClassUtils {
             value = coll.iterator().next();
             if ( value != null ) {
                 value = evaluate( value, cls, propagate );
-                if ( value != null ) return (TT)value; 
+                if ( value != null ) return (TT)value;
             }
         }
     }
     //    if ( object instanceof Parameter ) {
 //      value = ( (Parameter)object ).getValue( propagate );
-//      return evaluate( value, cls, propagate, allowWrapping );  
-//    } 
+//      return evaluate( value, cls, propagate, allowWrapping );
+//    }
 //    else if ( object instanceof Expression ) {
 //      Expression< ? > expr = (Expression<?>)object;
 //      if ( cls != null && cls.isInstance( expr.expression ) &&
@@ -2153,17 +2199,17 @@ public class ClassUtils {
 //        return (TT)expr.expression;
 //      }
 //      value = expr.evaluate( propagate );
-//      return evaluate( value, cls, propagate, allowWrapping );  
+//      return evaluate( value, cls, propagate, allowWrapping );
 //    }
 //    else if ( object instanceof Call) {
 //      value = ( (Call)object ).evaluate( propagate );
-//      return evaluate( value, cls, propagate, allowWrapping );  
-//    } else 
+//      return evaluate( value, cls, propagate, allowWrapping );
+//    } else
     if ( cls != null && ClassUtils.isNumber( cls ) &&
                 ClassUtils.isNumber( object.getClass() ) ) {
       try {
         Number n = (Number)object;
-        TT tt = (TT)castNumber( n, cls );
+        TT tt = castNumber( n, cls );
         if ( tt != null || object == null ) {
             return tt;
         }
@@ -2172,7 +2218,7 @@ public class ClassUtils {
       }
     }
 
-    // if 
+    // if
     if ( cls.equals( String.class ) ) {
         @SuppressWarnings( "unchecked" )
         TT r = (TT)object.toString();
@@ -2199,9 +2245,9 @@ public class ClassUtils {
     }
     return null;
   }
-  
+
   /**
-   * Determine whether the values of two objects are equal by evaluating them. 
+   * Determine whether the values of two objects are equal by evaluating them.
    * @param o1
    * @param o2
    * @return whether the evaluations of o1 and o2 are equal.
@@ -2255,10 +2301,10 @@ public class ClassUtils {
     if ( Utils.valuesEqual( v1, v2 ) ) return true;
     if ( cls1 != cls2 ) {
       v1 = evaluate( o1, cls2, propagate, allowWrapping );
-      v2 = evaluate( o2, cls2, propagate, allowWrapping );      
+      v2 = evaluate( o2, cls2, propagate, allowWrapping );
     }
     return Utils.valuesEqual( v1, v2 );
-    */ 
+    */
   }
 
   /**
