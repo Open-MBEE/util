@@ -1,5 +1,5 @@
 package gov.nasa.jpl.mbee.util;
 
-public interface HasId {
-  public int getId();
+public interface HasId<I> {
+  public I getId();
 }

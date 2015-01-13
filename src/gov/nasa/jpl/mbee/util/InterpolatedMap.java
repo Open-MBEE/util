@@ -19,6 +19,8 @@ import junit.framework.Assert;
  */
 public class InterpolatedMap< K, V > extends TreeMap< K, V > {
 
+    private static final long serialVersionUID = 7388614842922181155L;
+
     public static class Interpolation {
         protected static final byte STEP = 0; // value for key = get(floorKey(
                                               // key ))
