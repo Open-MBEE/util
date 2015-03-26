@@ -657,6 +657,15 @@ public class Utils {
       }
       return asList( newList( o ), cls );
   }
+  
+  public static <V, T extends V> List<V> arrayAsList( T[] c ) {
+      List<V> list = new ArrayList< V >();
+      for ( T co : c ) {
+          list.add(co);
+      }
+      return list;
+  }
+
 
   /**
    * @param c
