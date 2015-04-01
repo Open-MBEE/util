@@ -49,8 +49,8 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     public abstract ID getId( T t );
     public abstract ID getPropertyName( P property );  // This is the name as known by the owning Object.
     public abstract ID getIdOfProperty( P property );  // This is an object ID like getId(T t).
-    public abstract Set< P > getProperties( T t );
-    public abstract P getProperty( T t, ID id );
+    public abstract Set< P > getProperties( T t, boolean isSet1 );
+    public abstract P getProperty( T t, ID id, boolean isSet1 );
     public abstract boolean same( T t1, T t2 );
     public abstract boolean sameProperty( P prop1, P prop2 );
     public abstract String getName( T t );
@@ -90,8 +90,8 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         if ( computeDiffOnConstruction ) diff();
     }
 
-    public Map<ID, P> getPropertyMap( T t ) {
-        Set< P > propertiesSet = getProperties( t );
+    public Map<ID, P> getPropertyMap( T t, boolean isSet1 ) {
+        Set< P > propertiesSet = getProperties( t, isSet1 );
         Map< ID, P > properties = convertPropertySetToMap( propertiesSet );
         Utils.removeAll( properties, getPropertyIdsToIgnore() );
         return properties;
@@ -175,8 +175,8 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         T t1 = get1(tid);
         T t2 = get2(tid);
 
-        Map< ID, P > properties1 = getPropertyMap( t1 );
-        Map< ID, P > properties2 = getPropertyMap( t2 );
+        Map< ID, P > properties1 = getPropertyMap( t1, true );
+        Map< ID, P > properties2 = getPropertyMap( t2, false );
 
         List< Set< ID > > mapDiff = Utils.diff( properties1, properties2 );
         if ( mapDiff == null ) return null;
@@ -274,7 +274,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         if ( pid == null ) return null;
         T t = get1( tid );
         if ( t == null ) return null;
-        P p = getProperty(t, pid);
+        P p = getProperty(t, pid, true);
         return p;
     }
 
@@ -284,7 +284,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         if ( pid == null ) return null;
         T t = get2( tid );
         if ( t == null ) return null;
-        P p = getProperty(t, pid);
+        P p = getProperty(t, pid, false);
         return p;
     }
 
