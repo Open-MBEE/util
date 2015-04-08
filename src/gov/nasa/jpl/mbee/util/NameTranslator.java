@@ -28,7 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.util;
 
-//import gov.nasa.jpl.ae.solver.Random;
+//import gov.nasa.jpl.mbee.util.Random;
 
 import java.util.Map;
 import java.util.Set;
