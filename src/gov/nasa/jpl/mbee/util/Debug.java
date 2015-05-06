@@ -174,12 +174,16 @@ public class Debug {
     } catch ( Exception e ) {
       boolean wasOn = isOn();
       if ( forceOutput ) turnOn();
+      try { // make sure to turn off debug output!
       Debug.errln( msg );
       if ( stackTrace ) {
         String stackTraceString = stackTrace(e);
         Debug.errln( stackTraceString );
         Debug.err( "" ); // good place for a breakpoint
         //breakpoint();
+      }
+      } catch (Throwable t) {
+          // TODO?
       }
       if ( forceOutput && !wasOn ) turnOff(); 
       return true;

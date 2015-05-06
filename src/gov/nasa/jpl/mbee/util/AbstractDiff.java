@@ -5,6 +5,7 @@ package gov.nasa.jpl.mbee.util;
 
 import gov.nasa.jpl.mbee.util.CompareUtils.GenericComparator;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
 
 /**
  * AbstractDiff computes and stores the difference between two sets of objects
@@ -45,11 +47,15 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     public Comparator<T> objectComparator = null;
 
     public abstract ID getId( T t );
-    public abstract ID getPropertyId( P property );
-    public abstract Set< P > getProperties( T t );
-    public abstract P getProperty( T t, ID id );
-
-
+    public abstract ID getPropertyName( P property );  // This is the name as known by the owning Object.
+    public abstract ID getIdOfProperty( P property );  // This is an object ID like getId(T t).
+    public abstract Set< P > getProperties( T t, boolean isSet1 );
+    public abstract P getProperty( T t, ID id, boolean isSet1 );
+    public abstract boolean same( T t1, T t2 );
+    public abstract boolean sameProperty( P prop1, P prop2 );
+    public abstract String getName( T t );
+    public abstract Set<ID> filterValues(List<Set<ID>> mapDiff);
+    
     public Set<ID> propertyIdsToIgnore = new TreeSet<ID>(GenericComparator.instance());
 
     public AbstractDiff( Set<T> s1, Set<T> s2, Comparator<T> comparator ) {
@@ -84,8 +90,8 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         if ( computeDiffOnConstruction ) diff();
     }
 
-    public Map<ID, P> getPropertyMap( T t ) {
-        Set< P > propertiesSet = getProperties( t );
+    public Map<ID, P> getPropertyMap( T t, boolean isSet1 ) {
+        Set< P > propertiesSet = getProperties( t, isSet1 );
         Map< ID, P > properties = convertPropertySetToMap( propertiesSet );
         Utils.removeAll( properties, getPropertyIdsToIgnore() );
         return properties;
@@ -116,26 +122,9 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         updatedProperties = new LinkedHashMap< ID, Map<ID,Pair<P,P>> >();
 
         List< Set< ID > > mapDiff = Utils.diff( getMap1(), getMap2() );
-        Set<ID> addedIds = mapDiff.get( 0 );
-        Set<ID> removedIds = mapDiff.get( 1 );
-        Set<ID> updatedIds = mapDiff.get( 2 );
-
-        for ( ID id : addedIds ) {
-            T t2 = get2( id );
-            if ( t2 == null ) {
-                Debug.error("AbstractDiff: trying to add null entry for " + id + "!");
-            } else {
-                added.add( t2 );
-            }
-        }
-        for ( ID id : removedIds ) {
-            T t1 = get1( id );
-            if ( t1 == null ) {
-                Debug.error("AbstractDiff: trying to add null entry for " + id + "!");
-            } else {
-                removed.add( t1 );
-            }
-        }
+        
+        Set<ID> updatedIds = filterValues(mapDiff);
+        
         for ( ID id : updatedIds ) {
             mapDiff = diffProperties( id );
             Set<ID> addedPropIds = mapDiff.get( 0 );
@@ -186,10 +175,23 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         T t1 = get1(tid);
         T t2 = get2(tid);
 
-        Map< ID, P > properties1 = getPropertyMap( t1 );
-        Map< ID, P > properties2 = getPropertyMap( t2 );
+        Map< ID, P > properties1 = getPropertyMap( t1, true );
+        Map< ID, P > properties2 = getPropertyMap( t2, false );
 
         List< Set< ID > > mapDiff = Utils.diff( properties1, properties2 );
+        if ( mapDiff == null ) return null;
+        if ( mapDiff.size() < 3 ) return mapDiff;
+
+        // check to see if updates are correlated, in which case we can remove them.
+        Set< ID > updates = mapDiff.get( 2 );
+        for ( ID id : new ArrayList<ID>(updates) ) {
+            P prop1 = properties1.get( id );
+            P prop2 = properties2.get( id );
+            if ( sameProperty( prop1, prop2 ) ) {
+                updates.remove( id );
+                continue;
+            }
+        }
 
         return mapDiff;
     }
@@ -232,8 +234,10 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     protected Map<ID, P> convertPropertySetToMap( Set<P> set ) {
         LinkedHashMap< ID, P > map = new LinkedHashMap< ID, P >();
         for ( P p : set ) {
-            ID id = getPropertyId( p );
-            map.put( id, p );
+            ID id = getPropertyName( p );
+            map.put( id, p );  // FIXME this looks wrong, mapping sysml name of the 
+                               //       property value to the property value.  Should be
+                               //       the name of property, ie operand
         }
         return map;
     }
@@ -270,7 +274,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         if ( pid == null ) return null;
         T t = get1( tid );
         if ( t == null ) return null;
-        P p = getProperty(t, pid);
+        P p = getProperty(t, pid, true);
         return p;
     }
 
@@ -280,7 +284,7 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         if ( pid == null ) return null;
         T t = get2( tid );
         if ( t == null ) return null;
-        P p = getProperty(t, pid);
+        P p = getProperty(t, pid, false);
         return p;
     }
 
