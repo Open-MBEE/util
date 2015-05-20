@@ -2,21 +2,22 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>gov.nasa.jpl.mbee.util</groupId>
   <artifactId>mbee_util</artifactId>
+  <packaging>jar</packaging>
   <version>2.1.0-SNAPSHOT</version>
   <name>mbee_util</name>
   <description>MBEE java utilities</description>
   <distributionManagement>
-      <!-- use mvn -U deploy -DgeneratePom=true -Dpackaging=jar  -->
-      <repository>
-          <id>artifactory</id>
-          <name>releases</name>
-          <url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-release-local</url>
-      </repository>
-      <snapshotRepository>
-          <id>artifactory</id>
-          <name>snapshots</name>
-          <url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-snapshot-local</url>
-      </snapshotRepository>
+    <!-- use mvn -U deploy -DgeneratePom=true -Dpackaging=jar  -->
+    <repository>
+      <id>artifactory</id>
+      <name>releases</name>
+      <url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-release-local</url>
+    </repository>
+    <snapshotRepository>
+      <id>artifactory</id>
+      <name>snapshots</name>
+      <url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-snapshot-local</url>
+    </snapshotRepository>
   </distributionManagement>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -29,33 +30,36 @@
       </resource>
     </resources>
     <plugins>
-    <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-source-plugin</artifactId>
-      <executions>
-        <execution>
-          <id>attach-sources</id>
-          <goals>
-            <goal>jar</goal>
-          </goals>
-        </execution>
-      </executions>
-    </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.4</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+      	<groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.1</version>
         <configuration>
-          <source/>
-          <target/>
+          <verbose>false</verbose>
+          <source>1.7</source>
+          <target>1.7</target>
         </configuration>
       </plugin>
     </plugins>
   </build>
   <dependencies>
-  	<dependency>
-  		<groupId>junit</groupId>
-  		<artifactId>junit</artifactId>
-  		<version>4.8.1</version>
-  	</dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.8.1</version>
+    </dependency>
   </dependencies>
 </project>
