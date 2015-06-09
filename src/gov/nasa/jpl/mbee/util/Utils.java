@@ -1195,7 +1195,7 @@ public class Utils {
     if ( isNullOrEmpty( str ) ) return source + replacement;
     String compString = source;
     int pos = compString.lastIndexOf( str );
-    if ( pos == compString.length() - str.length() ) {
+    if ( pos != -1 && pos == compString.length() - str.length() ) {
         compString = compString.substring( 0, pos ) + replacement;
     }
     return compString;
