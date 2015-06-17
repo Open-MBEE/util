@@ -1018,10 +1018,11 @@ public class ClassUtils {
     if ( Debug.isOn() ) Debug.outln( eventClass.getName() + ": nonStaticInnerClass = " + nonStaticInnerClass );
     Object newArgs[] = arguments;
     if ( nonStaticInnerClass ) {
-      newArgs = new Object[ arguments.length + 1 ];
+      int argumentsLength = arguments == null ? 0 : arguments.length;
+      newArgs = new Object[ argumentsLength + 1 ];
       assert enclosingInstance != null;
       newArgs[ 0 ] = enclosingInstance;
-      for ( int i = 0; i < arguments.length; ++i ) {
+      for ( int i = 0; i < argumentsLength; ++i ) {
         newArgs[ i + 1 ] = arguments[ i ];
       }
     }
