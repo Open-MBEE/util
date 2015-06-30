@@ -666,6 +666,19 @@ public class Utils {
       return list;
   }
 
+  public static <V, T extends V> List<V> arrayAsList( T[] c, Class<V> cls ) {
+      List<V> list = new ArrayList< V >();
+      for ( T co : c ) {
+          try {
+              V v  = cls.cast( co );
+              list.add(v);
+          } catch ( ClassCastException e ) {
+              Debug.error( true, false, "Error! Could not cast " + co + " to " + cls.getSimpleName() + "!" );
+          }
+      }
+      return list;
+  }
+
 
   /**
    * @param c
