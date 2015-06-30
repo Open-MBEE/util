@@ -1410,4 +1410,8 @@ public class Utils {
         return diffs;
     }
 
+    public static boolean isNegative( Number n ) {
+        return n.doubleValue() < 0.0;
+    }
+
 }
