@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -1017,10 +1018,11 @@ public class ClassUtils {
     if ( Debug.isOn() ) Debug.outln( eventClass.getName() + ": nonStaticInnerClass = " + nonStaticInnerClass );
     Object newArgs[] = arguments;
     if ( nonStaticInnerClass ) {
-      newArgs = new Object[ arguments.length + 1 ];
+      int argumentsLength = arguments == null ? 0 : arguments.length;
+      newArgs = new Object[ argumentsLength + 1 ];
       assert enclosingInstance != null;
       newArgs[ 0 ] = enclosingInstance;
-      for ( int i = 0; i < arguments.length; ++i ) {
+      for ( int i = 0; i < argumentsLength; ++i ) {
         newArgs[ i + 1 ] = arguments[ i ];
       }
     }
@@ -1550,9 +1552,14 @@ public class ClassUtils {
     return ( Modifier.isStatic( cls.getModifiers() ) );
   }
 
-  public static boolean isStatic( Member method ) {
-    if ( method == null ) return false;
-    return ( Modifier.isStatic( method.getModifiers() ) );
+  public static boolean isStatic( Member member ) {
+    if ( member == null ) return false;
+    return ( Modifier.isStatic( member.getModifiers() ) );
+  }
+
+  public static boolean isFinal( Member member ) {
+      if ( member == null ) return false;
+      return ( Modifier.isFinal( member.getModifiers() ) );
   }
 
   /**
@@ -1779,6 +1786,40 @@ public class ClassUtils {
     boolean has = hasField( c, memberName );
     if ( !has ) has = hasMethod( c, memberName );
     return has;
+  }
+  
+//  public static <T> Class<?> getEnumClass( Class<T> cls ) {
+//      Class<T> enumClass = cls;
+//      if ( enumClass.isEnum() ) return cls;
+//      for ( TypeVariable< Class<T> > t : 
+//            enumClass.getTypeParameters() ) {
+//          t.
+//      }
+//
+//  }
+//  public static Object getEnumConstant( Class<?> enumClass, String constantName ) {
+//      LinkedList< Class<?> > classQ = new LinkedList< Class<?> >();
+//      classQ.add( enumClass );
+//  }
+  public static Object getEnumConstant( Class<?> enumClass, String constantName ) {
+      if ( enumClass.isEnum() ) {
+          Object[] constants = enumClass.getEnumConstants();
+          if ( constants != null ) {
+              for ( Object constant : constants ) {
+    
+                  if ( constant != null
+                       && ( "" + constant ).equals( constantName ) ) {
+                      return constant;
+                  }
+              }
+          }
+      }
+      return null;
+//      else if ( enumClass.getClasses().length > 0 ) {
+//          for ( Class<?> c : enumClass.getDeclaredClasses() ) {
+//              
+//          }
+//      }
   }
 
   // REVIEW -- consider walking through the fields and methods and matching

@@ -180,7 +180,7 @@ public class Debug {
         String stackTraceString = stackTrace(e);
         Debug.errln( stackTraceString );
         Debug.err( "" ); // good place for a breakpoint
-        //breakpoint();
+        breakpoint();
       }
       } catch (Throwable t) {
           // TODO?
