@@ -644,6 +644,7 @@ public class ClassUtils {
   // TODO -- expand to include member names, too: className -> memberName -> Class
   public static Map< String, Class< ? > > classCache =
       Collections.synchronizedMap( new HashMap< String, Class< ? > >() );
+  
 
   public static Class<?> getClassForName(String className, String memberName,
 		  								 String[] packages,  boolean initialize) {
@@ -716,6 +717,8 @@ public class ClassUtils {
   public static HashMap< String, List< Class<?> > > classesCache =
       new HashMap< String, List<Class<?>> >();
 
+  public static boolean optimistic = false;  // try to find again even if failed in the past
+  
   public static List< Class< ? > > getClassesForName( String className,
                                                         boolean initialize ) {
   //                                                    ClassLoader loader,
@@ -723,7 +726,7 @@ public class ClassUtils {
     if ( Debug.isOn() ) Debug.outln( "getClassesForName( " + className + " )" );
     List< Class< ? > > classList = classesCache.get( className );
     if ( Debug.isOn() ) Debug.outln("classList " + classList + " from classesCache " + classesCache );
-    if ( !Utils.isNullOrEmpty( classList ) ) {
+    if ( classList != null && ( !optimistic || !classList.isEmpty() ) ) {
       if ( Debug.isOn() ) Debug.outln( "getClassesForName( " + className + " ) returning " + classList );
       return classList;
     }
@@ -771,7 +774,7 @@ public class ClassUtils {
           if ( classForName != null ) classList.add( classForName );
         }
       }
-      if ( !Utils.isNullOrEmpty( classList ) ) {
+      if ( classList != null ) {
         classesCache.put( className, classList );
       }
       if ( Debug.isOn() ) Debug.outln( "getClassesForName( " + className + " ) returning " + classList );
