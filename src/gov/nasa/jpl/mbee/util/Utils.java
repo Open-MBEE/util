@@ -657,6 +657,28 @@ public class Utils {
       }
       return asList( newList( o ), cls );
   }
+  
+  public static <V, T extends V> List<V> arrayAsList( T[] c ) {
+      List<V> list = new ArrayList< V >();
+      for ( T co : c ) {
+          list.add(co);
+      }
+      return list;
+  }
+
+  public static <V, T extends V> List<V> arrayAsList( T[] c, Class<V> cls ) {
+      List<V> list = new ArrayList< V >();
+      for ( T co : c ) {
+          try {
+              V v  = cls.cast( co );
+              list.add(v);
+          } catch ( ClassCastException e ) {
+              Debug.error( true, false, "Error! Could not cast " + co + " to " + cls.getSimpleName() + "!" );
+          }
+      }
+      return list;
+  }
+
 
   /**
    * @param c
@@ -1186,7 +1208,7 @@ public class Utils {
     if ( isNullOrEmpty( str ) ) return source + replacement;
     String compString = source;
     int pos = compString.lastIndexOf( str );
-    if ( pos == compString.length() - str.length() ) {
+    if ( pos != -1 && pos == compString.length() - str.length() ) {
         compString = compString.substring( 0, pos ) + replacement;
     }
     return compString;
@@ -1386,6 +1408,10 @@ public class Utils {
         diffs.add( removed );
         diffs.add( updated );
         return diffs;
+    }
+
+    public static boolean isNegative( Number n ) {
+        return n.doubleValue() < 0.0;
     }
 
 }
