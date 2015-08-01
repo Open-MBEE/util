@@ -1240,7 +1240,12 @@ public class ClassUtils {
   }
 
   public static Method getMethodForArgs( Class< ? > cls, String callName,
-                                           Object... args ) {
+                                         Object... args ) {
+      return getMethodForArgs(cls, callName, true, args );
+  }
+  public static Method getMethodForArgs( Class< ? > cls, String callName,
+                                         boolean complain,
+                                         Object... args ) {
         if ( Debug.isOn() ) Debug.outln( "getMethodForArgs( cls="
                                          + ( cls == null ? "null"
                                                          : cls.getName() )
@@ -1255,15 +1260,23 @@ public class ClassUtils {
   //    } else {
         argTypes = getClasses( args );
   //    }
-      return getMethodForArgTypes( cls, callName, argTypes );
+      return getMethodForArgTypes( cls, callName, argTypes, complain );
     }
 
   public static Method getMethodForArgTypes( String className,
                                              String preferredPackage,
                                              String callName,
                                              Class<?>... argTypes ) {
+      return getMethodForArgTypes( className, preferredPackage, callName, true,
+                                   argTypes );
+  }
+  public static Method getMethodForArgTypes( String className,
+                                             String preferredPackage,
+                                             String callName,
+                                             boolean complain,
+                                             Class<?>... argTypes ) {
     return getMethodForArgTypes( className, preferredPackage, callName,
-                                 argTypes, true );
+                                 argTypes, complain );
   }
 
   private static int lengthOfCommonPrefix( String s1, String s2 ) {
@@ -1831,12 +1844,12 @@ public class ClassUtils {
   public static Object getId( Object o ) {
     try {
         for ( String fieldName : new String[] { "id", "ID", "Id" } ) {
-            Object oId = ClassUtils.getFieldValue( o, fieldName );
+            Object oId = ClassUtils.getFieldValue( o, fieldName, true );
             if ( oId != null ) return oId;
         }
         for ( String methodName : new String[] { "getId", "getID", "id", "ID" } ) {
             Method m = ClassUtils.getMethodForArgs( o.getClass(),
-                                                    methodName, (Object[])null );
+                                                    methodName, false, (Object[])null );
             if ( m != null ) {
                 Object oId = m.invoke( o, (Object[])null );
                 if ( oId != null ) return oId;
@@ -1854,12 +1867,12 @@ public class ClassUtils {
   public static Object getName( Object o ) {
       try {
           for ( String fieldName : new String[] { "name", "NAME", "Name" } ) {
-              Object oId = ClassUtils.getFieldValue( o, fieldName );
+              Object oId = ClassUtils.getFieldValue( o, fieldName, true );
               if ( oId != null ) return oId;
           }
           for ( String methodName : new String[] { "getName", "get_name", "name", "NAME", "Name" } ) {
               Method m = ClassUtils.getMethodForArgs( o.getClass(),
-                                                      methodName, (Object[])null );
+                                                      methodName, false, (Object[])null );
               if ( m != null ) {
                   Object oId = m.invoke( o, (Object[])null );
                   if ( oId != null ) return oId;
@@ -1869,6 +1882,61 @@ public class ClassUtils {
           // ignore
       }
       return null;
+    }
+
+    // REVIEW -- consider walking through the fields and methods and matching
+    // lowercase on "get" and "type"; Do the same for getId() and getName().
+    // REVIEW -- consider genericizing as getMemberValue()
+    public static Object getType( Object o ) {
+        try {
+            for ( String fieldName : new String[] { "type", "TYPE", "Type",
+                                                   "class", "CLASS", "Class" } ) {
+                Object oId = ClassUtils.getFieldValue( o, fieldName, true );
+                if ( oId != null ) return oId;
+            }
+            for ( String methodName : new String[] { "getType", "get_type",
+                                                    "type", "TYPE", "Type",
+                                                    "getClass", "get_class",
+                                                    "class", "CLASS", "Class" } ) {
+                Method m =
+                        ClassUtils.getMethodForArgs( o.getClass(), methodName,
+                                                     false, (Object[])null );
+                if ( m != null ) {
+                    Object oId = m.invoke( o, (Object[])null );
+                    if ( oId != null ) return oId;
+                }
+            }
+        } catch ( Throwable t ) {
+            // ignore
+        }
+        return null;
+    }
+
+    // REVIEW -- consider walking through the fields and methods and matching
+    // lowercase on "get" and "value"; Do the same for getId() and getName().
+    // REVIEW -- consider genericizing as getMemberValue()
+    public static Object getValue( Object o ) {
+        try {
+            for ( String fieldName : new String[] { "value", "VALUE", "Value" } ) {
+                Object oId = ClassUtils.getFieldValue( o, fieldName, true );
+                if ( oId != null ) return oId;
+            }
+            for ( String methodName : new String[] { "getValue", "get_value",
+                                                    "value", "VALUE", "Value",
+                                                    "evaluate", "EVALUATE",
+                                                    "Evaluate" } ) {
+                Method m =
+                        ClassUtils.getMethodForArgs( o.getClass(), methodName,
+                                                     false, (Object[])null );
+                if ( m != null ) {
+                    Object oId = m.invoke( o, (Object[])null );
+                    if ( oId != null ) return oId;
+                }
+            }
+        } catch ( Throwable t ) {
+            // ignore
+        }
+        return null;
     }
 
   public static String parameterPartOfName( String longName ) {
