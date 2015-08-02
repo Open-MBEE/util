@@ -1419,8 +1419,10 @@ public class ClassUtils {
       try {
         methods = cls == null ? null : cls.getMethods();
       } catch ( Exception e ) {
-        System.err.println( "Got exception calling " + clsName
+          if ( complain ) {
+        Debug.error(true, false, "Got exception calling " + clsName
                             + ".getMethod(): " + e.getMessage() );
+          }
       }
       if ( Debug.isOn() ) Debug.outln( "--> got methods: " + Utils.toString( methods ) );
       ArgTypeCompare atc = new ArgTypeCompare( argTypes );
@@ -1444,7 +1446,7 @@ public class ClassUtils {
                                        + atc.mostMatchingArgs + " args: "
                                        + Utils.toString( argTypes ) );
       } else if ( atc.best == null && complain ) {
-        System.err.println( "method " + callName + "(" + Utils.toString( argTypes ) + ")"
+        Debug.error(true, false, "method " + callName + "(" + Utils.toString( argTypes ) + ")"
                             + " not found for " + clsName );
       }
       return (Method)atc.best;
@@ -1858,6 +1860,9 @@ public class ClassUtils {
     } catch ( Throwable t ) {
         // ignore
     }
+    if ( o instanceof Wraps ) {
+        return getId( ( (Wraps)o ).getValue( false ) );
+    }
     return null;
   }
 
@@ -1881,6 +1886,9 @@ public class ClassUtils {
       } catch ( Throwable t ) {
           // ignore
       }
+      if ( o instanceof Wraps ) {
+          return getName( ((Wraps)o).getValue( false ) );
+      }
       return null;
     }
 
@@ -1888,6 +1896,11 @@ public class ClassUtils {
     // lowercase on "get" and "type"; Do the same for getId() and getName().
     // REVIEW -- consider genericizing as getMemberValue()
     public static Object getType( Object o ) {
+        if ( o instanceof Wraps ) {
+            Object type = ( (Wraps)o ).getType();
+            if ( type != null ) return type;
+            return getType( ( (Wraps)o ).getValue( false ) );
+        }
         try {
             for ( String fieldName : new String[] { "type", "TYPE", "Type",
                                                    "class", "CLASS", "Class" } ) {
@@ -1916,7 +1929,11 @@ public class ClassUtils {
     // lowercase on "get" and "value"; Do the same for getId() and getName().
     // REVIEW -- consider genericizing as getMemberValue()
     public static Object getValue( Object o ) {
+        if ( o instanceof Wraps ) {
+           return ((Wraps)o).getValue( false );
+        }
         try {
+            //System.out.println("@@@@@@@@@@@   WHOA   @@@@@@@@@@@@@");
             for ( String fieldName : new String[] { "value", "VALUE", "Value" } ) {
                 Object oId = ClassUtils.getFieldValue( o, fieldName, true );
                 if ( oId != null ) return oId;
