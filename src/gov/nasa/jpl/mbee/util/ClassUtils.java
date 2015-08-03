@@ -1218,7 +1218,12 @@ public class ClassUtils {
                            String.class,
                            //org.apache.commons.lang.ArrayUtils.class,
                            Arrays.class,
-                           Collections.class };
+                           Collections.class,
+                           Utils.class,
+                           ClassUtils.class,
+                           TimeUtils.class,
+                           CompareUtils.class,
+                           FileUtils.class};
     for ( Class<?> c : classes ) {
       Method m = getMethodForArgTypes( c, functionName, argTypes );
       if ( m != null ) return m;
@@ -1634,9 +1639,13 @@ public class ClassUtils {
    * @return
    */
   public static Object getFieldValue( Object o, String fieldName ) {
-    return getFieldValue( o, fieldName, false );
+    return getFieldValue( o, fieldName, false, false );
   }
 
+  protected static final String[] candidateMethodNames =
+          new String[]{ "getMember", "getValueNoPropagate", "getValue",
+                        "getField", "get" };
+  
   /**
    * Get the value of the object's field with with the given fieldName using
    * reflection.
@@ -1648,6 +1657,12 @@ public class ClassUtils {
    * @return the value of the field
    */
   public static Object getFieldValue( Object o, String fieldName,
+                                      boolean suppressExceptions ) {
+      return getFieldValue( o, fieldName, true, suppressExceptions );
+  }
+  
+  public static Object getFieldValue( Object o, String fieldName,
+                                      boolean tryMethods,
                                       boolean suppressExceptions ) {
     if ( o == null || Utils.isNullOrEmpty( fieldName ) ) {
       return null;
@@ -1672,7 +1687,7 @@ public class ClassUtils {
 //                        fieldName );
 //}
     Object result = null;
-    String[] candidateMethodNames = new String[]{ "getMember", "getValueNoPropagate", "getValue", "getField", "get" };
+    if ( tryMethods ) {
     for ( String mName : candidateMethodNames ) {
       Method m = getMethodForArgs( o.getClass(), mName, fieldName );
       if ( m == null ) m = getMethodForArgs( o.getClass(), mName );
@@ -1681,7 +1696,7 @@ public class ClassUtils {
           boolean gotArgs = Utils.isNullOrEmpty( m.getParameterTypes() );
           Object[] args = gotArgs ? new Object[]{} : new Object[]{ fieldName };
           result = m.invoke( o, args );
-          if ( !gotArgs ) return getFieldValue( result, fieldName, suppressExceptions );
+          if ( !gotArgs && result != null ) return getFieldValue( result, fieldName, false, true );
           return result;
         } catch ( IllegalArgumentException e ) {
             // ex is already non-null, so no need to assign it here.
@@ -1690,8 +1705,9 @@ public class ClassUtils {
         }
       }
     }
+    }
     if ( !suppressExceptions && result == null && ex != null ) {
-      // TODO Auto-generated catch block
+      //System.out.println("$$$$$$$$$   WTF  $$$$$$$$$$");
       ex.printStackTrace();
     }
     return null;
@@ -1839,17 +1855,24 @@ public class ClassUtils {
 //          }
 //      }
   }
+  
+  protected static final String[] idStrings = new String[] { "id", "ID", "Id" };
+  protected static final String[] idMethodStrings =
+          new String[] { "getId", "getID", "id", "ID" };
 
   // REVIEW -- consider walking through the fields and methods and matching
   // lowercase on "get" and "id"; Do the same for getName()
   // REVIEW -- consider genericizing as getMemberValue()
   public static Object getId( Object o ) {
+    if ( o instanceof HasId ) {
+      return ((HasId<?>)o).getId();
+    }
     try {
-        for ( String fieldName : new String[] { "id", "ID", "Id" } ) {
-            Object oId = ClassUtils.getFieldValue( o, fieldName, true );
+        for ( String fieldName : idStrings ) {
+            Object oId = ClassUtils.getFieldValue( o, fieldName, false, true );
             if ( oId != null ) return oId;
         }
-        for ( String methodName : new String[] { "getId", "getID", "id", "ID" } ) {
+        for ( String methodName : idMethodStrings ) {
             Method m = ClassUtils.getMethodForArgs( o.getClass(),
                                                     methodName, false, (Object[])null );
             if ( m != null ) {
@@ -1866,16 +1889,24 @@ public class ClassUtils {
     return null;
   }
 
+  protected static final String[] nameStrings =
+          new String[] { "name", "NAME", "Name" };
+  protected static final String[] nameMethodStrings = 
+          new String[] { "getName", "get_name", "name", "NAME", "Name" };
+
   // REVIEW -- consider walking through the fields and methods and matching
   // lowercase on "get" and "name"; Do the same for getId().
   // REVIEW -- consider genericizing as getMemberValue()
   public static Object getName( Object o ) {
+      if ( o instanceof HasName ) {
+          return ( (HasName< ? >)o ).getName();
+      }
       try {
-          for ( String fieldName : new String[] { "name", "NAME", "Name" } ) {
-              Object oId = ClassUtils.getFieldValue( o, fieldName, true );
+          for ( String fieldName : nameStrings ) {
+              Object oId = ClassUtils.getFieldValue( o, fieldName, false, true );
               if ( oId != null ) return oId;
           }
-          for ( String methodName : new String[] { "getName", "get_name", "name", "NAME", "Name" } ) {
+          for ( String methodName : nameMethodStrings ) {
               Method m = ClassUtils.getMethodForArgs( o.getClass(),
                                                       methodName, false, (Object[])null );
               if ( m != null ) {
@@ -1892,6 +1923,12 @@ public class ClassUtils {
       return null;
     }
 
+    protected static final String[] typeStrings =
+            new String[] { "type", "TYPE", "Type", "class", "CLASS", "Class" };
+    protected static final String[] typeMethodStrings =
+            new String[] { "getType", "get_type", "type", "TYPE", "Type",
+                          "getClass", "get_class", "class", "CLASS", "Class" };
+  
     // REVIEW -- consider walking through the fields and methods and matching
     // lowercase on "get" and "type"; Do the same for getId() and getName().
     // REVIEW -- consider genericizing as getMemberValue()
@@ -1902,15 +1939,11 @@ public class ClassUtils {
             return getType( ( (Wraps)o ).getValue( false ) );
         }
         try {
-            for ( String fieldName : new String[] { "type", "TYPE", "Type",
-                                                   "class", "CLASS", "Class" } ) {
-                Object oId = ClassUtils.getFieldValue( o, fieldName, true );
+            for ( String fieldName : typeStrings ) {
+                Object oId = ClassUtils.getFieldValue( o, fieldName, false, true );
                 if ( oId != null ) return oId;
             }
-            for ( String methodName : new String[] { "getType", "get_type",
-                                                    "type", "TYPE", "Type",
-                                                    "getClass", "get_class",
-                                                    "class", "CLASS", "Class" } ) {
+            for ( String methodName : typeMethodStrings ) {
                 Method m =
                         ClassUtils.getMethodForArgs( o.getClass(), methodName,
                                                      false, (Object[])null );
@@ -1925,6 +1958,12 @@ public class ClassUtils {
         return null;
     }
 
+    protected static final String[] valueStrings =
+            new String[] { "value", "VALUE", "Value" };
+    protected static final String[] valueMethodStrings =
+            new String[] { "getValue", "get_value", "value", "VALUE", "Value",
+                           "evaluate", "EVALUATE", "Evaluate" };
+
     // REVIEW -- consider walking through the fields and methods and matching
     // lowercase on "get" and "value"; Do the same for getId() and getName().
     // REVIEW -- consider genericizing as getMemberValue()
@@ -1933,15 +1972,11 @@ public class ClassUtils {
            return ((Wraps)o).getValue( false );
         }
         try {
-            //System.out.println("@@@@@@@@@@@   WHOA   @@@@@@@@@@@@@");
-            for ( String fieldName : new String[] { "value", "VALUE", "Value" } ) {
-                Object oId = ClassUtils.getFieldValue( o, fieldName, true );
+            for ( String fieldName : valueStrings ) {
+                Object oId = ClassUtils.getFieldValue( o, fieldName, false, true );
                 if ( oId != null ) return oId;
             }
-            for ( String methodName : new String[] { "getValue", "get_value",
-                                                    "value", "VALUE", "Value",
-                                                    "evaluate", "EVALUATE",
-                                                    "Evaluate" } ) {
+            for ( String methodName : valueMethodStrings ) {
                 Method m =
                         ClassUtils.getMethodForArgs( o.getClass(), methodName,
                                                      false, (Object[])null );
