@@ -51,6 +51,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Vector;
 
 import junit.framework.Assert;
 
@@ -64,11 +65,15 @@ public class ClassUtils {
       //public Class<?>[] candidateArgTypes = null;
       public Class<?>[] referenceArgTypes = null;
   //    public boolean isVarArgs = false;
+      public Object referenceObject = null;
+      public Class<?> referenceClass = null;
+      public Boolean hasPreference = null;
 
       public int numMatching = 0;
       public int numNull = 0;
       public int numDeps = 0;
       public boolean okNumArgs = false;
+      public int preferenceRank = Integer.MAX_VALUE;
 
       public T best = null;
       public boolean gotOkNumArgs = false;
@@ -76,6 +81,8 @@ public class ClassUtils {
       public int mostDeps = 0;
       public boolean allArgsMatched = false;
       public boolean allNonNullArgsMatched = false;
+      public Class<?>[] bestCandidateArgTypes = null;
+      public int bestPreferenceRank = Integer.MAX_VALUE;
       public double bestScore = Double.MAX_VALUE;
 
       /**
@@ -88,11 +95,27 @@ public class ClassUtils {
         this.referenceArgTypes = referenceArgTypes;
       }
 
+      public ArgTypeCompare( Object obj, Class<?> cls, Class< ? >[] referenceArgTypes ) {
+          super();
+          this.referenceObject = obj;
+          this.referenceClass = cls != null ? cls : (obj == null ? null : obj.getClass());
+          this.referenceArgTypes = referenceArgTypes;
+      }
+      
+      public boolean hasPreference() {
+          if ( referenceObject != null ) return referenceObject instanceof HasPreference;
+          if ( hasPreference == null && referenceClass != null ) {
+              hasPreference = HasPreference.Helper.classHasPreference( referenceClass );
+          }
+          return hasPreference;
+      }
+
       public void compare( T o, Class<?>[] candidateArgTypes,
                            boolean isVarArgs ) {
         numMatching = 0;
         numNull = 0;
         numDeps = 0;
+        preferenceRank = Integer.MAX_VALUE;
         boolean debugWasOn = Debug.isOn();
         if ( debugWasOn ) Debug.turnOff();
   //      double score = numArgsCost + argMismatchCost * argTypes.length;
@@ -149,16 +172,26 @@ public class ClassUtils {
                            + referenceArgTypes[ i ] );
           }
         }
+        
+        boolean isPreferred = false;
+        if ( referenceObject != null && bestCandidateArgTypes != null && hasPreference() ) {
+            isPreferred = ((HasPreference)referenceObject).prefer( candidateArgTypes, bestCandidateArgTypes );
+            if ( isPreferred ) System.out.println( "=====================  YEAH!  ======================" );
+        }
+        
         if ( ( best == null )
             || ( !gotOkNumArgs && okNumArgs )
             || ( ( gotOkNumArgs == okNumArgs )
                  && ( ( numMatching > mostMatchingArgs )
                       || ( ( numMatching == mostMatchingArgs )
-                           && ( numDeps > mostDeps ) ) ) ) ) {
+                           && ( ( numDeps > mostDeps )
+                                   || ( ( numDeps == mostDeps )
+                                        && isPreferred ) ) ) ) ) ) {
          best = o;
          gotOkNumArgs = okNumArgs;
          mostMatchingArgs = numMatching;
          mostDeps = numDeps;
+         bestCandidateArgTypes = candidateArgTypes;
          allArgsMatched = ( numMatching >= candidateArgsLength );
          allNonNullArgsMatched = ( numMatching + numNull >= candidateArgsLength );
            if ( Debug.isOn() ) Debug.outln( "new match " + o + ", mostMatchingArgs="
@@ -920,6 +953,72 @@ public class ClassUtils {
     return getConstructorForArgTypes( classForName, argTypes );
   }
 
+  
+  public static Vector<Object> wrappedObjects( Object object, boolean propagate  ) {
+      Vector< Object > list = new Vector<Object>();
+      if ( object == null ) return list;
+      Seen<Object> seen = null;
+      Object o = object;
+      Pair< Boolean, Seen< Object > > p;
+      while ( !(p = Utils.seen( o, true, seen )).first ) {
+          seen = p.second;
+          list.add( o );
+          if ( o instanceof Wraps ) {
+              o = ((Wraps)o).getValue( propagate );
+          } else break;
+      }
+      return list;
+  }
+  
+  public static boolean classMatches( Class<?> parentCls, Object object, boolean propagate ) {
+      if ( object == null ) return false;
+      Seen<Object> seen = null;
+      Object o = object;
+      Pair< Boolean, Seen< Object > > p;
+      while ( !(p = Utils.seen( o, true, seen )).first ) {
+          seen = p.second;
+          Class<?> c = o.getClass();
+          if ( parentCls.isInstance( o ) ) return true;
+          if ( o instanceof Class ) {
+              Class<?> oc = (Class<?>)o;
+              if ( parentCls.isAssignableFrom( c ) ) return true;
+              // REVIEW -- try c.isAssignable( cls )?
+          }
+          if ( o instanceof Wraps ) {
+              o = ((Wraps)o).getValue( propagate );
+              if ( o == null ) break;
+          } else break;
+      }
+      return false;
+  }
+  
+  
+    public static boolean classesMatch( Class< ? >[] parentClasses,
+                                        Object[] instances, boolean propagate ) {
+        if ( parentClasses == instances ) return true;
+        if ( parentClasses == null || instances == null ) return false;
+        if ( parentClasses.length != instances.length ) return false;
+        for ( int i = 0; i < parentClasses.length; ++i ) {
+            if ( !classMatches( parentClasses[ i ], instances[ i ], propagate ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean classesMatch( Class< ? >[] parentClasses,
+                                        Class< ? >[] subclasses ) {
+        if ( parentClasses == subclasses ) return true;
+        if ( parentClasses == null || subclasses == null ) return false;
+        if ( parentClasses.length != subclasses.length ) return false;
+        for ( int i = 0; i < parentClasses.length; ++i ) {
+            if ( !parentClasses[ i ].isAssignableFrom( subclasses[ i ] ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+  
   public static Class<?>[] getClasses( Object[] objects ) {
     //return toClass( objects );
     Class< ? > argTypes[] = null;
@@ -1382,6 +1481,11 @@ public class ClassUtils {
   }
   public static Method getMethodForArgTypes( Class< ? > cls, String callName,
                                              Class<?>[] argTypes, boolean complain ) {
+      return getMethodForArgTypes( null, cls, callName, argTypes, complain );
+      
+  }
+  public static Method getMethodForArgTypes( Object object, Class< ? > cls, String callName,
+                                             Class<?>[] argTypes, boolean complain ) {
   //    return getMethodForArgTypes( cls, callName, argTypes, 10.0, 2.0, null );
   //  }
   //  public static Method getMethodForArgTypes( Class< ? > cls, String callName,
@@ -1430,7 +1534,7 @@ public class ClassUtils {
           }
       }
       if ( Debug.isOn() ) Debug.outln( "--> got methods: " + Utils.toString( methods ) );
-      ArgTypeCompare atc = new ArgTypeCompare( argTypes );
+      ArgTypeCompare atc = new ArgTypeCompare( object, cls, argTypes );
       if ( methods != null ) {
         for ( Method m : methods ) {
           if ( m.getName().equals( callName ) ) {

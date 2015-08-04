@@ -48,6 +48,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -946,6 +947,107 @@ public class Utils {
 
   public static <T1, T2> boolean valuesEqual( T1 v1, T2 v2 ) {
     return v1 == v2 || ( v1 != null && v1.equals( v2 ) );
+  }
+  
+  public static <T1, T2> boolean valuesLooselyEqual( T1 v1, T2 v2,
+                                                     boolean propagate  ) {
+      return valuesLooselyEqual( v1, v2, true, propagate );
+  }
+  public static <T1, T2> boolean valuesLooselyEqual( T1 v1, T2 v2, boolean checkWrap,
+                                                     boolean propagate  ) {
+      Seen<Object> seen1 = null;
+      Object vv1 = v1;
+      while ( true ) {
+          Pair< Boolean, Seen< Object > > p1 = Utils.seen( vv1, true, seen1 );
+          if ( p1.first ) break;
+          seen1 = p1.second;
+          Object vv2 = v2;
+          Seen<Object> seen2 = null;
+          while ( true ) {
+              Pair< Boolean, Seen< Object > > p2 = Utils.seen( vv2, true, seen2 );
+              if ( p2.first ) break;
+              seen2 = p2.second;
+              
+              if ( valuesLooselyEqualNoWrap( vv1, vv2, propagate ) ) return true;
+              
+              if ( checkWrap && vv2 instanceof Wraps )
+                  vv2 = ((Wraps<?>)vv2).getValue( propagate );
+              else break;
+          }
+          if ( checkWrap && vv1 instanceof Wraps )
+              vv1 = ((Wraps<?>)vv1).getValue( propagate );
+          else break;
+      }
+      return false;
+  }
+
+  public static <T1, T2> boolean valuesLooselyEqualNoWrap( T1 v1, T2 v2, boolean propagate  ) {
+      // Plain values
+      if ( valuesEqual( v1, v2 ) ) return true;
+      
+      // Check null
+      if ( v1 == null || v2 == null ) return false;
+      
+      // Classes
+      if ( v1 instanceof Class ) {
+          if ( ClassUtils.classMatches( (Class<?>)v1, v2, propagate ) ) {
+              return true;  
+          }
+          if ( !( v2 instanceof Class ) ) return false;
+      }
+      if ( v2 instanceof Class ) {
+          return ClassUtils.classMatches( (Class<?>)v2, v1, propagate );
+      }
+
+      // Collections and arrays
+      Collection<?> v1c = ( v1 instanceof Collection ) ? (Collection<?>)v1 : null;
+      Object[] v1a = (v1c == null && v1.getClass().isArray()) ? (Object[])v1 : null;
+      if ( v1c != null || v1a != null ) {
+          Collection<?> v2c = ( v2 instanceof Collection ) ? (Collection<?>)v2 : null;
+          Object[] v2a = (v2c == null && v2.getClass().isArray()) ? (Object[])v2 : null;
+          if ( v2c == null && v2a == null ) return false;
+          int s1 = v1c == null ? v1a.length : v1c.size();
+          int s2 = v2c == null ? v2a.length : v2c.size();
+          if ( s1 != s2 ) return false;
+          Iterator<?> i1 = v1c == null ? null : v1c.iterator();
+          Iterator<?> i2 = v2c == null ? null : v2c.iterator();
+          for ( int i = 0; i < s1; ++i ) {
+              Object vv1 = v1c == null ? v1a[i] : i1.next(); 
+              Object vv2 = v2c == null ? v2a[i] : i2.next();
+              if ( !valuesLooselyEqual( vv1, vv2, propagate ) ) return false;
+          }
+          return true;
+      }
+      
+      // Pairs
+      if ( ( v1 instanceof Pair ) && ( v2 instanceof Pair ) ) {
+          Pair<?,?> p1 = (Pair<?,?>)v1;
+          Pair<?,?> p2 = (Pair<?,?>)v2;
+          return valuesLooselyEqual( p1.first, p2.first, propagate ) &&
+               valuesLooselyEqual( p1.second, p2.second, propagate );
+      }
+      
+      // Map entries
+      if ( ( v1 instanceof Entry ) && ( v2 instanceof Entry ) ) {
+          return valuesLooselyEqual( ((Entry< ?, ? >)v1).getKey(),
+                                     ((Entry< ?, ? >)v2).getKey(), propagate ) &&
+                 valuesLooselyEqual( ((Entry< ?, ? >)v1).getValue(),
+                                     ((Entry< ?, ? >)v2).getValue(), propagate );
+      }
+      
+      // Maps
+      if ( ( v1 instanceof Map ) && ( v2 instanceof Map ) ) {
+          Map<?,?> m1 = (Map<?,?>)v1;
+          Map<?,?> m2 = (Map<?,?>)v2;
+          if ( m1.size() != m2.size() ) return false;
+          for ( Object k : m1.keySet() ) {
+              if ( !m2.containsKey( k ) ) return false;  // REVIEW -- try do loosely equal here?
+              if ( !valuesLooselyEqual( m1.get( k ), m2.get( k ), propagate ) ) return false;
+          }
+          return true;
+      }
+      
+      return false;
   }
 
   public static String toStringNoHash( Object o ) {
