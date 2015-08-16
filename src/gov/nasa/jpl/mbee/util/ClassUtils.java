@@ -2446,6 +2446,16 @@ public class ClassUtils {
     // Try to evaluate object or dig inside to get the object of the right type.
     Object value = null;
 
+    if ( object instanceof Wraps ) {
+        Object wrappedObj = ( (Wraps)object ).getValue( propagate );
+        try {
+            value = evaluate( wrappedObj, cls, propagate );
+            if ( value != null ) return (TT)value;
+        } catch ( Throwable e ) {
+            // ignore
+        }
+    }
+    
     if ( object instanceof Collection ) {
         Collection<?> coll = (Collection<?>)object;
         if ( coll.size() == 1 ) {
@@ -2473,17 +2483,27 @@ public class ClassUtils {
 //      value = ( (Call)object ).evaluate( propagate );
 //      return evaluate( value, cls, propagate, allowWrapping );
 //    } else
-    if ( cls != null && ClassUtils.isNumber( cls ) &&
-                ClassUtils.isNumber( object.getClass() ) ) {
-      try {
-        Number n = (Number)object;
-        TT tt = castNumber( n, cls );
-        if ( tt != null || object == null ) {
-            return tt;
+    if ( cls != null && ClassUtils.isNumber( cls ) ) {
+        if ( ClassUtils.isNumber( object.getClass() ) ) {
+            try {
+                Number n = (Number)object;
+                TT tt = castNumber( n, cls );
+                if ( tt != null || object == null ) {
+                    return tt;
+                }
+            } catch ( Exception e ) {
+                // warning?  we shouldn't get here, right?
+            }
+        } else {
+            // try to make the string a number
+            try {
+                String s = evaluate( object, String.class, propagate );
+                Double d = new Double( s );
+                if ( d != null ) {
+                    return evaluate( d, cls, propagate );
+                }
+            } catch (Throwable t) {}
         }
-      } catch ( Exception e ) {
-        // ignore
-      }
     }
 
     // if
