@@ -731,6 +731,26 @@ public class Utils {
         }
         return target;
     }
+    
+    public static <ID, T> Map<ID, T> toMap( Collection<T> set ) {
+        LinkedHashMap< ID, T > map = new LinkedHashMap< ID, T >();
+        for ( T t : set ) {
+        	ID id = null;
+        	try
+        	{ id = (ID) ClassUtils.getId( t ); }
+        	catch
+        	( Throwable e ) { Debug.error("Could not get ID for toMap"); return null; }
+        	if (id == null)
+        	{
+        		Debug.error("ID returned with value of null");
+        	}
+        	else
+        	{
+        		map.put( id, t );
+        	}
+        }
+        return map;
+    }
 
   /**
    * @param c

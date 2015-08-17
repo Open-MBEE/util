@@ -1827,6 +1827,10 @@ public class ClassUtils {
   // REVIEW -- consider genericizing as getMemberValue()
   public static Object getId( Object o ) {
     try {
+    	if (o instanceof HasId)
+    	{
+    		return ((HasId) o).getId();
+    	}
         for ( String fieldName : new String[] { "id", "ID", "Id" } ) {
             Object oId = ClassUtils.getFieldValue( o, fieldName );
             if ( oId != null ) return oId;
