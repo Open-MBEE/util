@@ -1977,7 +1977,7 @@ public class ClassUtils {
     		return ((HasId) o).getId();
     	}
         for ( String fieldName : new String[] { "id", "ID", "Id" } ) {
-            Object oId = ClassUtils.getFieldValue( o, fieldName );
+            Object oId = ClassUtils.getFieldValue( o, fieldName, false, true );
             if ( oId != null ) return oId;
         }
         for ( String methodName : idMethodStrings ) {
