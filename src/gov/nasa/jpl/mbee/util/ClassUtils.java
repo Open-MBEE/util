@@ -51,6 +51,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Vector;
 
 import junit.framework.Assert;
 
@@ -64,11 +65,15 @@ public class ClassUtils {
       //public Class<?>[] candidateArgTypes = null;
       public Class<?>[] referenceArgTypes = null;
   //    public boolean isVarArgs = false;
+      public Object referenceObject = null;
+      public Class<?> referenceClass = null;
+      public Boolean hasPreference = null;
 
       public int numMatching = 0;
       public int numNull = 0;
       public int numDeps = 0;
       public boolean okNumArgs = false;
+      public int preferenceRank = Integer.MAX_VALUE;
 
       public T best = null;
       public boolean gotOkNumArgs = false;
@@ -76,6 +81,8 @@ public class ClassUtils {
       public int mostDeps = 0;
       public boolean allArgsMatched = false;
       public boolean allNonNullArgsMatched = false;
+      public Class<?>[] bestCandidateArgTypes = null;
+      public int bestPreferenceRank = Integer.MAX_VALUE;
       public double bestScore = Double.MAX_VALUE;
 
       /**
@@ -88,11 +95,27 @@ public class ClassUtils {
         this.referenceArgTypes = referenceArgTypes;
       }
 
+      public ArgTypeCompare( Object obj, Class<?> cls, Class< ? >[] referenceArgTypes ) {
+          super();
+          this.referenceObject = obj;
+          this.referenceClass = cls != null ? cls : (obj == null ? null : obj.getClass());
+          this.referenceArgTypes = referenceArgTypes;
+      }
+      
+      public boolean hasPreference() {
+          if ( referenceObject != null ) return referenceObject instanceof HasPreference;
+          if ( hasPreference == null && referenceClass != null ) {
+              hasPreference = HasPreference.Helper.classHasPreference( referenceClass );
+          }
+          return hasPreference;
+      }
+
       public void compare( T o, Class<?>[] candidateArgTypes,
                            boolean isVarArgs ) {
         numMatching = 0;
         numNull = 0;
         numDeps = 0;
+        preferenceRank = Integer.MAX_VALUE;
         boolean debugWasOn = Debug.isOn();
         if ( debugWasOn ) Debug.turnOff();
   //      double score = numArgsCost + argMismatchCost * argTypes.length;
@@ -149,16 +172,26 @@ public class ClassUtils {
                            + referenceArgTypes[ i ] );
           }
         }
+        
+        boolean isPreferred = false;
+        if ( referenceObject != null && bestCandidateArgTypes != null && hasPreference() ) {
+            isPreferred = ((HasPreference)referenceObject).prefer( candidateArgTypes, bestCandidateArgTypes );
+            if ( isPreferred ) System.out.println( "=====================  YEAH!  ======================" );
+        }
+        
         if ( ( best == null )
             || ( !gotOkNumArgs && okNumArgs )
             || ( ( gotOkNumArgs == okNumArgs )
                  && ( ( numMatching > mostMatchingArgs )
                       || ( ( numMatching == mostMatchingArgs )
-                           && ( numDeps > mostDeps ) ) ) ) ) {
+                           && ( ( numDeps > mostDeps )
+                                   || ( ( numDeps == mostDeps )
+                                        && isPreferred ) ) ) ) ) ) {
          best = o;
          gotOkNumArgs = okNumArgs;
          mostMatchingArgs = numMatching;
          mostDeps = numDeps;
+         bestCandidateArgTypes = candidateArgTypes;
          allArgsMatched = ( numMatching >= candidateArgsLength );
          allNonNullArgsMatched = ( numMatching + numNull >= candidateArgsLength );
            if ( Debug.isOn() ) Debug.outln( "new match " + o + ", mostMatchingArgs="
@@ -644,6 +677,7 @@ public class ClassUtils {
   // TODO -- expand to include member names, too: className -> memberName -> Class
   public static Map< String, Class< ? > > classCache =
       Collections.synchronizedMap( new HashMap< String, Class< ? > >() );
+  
 
   public static Class<?> getClassForName(String className, String memberName,
 		  								 String[] packages,  boolean initialize) {
@@ -716,6 +750,8 @@ public class ClassUtils {
   public static HashMap< String, List< Class<?> > > classesCache =
       new HashMap< String, List<Class<?>> >();
 
+  public static boolean optimistic = false;  // try to find again even if failed in the past
+  
   public static List< Class< ? > > getClassesForName( String className,
                                                         boolean initialize ) {
   //                                                    ClassLoader loader,
@@ -723,7 +759,7 @@ public class ClassUtils {
     if ( Debug.isOn() ) Debug.outln( "getClassesForName( " + className + " )" );
     List< Class< ? > > classList = classesCache.get( className );
     if ( Debug.isOn() ) Debug.outln("classList " + classList + " from classesCache " + classesCache );
-    if ( !Utils.isNullOrEmpty( classList ) ) {
+    if ( classList != null && ( !optimistic || !classList.isEmpty() ) ) {
       if ( Debug.isOn() ) Debug.outln( "getClassesForName( " + className + " ) returning " + classList );
       return classList;
     }
@@ -771,7 +807,7 @@ public class ClassUtils {
           if ( classForName != null ) classList.add( classForName );
         }
       }
-      if ( !Utils.isNullOrEmpty( classList ) ) {
+      if ( classList != null ) {
         classesCache.put( className, classList );
       }
       if ( Debug.isOn() ) Debug.outln( "getClassesForName( " + className + " ) returning " + classList );
@@ -917,6 +953,72 @@ public class ClassUtils {
     return getConstructorForArgTypes( classForName, argTypes );
   }
 
+  
+  public static Vector<Object> wrappedObjects( Object object, boolean propagate  ) {
+      Vector< Object > list = new Vector<Object>();
+      if ( object == null ) return list;
+      Seen<Object> seen = null;
+      Object o = object;
+      Pair< Boolean, Seen< Object > > p;
+      while ( !(p = Utils.seen( o, true, seen )).first ) {
+          seen = p.second;
+          list.add( o );
+          if ( o instanceof Wraps ) {
+              o = ((Wraps)o).getValue( propagate );
+          } else break;
+      }
+      return list;
+  }
+  
+  public static boolean classMatches( Class<?> parentCls, Object object, boolean propagate ) {
+      if ( object == null ) return false;
+      Seen<Object> seen = null;
+      Object o = object;
+      Pair< Boolean, Seen< Object > > p;
+      while ( !(p = Utils.seen( o, true, seen )).first ) {
+          seen = p.second;
+          Class<?> c = o.getClass();
+          if ( parentCls.isInstance( o ) ) return true;
+          if ( o instanceof Class ) {
+              Class<?> oc = (Class<?>)o;
+              if ( parentCls.isAssignableFrom( c ) ) return true;
+              // REVIEW -- try c.isAssignable( cls )?
+          }
+          if ( o instanceof Wraps ) {
+              o = ((Wraps)o).getValue( propagate );
+              if ( o == null ) break;
+          } else break;
+      }
+      return false;
+  }
+  
+  
+    public static boolean classesMatch( Class< ? >[] parentClasses,
+                                        Object[] instances, boolean propagate ) {
+        if ( parentClasses == instances ) return true;
+        if ( parentClasses == null || instances == null ) return false;
+        if ( parentClasses.length != instances.length ) return false;
+        for ( int i = 0; i < parentClasses.length; ++i ) {
+            if ( !classMatches( parentClasses[ i ], instances[ i ], propagate ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean classesMatch( Class< ? >[] parentClasses,
+                                        Class< ? >[] subclasses ) {
+        if ( parentClasses == subclasses ) return true;
+        if ( parentClasses == null || subclasses == null ) return false;
+        if ( parentClasses.length != subclasses.length ) return false;
+        for ( int i = 0; i < parentClasses.length; ++i ) {
+            if ( !parentClasses[ i ].isAssignableFrom( subclasses[ i ] ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+  
   public static Class<?>[] getClasses( Object[] objects ) {
     //return toClass( objects );
     Class< ? > argTypes[] = null;
@@ -1215,7 +1317,12 @@ public class ClassUtils {
                            String.class,
                            //org.apache.commons.lang.ArrayUtils.class,
                            Arrays.class,
-                           Collections.class };
+                           Collections.class,
+                           Utils.class,
+                           ClassUtils.class,
+                           TimeUtils.class,
+                           CompareUtils.class,
+                           FileUtils.class};
     for ( Class<?> c : classes ) {
       Method m = getMethodForArgTypes( c, functionName, argTypes );
       if ( m != null ) return m;
@@ -1237,7 +1344,12 @@ public class ClassUtils {
   }
 
   public static Method getMethodForArgs( Class< ? > cls, String callName,
-                                           Object... args ) {
+                                         Object... args ) {
+      return getMethodForArgs(cls, callName, true, args );
+  }
+  public static Method getMethodForArgs( Class< ? > cls, String callName,
+                                         boolean complain,
+                                         Object... args ) {
         if ( Debug.isOn() ) Debug.outln( "getMethodForArgs( cls="
                                          + ( cls == null ? "null"
                                                          : cls.getName() )
@@ -1252,15 +1364,23 @@ public class ClassUtils {
   //    } else {
         argTypes = getClasses( args );
   //    }
-      return getMethodForArgTypes( cls, callName, argTypes );
+      return getMethodForArgTypes( cls, callName, argTypes, complain );
     }
 
   public static Method getMethodForArgTypes( String className,
                                              String preferredPackage,
                                              String callName,
                                              Class<?>... argTypes ) {
+      return getMethodForArgTypes( className, preferredPackage, callName, true,
+                                   argTypes );
+  }
+  public static Method getMethodForArgTypes( String className,
+                                             String preferredPackage,
+                                             String callName,
+                                             boolean complain,
+                                             Class<?>... argTypes ) {
     return getMethodForArgTypes( className, preferredPackage, callName,
-                                 argTypes, true );
+                                 argTypes, complain );
   }
 
   private static int lengthOfCommonPrefix( String s1, String s2 ) {
@@ -1361,6 +1481,11 @@ public class ClassUtils {
   }
   public static Method getMethodForArgTypes( Class< ? > cls, String callName,
                                              Class<?>[] argTypes, boolean complain ) {
+      return getMethodForArgTypes( null, cls, callName, argTypes, complain );
+      
+  }
+  public static Method getMethodForArgTypes( Object object, Class< ? > cls, String callName,
+                                             Class<?>[] argTypes, boolean complain ) {
   //    return getMethodForArgTypes( cls, callName, argTypes, 10.0, 2.0, null );
   //  }
   //  public static Method getMethodForArgTypes( Class< ? > cls, String callName,
@@ -1403,11 +1528,13 @@ public class ClassUtils {
       try {
         methods = cls == null ? null : cls.getMethods();
       } catch ( Exception e ) {
-        System.err.println( "Got exception calling " + clsName
+          if ( complain ) {
+        Debug.error(true, false, "Got exception calling " + clsName
                             + ".getMethod(): " + e.getMessage() );
+          }
       }
       if ( Debug.isOn() ) Debug.outln( "--> got methods: " + Utils.toString( methods ) );
-      ArgTypeCompare atc = new ArgTypeCompare( argTypes );
+      ArgTypeCompare atc = new ArgTypeCompare( object, cls, argTypes );
       if ( methods != null ) {
         for ( Method m : methods ) {
           if ( m.getName().equals( callName ) ) {
@@ -1428,7 +1555,7 @@ public class ClassUtils {
                                        + atc.mostMatchingArgs + " args: "
                                        + Utils.toString( argTypes ) );
       } else if ( atc.best == null && complain ) {
-        System.err.println( "method " + callName + "(" + Utils.toString( argTypes ) + ")"
+        Debug.error(true, false, "method " + callName + "(" + Utils.toString( argTypes ) + ")"
                             + " not found for " + clsName );
       }
       return (Method)atc.best;
@@ -1616,9 +1743,13 @@ public class ClassUtils {
    * @return
    */
   public static Object getFieldValue( Object o, String fieldName ) {
-    return getFieldValue( o, fieldName, false );
+    return getFieldValue( o, fieldName, false, false );
   }
 
+  protected static final String[] candidateMethodNames =
+          new String[]{ "getMember", "getValueNoPropagate", "getValue",
+                        "getField", "get" };
+  
   /**
    * Get the value of the object's field with with the given fieldName using
    * reflection.
@@ -1630,6 +1761,12 @@ public class ClassUtils {
    * @return the value of the field
    */
   public static Object getFieldValue( Object o, String fieldName,
+                                      boolean suppressExceptions ) {
+      return getFieldValue( o, fieldName, true, suppressExceptions );
+  }
+  
+  public static Object getFieldValue( Object o, String fieldName,
+                                      boolean tryMethods,
                                       boolean suppressExceptions ) {
     if ( o == null || Utils.isNullOrEmpty( fieldName ) ) {
       return null;
@@ -1654,7 +1791,7 @@ public class ClassUtils {
 //                        fieldName );
 //}
     Object result = null;
-    String[] candidateMethodNames = new String[]{ "getMember", "getValueNoPropagate", "getValue", "getField", "get" };
+    if ( tryMethods ) {
     for ( String mName : candidateMethodNames ) {
       Method m = getMethodForArgs( o.getClass(), mName, fieldName );
       if ( m == null ) m = getMethodForArgs( o.getClass(), mName );
@@ -1663,7 +1800,7 @@ public class ClassUtils {
           boolean gotArgs = Utils.isNullOrEmpty( m.getParameterTypes() );
           Object[] args = gotArgs ? new Object[]{} : new Object[]{ fieldName };
           result = m.invoke( o, args );
-          if ( !gotArgs ) return getFieldValue( result, fieldName, suppressExceptions );
+          if ( !gotArgs && result != null ) return getFieldValue( result, fieldName, false, true );
           return result;
         } catch ( IllegalArgumentException e ) {
             // ex is already non-null, so no need to assign it here.
@@ -1672,8 +1809,9 @@ public class ClassUtils {
         }
       }
     }
+    }
     if ( !suppressExceptions && result == null && ex != null ) {
-      // TODO Auto-generated catch block
+      //System.out.println("$$$$$$$$$   WTF  $$$$$$$$$$");
       ex.printStackTrace();
     }
     return null;
@@ -1821,19 +1959,30 @@ public class ClassUtils {
 //          }
 //      }
   }
+  
+  protected static final String[] idStrings = new String[] { "id", "ID", "Id" };
+  protected static final String[] idMethodStrings =
+          new String[] { "getId", "getID", "id", "ID" };
 
   // REVIEW -- consider walking through the fields and methods and matching
   // lowercase on "get" and "id"; Do the same for getName()
   // REVIEW -- consider genericizing as getMemberValue()
   public static Object getId( Object o ) {
+    if ( o instanceof HasId ) {
+      return ((HasId<?>)o).getId();
+    }
     try {
+    	if (o instanceof HasId)
+    	{
+    		return ((HasId) o).getId();
+    	}
         for ( String fieldName : new String[] { "id", "ID", "Id" } ) {
-            Object oId = ClassUtils.getFieldValue( o, fieldName );
+            Object oId = ClassUtils.getFieldValue( o, fieldName, false, true );
             if ( oId != null ) return oId;
         }
-        for ( String methodName : new String[] { "getId", "getID", "id", "ID" } ) {
+        for ( String methodName : idMethodStrings ) {
             Method m = ClassUtils.getMethodForArgs( o.getClass(),
-                                                    methodName, (Object[])null );
+                                                    methodName, false, (Object[])null );
             if ( m != null ) {
                 Object oId = m.invoke( o, (Object[])null );
                 if ( oId != null ) return oId;
@@ -1842,21 +1991,32 @@ public class ClassUtils {
     } catch ( Throwable t ) {
         // ignore
     }
+    if ( o instanceof Wraps ) {
+        return getId( ( (Wraps)o ).getValue( false ) );
+    }
     return null;
   }
+
+  protected static final String[] nameStrings =
+          new String[] { "name", "NAME", "Name" };
+  protected static final String[] nameMethodStrings = 
+          new String[] { "getName", "get_name", "name", "NAME", "Name" };
 
   // REVIEW -- consider walking through the fields and methods and matching
   // lowercase on "get" and "name"; Do the same for getId().
   // REVIEW -- consider genericizing as getMemberValue()
   public static Object getName( Object o ) {
+      if ( o instanceof HasName ) {
+          return ( (HasName< ? >)o ).getName();
+      }
       try {
-          for ( String fieldName : new String[] { "name", "NAME", "Name" } ) {
-              Object oId = ClassUtils.getFieldValue( o, fieldName );
+          for ( String fieldName : nameStrings ) {
+              Object oId = ClassUtils.getFieldValue( o, fieldName, false, true );
               if ( oId != null ) return oId;
           }
-          for ( String methodName : new String[] { "getName", "get_name", "name", "NAME", "Name" } ) {
+          for ( String methodName : nameMethodStrings ) {
               Method m = ClassUtils.getMethodForArgs( o.getClass(),
-                                                      methodName, (Object[])null );
+                                                      methodName, false, (Object[])null );
               if ( m != null ) {
                   Object oId = m.invoke( o, (Object[])null );
                   if ( oId != null ) return oId;
@@ -1865,7 +2025,78 @@ public class ClassUtils {
       } catch ( Throwable t ) {
           // ignore
       }
+      if ( o instanceof Wraps ) {
+          return getName( ((Wraps)o).getValue( false ) );
+      }
       return null;
+    }
+
+    protected static final String[] typeStrings =
+            new String[] { "type", "TYPE", "Type", "class", "CLASS", "Class" };
+    protected static final String[] typeMethodStrings =
+            new String[] { "getType", "get_type", "type", "TYPE", "Type",
+                          "getClass", "get_class", "class", "CLASS", "Class" };
+  
+    // REVIEW -- consider walking through the fields and methods and matching
+    // lowercase on "get" and "type"; Do the same for getId() and getName().
+    // REVIEW -- consider genericizing as getMemberValue()
+    public static Object getType( Object o ) {
+        if ( o instanceof Wraps ) {
+            Object type = ( (Wraps)o ).getType();
+            if ( type != null ) return type;
+            return getType( ( (Wraps)o ).getValue( false ) );
+        }
+        try {
+            for ( String fieldName : typeStrings ) {
+                Object oId = ClassUtils.getFieldValue( o, fieldName, false, true );
+                if ( oId != null ) return oId;
+            }
+            for ( String methodName : typeMethodStrings ) {
+                Method m =
+                        ClassUtils.getMethodForArgs( o.getClass(), methodName,
+                                                     false, (Object[])null );
+                if ( m != null ) {
+                    Object oId = m.invoke( o, (Object[])null );
+                    if ( oId != null ) return oId;
+                }
+            }
+        } catch ( Throwable t ) {
+            // ignore
+        }
+        return null;
+    }
+
+    protected static final String[] valueStrings =
+            new String[] { "value", "VALUE", "Value" };
+    protected static final String[] valueMethodStrings =
+            new String[] { "getValue", "get_value", "value", "VALUE", "Value",
+                           "evaluate", "EVALUATE", "Evaluate" };
+
+    // REVIEW -- consider walking through the fields and methods and matching
+    // lowercase on "get" and "value"; Do the same for getId() and getName().
+    // REVIEW -- consider genericizing as getMemberValue()
+    public static Object getValue( Object o ) {
+        if ( o instanceof Wraps ) {
+           return ((Wraps)o).getValue( false );
+        }
+        try {
+            for ( String fieldName : valueStrings ) {
+                Object oId = ClassUtils.getFieldValue( o, fieldName, false, true );
+                if ( oId != null ) return oId;
+            }
+            for ( String methodName : valueMethodStrings ) {
+                Method m =
+                        ClassUtils.getMethodForArgs( o.getClass(), methodName,
+                                                     false, (Object[])null );
+                if ( m != null ) {
+                    Object oId = m.invoke( o, (Object[])null );
+                    if ( oId != null ) return oId;
+                }
+            }
+        } catch ( Throwable t ) {
+            // ignore
+        }
+        return null;
     }
 
   public static String parameterPartOfName( String longName ) {
@@ -2219,6 +2450,16 @@ public class ClassUtils {
     // Try to evaluate object or dig inside to get the object of the right type.
     Object value = null;
 
+    if ( object instanceof Wraps ) {
+        Object wrappedObj = ( (Wraps)object ).getValue( propagate );
+        try {
+            value = evaluate( wrappedObj, cls, propagate );
+            if ( value != null ) return (TT)value;
+        } catch ( Throwable e ) {
+            // ignore
+        }
+    }
+    
     if ( object instanceof Collection ) {
         Collection<?> coll = (Collection<?>)object;
         if ( coll.size() == 1 ) {
@@ -2246,17 +2487,27 @@ public class ClassUtils {
 //      value = ( (Call)object ).evaluate( propagate );
 //      return evaluate( value, cls, propagate, allowWrapping );
 //    } else
-    if ( cls != null && ClassUtils.isNumber( cls ) &&
-                ClassUtils.isNumber( object.getClass() ) ) {
-      try {
-        Number n = (Number)object;
-        TT tt = castNumber( n, cls );
-        if ( tt != null || object == null ) {
-            return tt;
+    if ( cls != null && ClassUtils.isNumber( cls ) ) {
+        if ( ClassUtils.isNumber( object.getClass() ) ) {
+            try {
+                Number n = (Number)object;
+                TT tt = castNumber( n, cls );
+                if ( tt != null || object == null ) {
+                    return tt;
+                }
+            } catch ( Exception e ) {
+                // warning?  we shouldn't get here, right?
+            }
+        } else {
+            // try to make the string a number
+            try {
+                String s = evaluate( object, String.class, propagate );
+                Double d = new Double( s );
+                if ( d != null ) {
+                    return evaluate( d, cls, propagate );
+                }
+            } catch (Throwable t) {}
         }
-      } catch ( Exception e ) {
-        // ignore
-      }
     }
 
     // if
