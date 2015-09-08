@@ -147,6 +147,14 @@ public class ClassUtils {
             //++numNull;
             //++numDeps;
             continue;
+          } else if ( isVarArgs && i == candidateArgsLength-1
+                      && candidateArgTypes[ i ].isArray()
+                      && candidateArgTypes[ i ].getComponentType()
+                                               .isAssignableFrom( referenceArgTypes[ i ] ) ) {
+              if ( Debug.isOn() ) Debug.outln( "varArg argTypes1[ " + i + " ]="
+                      + candidateArgTypes[ i ].getComponentType() + " matches args[ " + i
+                      + " ].getClass()=" + referenceArgTypes[ i ] );
+              ++numMatching;
           } else if ( candidateArgTypes[ i ].isAssignableFrom( referenceArgTypes[ i ] ) ) {
               if ( Debug.isOn() ) Debug.outln( "argTypes1[ " + i + " ]="
                            + candidateArgTypes[ i ] + " matches args[ " + i
