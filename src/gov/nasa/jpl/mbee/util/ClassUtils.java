@@ -184,7 +184,8 @@ public class ClassUtils {
         boolean isPreferred = false;
         if ( referenceObject != null && bestCandidateArgTypes != null && hasPreference() ) {
             isPreferred = ((HasPreference)referenceObject).prefer( candidateArgTypes, bestCandidateArgTypes );
-            if ( isPreferred ) System.out.println( "=====================  YEAH!  ======================" );
+            if ( // uncomment this! //Debug.isOn() && 
+                    isPreferred ) System.out.println( "=====================  YEAH!  ======================" );
         }
         
         if ( ( best == null )
@@ -1332,7 +1333,7 @@ public class ClassUtils {
                            CompareUtils.class,
                            FileUtils.class};
     for ( Class<?> c : classes ) {
-      Method m = getMethodForArgTypes( c, functionName, argTypes );
+      Method m = getMethodForArgTypes( c, functionName, argTypes, false );
       if ( m != null ) return m;
     }
     return null;
