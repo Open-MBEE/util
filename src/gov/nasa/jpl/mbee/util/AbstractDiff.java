@@ -54,7 +54,6 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     public abstract boolean same( T t1, T t2 );
     public abstract boolean sameProperty( P prop1, P prop2 );
     public abstract String getName( T t );
-    public abstract Set<ID> filterValues(List<Set<ID>> mapDiff);
     
     public Set<ID> propertyIdsToIgnore = new TreeSet<ID>(GenericComparator.instance());
 
@@ -174,9 +173,30 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
     protected List< Set< ID > > diffProperties( ID tid ) {
         T t1 = get1(tid);
         T t2 = get2(tid);
-
         Map< ID, P > properties1 = getPropertyMap( t1, true );
         Map< ID, P > properties2 = getPropertyMap( t2, false );
+        return diffProperties( this, properties1, properties2 );
+    }
+    
+    protected static <T, P, ID> List< Set< ID > > diffProperties( AbstractDiff<T,P,ID> aDiff,
+                                                                  T t1, T t2 ) {
+        Map< ID, P > properties1 = aDiff.getPropertyMap( t1, true );
+        Map< ID, P > properties2 = aDiff.getPropertyMap( t2, false );
+        return diffProperties( aDiff, properties1, properties2 );
+    }
+    
+    /**
+     * @param aDiff
+     *            a diff object context for evaluating whether two properties
+     *            are equal. A null value for aDiff indicates that a default
+     *            comparison method should be used.
+     * @param properties1
+     * @param properties2
+     * @return
+     */
+    protected static <P, ID> List< Set< ID > > diffProperties( AbstractDiff aDiff,
+                                                               Map< ID, P > properties1,
+                                                               Map< ID, P > properties2 ) {
 
         List< Set< ID > > mapDiff = Utils.diff( properties1, properties2 );
         if ( mapDiff == null ) return null;
@@ -187,13 +207,45 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
         for ( ID id : new ArrayList<ID>(updates) ) {
             P prop1 = properties1.get( id );
             P prop2 = properties2.get( id );
-            if ( sameProperty( prop1, prop2 ) ) {
+            if ( ( aDiff != null && aDiff.sameProperty( prop1, prop2 ) ) ||
+                 ( aDiff == null && defaultSameProperty( prop1, prop2 ) ) ) {
                 updates.remove( id );
                 continue;
             }
         }
 
         return mapDiff;
+    }
+    
+    protected static <P> boolean defaultSameProperty( P prop1, P prop2 ) {
+        int comp = CompareUtils.compare( prop1, prop2 );
+        return comp == 0;
+    }
+    
+    /**
+     * Add diff2 into diff1 such that applying the glommed diff would produce
+     * the same result as applying diff1 and then applying diff2.
+     * 
+     * @param diff1
+     * @param diff2
+     */
+    public static <TT, PP, II> void glom(Diff<TT, PP, II> diff1,
+                                         Diff<TT, PP, II> diff2) {
+        
+    }
+
+    /**
+     * Set diffDiff to the diff of diff1 and diff2 such that applying diff1
+     * followed by diffDiff would produce the same result as applying diff2.
+     * 
+     * @param diff1
+     * @param diff2
+     * @param diffDiff
+     */
+    public static <TT, PP, II> void diff(Diff<TT, PP, II> diff1,
+                                         Diff<TT, PP, II> diff2,
+                                         Diff<TT, PP, II> diffDiff) {
+        
     }
 
     @Override
@@ -224,33 +276,35 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
 
     protected Map<ID, T> convertSetToMap( Set<T> set ) {
         LinkedHashMap< ID, T > map = new LinkedHashMap< ID, T >();
+        if ( set != null ) {
         for ( T t : set ) {
             ID id = getId( t );
             map.put( id, t );
+        }
         }
         return map;
     }
 
     protected Map<ID, P> convertPropertySetToMap( Set<P> set ) {
         LinkedHashMap< ID, P > map = new LinkedHashMap< ID, P >();
+        if ( set != null ) {
         for ( P p : set ) {
-            ID id = getPropertyName( p );
-            map.put( id, p );  // FIXME this looks wrong, mapping sysml name of the 
-                               //       property value to the property value.  Should be
-                               //       the name of property, ie operand
+            ID id = getIdOfProperty( p );
+            map.put( id, p );
+        }
         }
         return map;
     }
 
     public Map< ID, T > getMap1() {
-        if ( map1 == null && set1 != null ) {
+        if ( map1 == null ) {
             map1 = convertSetToMap( set1 );
         }
         return map1;
     }
 
     public Map< ID, T > getMap2() {
-        if ( map2 == null && set2 != null ) {
+        if ( map2 == null ) {
             map2 = convertSetToMap( set2 );
         }
         return map2;
@@ -409,6 +463,22 @@ public abstract class AbstractDiff<T,P,ID> implements Diff<T,P,ID> {
      */
     public void setObjectComparator( Comparator< T > objectComparator ) {
         this.objectComparator = objectComparator;
+    }
+
+    /**
+     * Override this method to screen out and return only the ids in the diff
+     * that should be included in the diff. This default implementation returns
+     * everything.
+     * 
+     * @param mapDiff
+     * @return the ids in the diff that should be included in the diff
+     */
+    public Set<ID> filterValues(List<Set<ID>> mapDiff) {
+        Set<ID> ids = Utils.newSet();
+        for ( Set<ID> s : mapDiff ) {
+            if ( s != null ) ids.addAll( s );
+        }
+        return ids;
     }
 
 
