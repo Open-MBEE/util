@@ -38,10 +38,12 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -82,6 +84,7 @@ public class ClassUtils {
       public boolean allArgsMatched = false;
       public boolean allNonNullArgsMatched = false;
       public Class<?>[] bestCandidateArgTypes = null;
+      public ArrayList<Integer> bestDistance = null;
       public int bestPreferenceRank = Integer.MAX_VALUE;
       public double bestScore = Double.MAX_VALUE;
 
@@ -116,6 +119,7 @@ public class ClassUtils {
         numNull = 0;
         numDeps = 0;
         preferenceRank = Integer.MAX_VALUE;
+        ArrayList<Integer> argDistance = new ArrayList< Integer >();
         boolean debugWasOn = Debug.isOn();
         if ( debugWasOn ) Debug.turnOff();
   //      double score = numArgsCost + argMismatchCost * argTypes.length;
@@ -132,11 +136,13 @@ public class ClassUtils {
   //      if ( okNumArgs ) score -= numArgsCost;
         for ( int i = 0; i < Math.min( candidateArgsLength,
                                        referenceArgsLength ); ++i ) {
+          int distance = Integer.MAX_VALUE;
           if ( referenceArgTypes[ i ] == null ) {
             if ( Debug.isOn() ) Debug.outln( "null arg[ " + i + " ]" );
             ++numNull;
             ++numDeps;
             //++numMatching;
+            argDistance.add( distance );
             continue;
           }
           if ( candidateArgTypes[ i ] == null ) {
@@ -146,6 +152,7 @@ public class ClassUtils {
                 + " ].getClass()=" + referenceArgTypes[ i ] );
             //++numNull;
             //++numDeps;
+            argDistance.add( distance );
             continue;
           } else if ( isVarArgs && i == candidateArgsLength-1
                       && candidateArgTypes[ i ].isArray()
@@ -154,6 +161,7 @@ public class ClassUtils {
               if ( Debug.isOn() ) Debug.outln( "varArg argTypes1[ " + i + " ]="
                       + candidateArgTypes[ i ].getComponentType() + " matches args[ " + i
                       + " ].getClass()=" + referenceArgTypes[ i ] );
+              distance = subclassDistance( candidateArgTypes[ i ].getComponentType(), referenceArgTypes[ i ] );
               ++numMatching;
           } else if ( candidateArgTypes[ i ].isAssignableFrom( referenceArgTypes[ i ] ) ) {
               if ( Debug.isOn() ) Debug.outln( "argTypes1[ " + i + " ]="
@@ -179,6 +187,7 @@ public class ClassUtils {
                            + " does not match args[ " + i + " ].getClass()="
                            + referenceArgTypes[ i ] );
           }
+          argDistance.add( distance );
         }
         
         boolean isPreferred = false;
@@ -188,29 +197,135 @@ public class ClassUtils {
                     isPreferred ) System.out.println( "=====================  YEAH!  ======================" );
         }
         
+        int distComp = bestDistance == null ? -1 : typeDistanceCompare( argDistance, bestDistance );
+        
         if ( ( best == null )
             || ( !gotOkNumArgs && okNumArgs )
             || ( ( gotOkNumArgs == okNumArgs )
                  && ( ( numMatching > mostMatchingArgs )
                       || ( ( numMatching == mostMatchingArgs )
-                           && ( ( numDeps > mostDeps )
-                                   || ( ( numDeps == mostDeps )
-                                        && isPreferred ) ) ) ) ) ) {
+                           && ( distComp < 0 )
+                          || ( ( distComp == 0 )
+                               && ( ( numDeps > mostDeps )
+                                       || ( ( numDeps == mostDeps )
+                                            && isPreferred ) ) ) ) ) ) ) {
          best = o;
          gotOkNumArgs = okNumArgs;
          mostMatchingArgs = numMatching;
          mostDeps = numDeps;
          bestCandidateArgTypes = candidateArgTypes;
+         bestDistance = argDistance;
          allArgsMatched = ( numMatching >= candidateArgsLength );
          allNonNullArgsMatched = ( numMatching + numNull >= candidateArgsLength );
            if ( Debug.isOn() ) Debug.outln( "new match " + o + ", mostMatchingArgs="
                         + mostMatchingArgs + ",  allArgsMatched = "
                         + allArgsMatched + " = numMatching(" + numMatching
                         + ") >= candidateArgTypes.length("
-                        + candidateArgsLength + "), numDeps=" + numDeps );
+                        + candidateArgsLength + "), argDistance=" + argDistance
+                        + ", numDeps=" + numDeps );
         }
         if ( debugWasOn ) Debug.turnOn();
       }
+    }
+      
+      protected static int typeDistanceCompare( ArrayList<Integer> a1,
+                                         ArrayList<Integer> a2 ) {
+          boolean a1Dominates = true;
+          boolean a2Dominates = true;
+          int i = 0;
+          for ( ; i < Math.min( a1.size(), a2.size() ); ++i ) {
+              int comp = Integer.compare( a1.get(i), a2.get(i) );
+              if ( comp < 0 ) {
+                  a2Dominates = false;
+                  if ( !a1Dominates ) return 0;
+              }
+              if ( comp > 0 ) {
+                  a1Dominates = false;
+                  if ( !a2Dominates ) return 0;
+              }
+          }
+          // If one is longer than the other then the longer one dominates if it
+          // has no mismatches (indicated by MAX_VALUE).  If there are mismatches,
+          // then the shorter one dominates.
+          if ( a1Dominates && a2Dominates ) {
+              if ( a1.size() == a2.size() ) return 0;
+              ArrayList<Integer> a = ( a1.size() > a2.size() ? a1 : a2 );
+              for (; i < a.size(); ++i ) {
+                  if ( a.get( i ) == Integer.MAX_VALUE ) {
+                      // mismatch
+                      if ( a1.size() > a2.size() ) return 1;
+                      return -1;
+                  }
+              }
+              if ( a1.size() > a2.size() ) return -1;
+              return 1;
+          }
+          if ( a1Dominates ) return -1;
+          return 1;
+      }
+      
+      protected static Comparator< Pair< Integer, Class< ? > > > classDistanceComparator = 
+              new Comparator< Pair< Integer, Class< ? > > >() {
+          @Override
+          public int compare( Pair< Integer, Class< ? > > p1, Pair< Integer, Class< ? > > p2 ) {
+              int comp = Integer.compare( p1.first, p2.first );
+              if ( comp != 0 ) return comp;
+              comp = CompareUtils.compare( p1.second.getSimpleName(), p2.second.getSimpleName() );
+              if ( comp != 0 ) return comp;
+              return comp;
+          }
+      };
+
+    /**
+     * Determines how many parent/super classes away the superclass is from the subclass.
+     * @param superclass
+     * @param subclass
+     * @return
+     */
+    public static int subclassDistance( Class< ? > superclass, Class< ? > subclass ) {
+//        return subclassDistance( superclass, subclass, new HashMap<String, Integer>() );
+//    }
+//    protected static int subclassDistance( Class< ? > superclass, Class< ? > subclass,
+//                                           Map<String,Integer> distanceCache ) {
+        int distance = Integer.MAX_VALUE;
+        if ( superclass == null || subclass == null ) return distance;
+        if ( superclass.isPrimitive() ) {
+            superclass = classForPrimitive( superclass );
+        }
+        if ( subclass.isPrimitive() ) {
+            subclass = classForPrimitive( subclass );
+        }
+        String subclassName = subclass.getSimpleName();
+//        if ( distanceCache.containsKey( subclassName ) ) {
+//            return distanceCache.get( subclassName );
+//        }
+        boolean isInterface = superclass.isInterface();
+        Class<?> parentClass = subclass;
+        int count = 0;
+        
+        int bestOverallDistance = Integer.MAX_VALUE;
+        TreeSet< Pair< Integer, Class<?> > > queue =
+                new TreeSet< Pair< Integer,Class<?> > >(classDistanceComparator);
+        queue.add( new Pair< Integer, Class<?> >( 0, parentClass ) );
+        while ( !queue.isEmpty() ) {
+            Pair< Integer, Class< ? > > p = queue.first();
+            queue.remove(p);
+            parentClass = p.second;
+            if ( superclass.getSimpleName().equals( parentClass.getSimpleName() ) ) {
+                return p.first;
+            }
+            if ( isInterface && parentClass.getInterfaces() != null ) {
+                //int bestDistance = Integer.MAX_VALUE;
+                for ( Class<?> cls : parentClass.getInterfaces() ) {
+                    queue.add( new Pair< Integer, Class<?> >( p.first + 1, cls ) );                    
+                }
+            }
+            parentClass = parentClass.getSuperclass();
+            if ( parentClass != null ) {
+                queue.add( new Pair< Integer, Class<?> >( p.first + 1, parentClass ) );
+            }
+        }
+        return distance;
     }
 
     // TODO -- this would be useful for TimeVaryingMap.valueFromString();
