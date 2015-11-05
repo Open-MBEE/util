@@ -1249,6 +1249,30 @@ public class Utils {
       return newList;
   }
 
+  public static ArrayList<Object> flatten( Collection< ? > list ) {
+      try {
+          return flatten( list, Object.class );
+      } catch ( ClassCastException e ) {
+          e.printStackTrace();
+      }
+      return null;
+  }
+  
+  public static <T> ArrayList<T> flatten( Collection< ? > list, Class< T > cls ) {
+      ArrayList<T> newList = new ArrayList< T >();
+      for ( Object o : list ) {
+          if ( !( o instanceof Collection )
+               && ( cls == null || cls.isInstance( o ) ) ) {
+              @SuppressWarnings( "unchecked" )
+              T t = (T)o;
+              newList.add( t );
+          } else if ( o instanceof Collection ) {
+              newList.addAll( flatten( (Collection< ? >)o, cls ) );
+          }
+      }
+      return newList;
+  }
+  
   protected static final String[] trueStrings = new String[] {"t", "true", "1", "1.0", "yes", "y"};
 
   public static Boolean isTrue(Object o) {
