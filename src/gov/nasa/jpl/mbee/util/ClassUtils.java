@@ -2594,6 +2594,20 @@ public class ClassUtils {
             }
         }
     }
+    
+    if ( cls != null && Collection.class.isAssignableFrom( cls ) ) {
+       if ( cls.isAssignableFrom( ArrayList.class ) ) {
+           return (TT)Utils.newList( object );
+       }
+       if ( cls.isAssignableFrom( Set.class ) ) {
+           return (TT)Utils.newSet( object );
+       }
+    }
+    if ( cls != null && cls.isAssignableFrom( TreeMap.class ) &&
+         object instanceof HasId ) {
+        return (TT)Utils.newMap( new Pair(((HasId)object).getId(), object ) );
+    }
+    
     //    if ( object instanceof Parameter ) {
 //      value = ( (Parameter)object ).getValue( propagate );
 //      return evaluate( value, cls, propagate, allowWrapping );
