@@ -95,13 +95,20 @@ public class CompareUtils {
     if ( useId && o1 instanceof HasId && o2 instanceof HasId ) {
       return CompareUtils.compare( ( (HasId)o1 ).getId(), ( (HasId)o2 ).getId() );
     }
-    int compare = o1.getClass().getName().compareTo( o2.getClass().getName() );
-    if ( compare != 0 ) return compare;
     if ( checkComparable ) {
       if ( o1 instanceof Comparable ) {
-        return ((Comparable<T2>)o1).compareTo( o2 ); 
+          try {
+              return ((Comparable<T2>)o1).compareTo( o2 );
+          } catch ( ClassCastException e ) {
+          }
       }
     }
+    if ( o1 instanceof Number && o2 instanceof Number ) {
+        return ((Double)((Number)o1).doubleValue()).compareTo( ((Number)o2).doubleValue() );
+    }
+    int compare = o1.getClass().getName().compareTo( o2.getClass().getName() );
+    if ( compare != 0 ) return compare;
+
     if (o1 instanceof Collection && o2 instanceof Collection ) {
       return CompareUtils.compareCollections( (Collection)o1, (Collection)o2,
                                  checkComparable, useId );
