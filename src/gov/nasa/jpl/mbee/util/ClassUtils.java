@@ -282,6 +282,9 @@ public class ClassUtils {
      * @param subclass
      * @return
      */
+    public static int distanceToSubclass( Class< ? > superclass, Class< ? > subclass ) {
+        return subclassDistance( superclass, subclass );
+    }
     public static int subclassDistance( Class< ? > superclass, Class< ? > subclass ) {
 //        return subclassDistance( superclass, subclass, new HashMap<String, Integer>() );
 //    }
@@ -1701,21 +1704,53 @@ public class ClassUtils {
         return methods;
     }
 
-  public static String dominantType( String argType1, String argType2 ) {
-	  if ( argType1 == null ) return argType2;
-	  if ( argType2 == null ) return argType1;
-	  if ( argType1.equals( "String" ) ) return argType1;
-	  if ( argType2.equals( "String" ) ) return argType2;
-	  if ( argType1.toLowerCase().equals( "double" ) ) return argType1;
-	  if ( argType2.toLowerCase().equals( "double" ) ) return argType2;
-      if ( argType1.toLowerCase().equals( "float" ) ) return argType1;
-      if ( argType2.toLowerCase().equals( "float" ) ) return argType2;
-	  if ( argType1.toLowerCase().startsWith( "long" ) ) return argType1;
-	  if ( argType2.toLowerCase().startsWith( "long" ) ) return argType2;
-	  if ( argType1.toLowerCase().startsWith( "int" ) ) return argType1;
-	  if ( argType2.toLowerCase().startsWith( "int" ) ) return argType2;
-	  return argType1;
-	}
+    public static boolean isArgumentBetterForType( Object arg, Object otherArg,
+                                                   Class< ? > parameterType ) {
+        Class< ? > argClass = arg.getClass();
+        Class< ? > otherArgClass = otherArg.getClass();
+        return isTypeABetterMatch( argClass, otherArgClass, parameterType );
+    }
+
+    public static boolean isTypeABetterMatch( Class< ? > argClass,
+                                              Class< ? > otherArgClass,
+                                              Class< ? > parameterType ) {
+        if ( otherArgClass.equals( parameterType ) ) return false;
+        if ( argClass.equals( parameterType ) ) return true;
+        if ( !parameterType.isAssignableFrom( argClass ) ) {
+            return false;
+        }
+        if ( !parameterType.isAssignableFrom( otherArgClass ) ) {
+            return true;
+        }
+        // both assignable from here
+
+        int argDistance =
+                ClassUtils.distanceToSubclass( parameterType, argClass );
+        int otherArgDistance =
+                ClassUtils.distanceToSubclass( parameterType, argClass );
+
+        int comp = CompareUtils.compare( argDistance, otherArgDistance );
+        // shorter distance wins; comp < 0 means argDistance is smaller
+        return comp < 0;
+    }
+    
+    public static String dominantType( String argType1, String argType2 ) {
+        if ( argType1 == null ) return argType2;
+        if ( argType2 == null ) return argType1;
+        if ( argType1.equals( "String" ) ) return argType1;
+        if ( argType2.equals( "String" ) ) return argType2;
+        String argType1Lower = argType1.toLowerCase();
+        if ( argType1Lower.equals( "double" ) ) return argType1;
+        String argType2Lower = argType2.toLowerCase();
+        if ( argType2Lower.equals( "double" ) ) return argType2;
+        if ( argType1Lower.equals( "float" ) ) return argType1;
+        if ( argType2Lower.equals( "float" ) ) return argType2;
+        if ( argType1Lower.startsWith( "long" ) ) return argType1;
+        if ( argType2Lower.startsWith( "long" ) ) return argType2;
+        if ( argType1Lower.startsWith( "int" ) ) return argType1;
+        if ( argType2Lower.startsWith( "int" ) ) return argType2;
+        return argType1;
+    }
 
   public static Class<?> dominantTypeClass(Class<?> cls1, Class<?> cls2) {
 	  if ( cls1 == null ) return cls2;
