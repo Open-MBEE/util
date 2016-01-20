@@ -1704,18 +1704,40 @@ public class ClassUtils {
         return methods;
     }
 
+    public static Object bestArgumentForType( Collection<?> arguments,
+                                              Class<?> parameterType ) {
+        Object bestArg = null;
+        for ( Object arg : arguments ) {
+            if ( bestArg == null ||
+                 isArgumentBetterForType( arg, bestArg, parameterType ) ) {
+                bestArg = arg;
+            }
+        }
+        return bestArg;
+    }
     public static boolean isArgumentBetterForType( Object arg, Object otherArg,
                                                    Class< ? > parameterType ) {
-        Class< ? > argClass = arg.getClass();
-        Class< ? > otherArgClass = otherArg.getClass();
+        if ( arg == otherArg ) return false;        
+        Class< ? > argClass = arg != null ? arg.getClass() : null;
+        Class< ? > otherArgClass = otherArg != null ? otherArg.getClass() : null;
         return isTypeABetterMatch( argClass, otherArgClass, parameterType );
     }
 
     public static boolean isTypeABetterMatch( Class< ? > argClass,
                                               Class< ? > otherArgClass,
                                               Class< ? > parameterType ) {
+        if ( parameterType == null ) return false;
+        if ( argClass == otherArgClass ) return false;
+        if ( argClass == null ) {
+            boolean isOtherArgAssignable = parameterType.isAssignableFrom( otherArgClass );
+            return !isOtherArgAssignable;
+        }
+        if ( otherArgClass == null ) {
+            boolean isArgAssignable = parameterType.isAssignableFrom( argClass );
+            return isArgAssignable;
+        }
+        if ( argClass.equals( otherArgClass ) ) return false;
         if ( otherArgClass.equals( parameterType ) ) return false;
-        if ( argClass.equals( parameterType ) ) return true;
         if ( !parameterType.isAssignableFrom( argClass ) ) {
             return false;
         }
