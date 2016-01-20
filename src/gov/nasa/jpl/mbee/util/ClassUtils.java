@@ -1727,6 +1727,7 @@ public class ClassUtils {
                                               Class< ? > otherArgClass,
                                               Class< ? > parameterType ) {
         if ( parameterType == null ) return false;
+        parameterType = getNonPrimitiveClass( parameterType );
         if ( argClass == otherArgClass ) return false;
         if ( argClass == null ) {
             boolean isOtherArgAssignable = parameterType.isAssignableFrom( otherArgClass );
