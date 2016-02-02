@@ -224,6 +224,7 @@ public class ClassUtils {
                         + candidateArgsLength + "), argDistance=" + argDistance
                         + ", numDeps=" + numDeps );
         }
+        // FIXME -- wrap in a finally clause
         if ( debugWasOn ) Debug.turnOn();
       }
     }
@@ -1269,11 +1270,15 @@ public class ClassUtils {
       atc.compare( e.getKey(), e.getValue().first, e.getValue().second );
     }
     if ( atc.best != null && !atc.allNonNullArgsMatched ) {
-      System.err.println( "constructor returned (" + atc.best
-                          + ") only matches " + atc.mostMatchingArgs
-                          + " args: " + Utils.toString( argTypes, false ) );
+        if ( Debug.isOn() ) {
+            Debug.outln( "constructor returned (" + atc.best
+                         + ") only matches " + atc.mostMatchingArgs
+                         + " args: " + Utils.toString( argTypes, false ) );
+        }
     } else if ( atc.best == null ) {
-      System.err.println( "best args not found in " + candidates );
+        if ( Debug.isOn() ) {
+            Debug.errln( "best args not found in " + candidates );
+        }
     }
     return atc.best;
   }
@@ -1287,14 +1292,18 @@ public class ClassUtils {
         atc.compare( aCtor, aCtor.getParameterTypes(), aCtor.isVarArgs() );
       }
       if ( atc.best != null && !atc.allNonNullArgsMatched ) {
-        System.err.println( "constructor returned (" + atc.best
-                            + ") only matches " + atc.mostMatchingArgs
-                            + " args: " + Utils.toString( argTypes, false ) );
+          if ( Debug.isOn() ) {
+              Debug.outln( "constructor returned (" + atc.best
+                           + ") only matches " + atc.mostMatchingArgs
+                           + " args: " + Utils.toString( argTypes, false ) );
+          }
       } else if ( atc.best == null ) {
-        System.err.println( "constructor not found in " + ctors );
+          if ( Debug.isOn() ) {
+              Debug.errln( "constructor not found in " + ctors );
   //                          cls.getSimpleName()
   //                          + toString( argTypes, false ) + " not found for "
   //                          + cls.getSimpleName() );
+          }
       }
       return atc.best;
     }
@@ -1632,7 +1641,7 @@ public class ClassUtils {
   //    int mostDeps = 0;
   //    boolean allArgsMatched = false;
   //    double bestScore = Double.MAX_VALUE;
-      boolean debugWasOn = Debug.isOn();
+      //boolean debugWasOn = Debug.isOn();
       //Debug.turnOff();
       if ( Debug.isOn() ) Debug.outln( "calling " + clsName + ".class.getMethod(" + callName + ")"  );
       if ( cls != null ) {
@@ -1669,9 +1678,9 @@ public class ClassUtils {
           }
         }
       }
-      if ( debugWasOn ) {
-        Debug.turnOn();
-      }
+//      if ( debugWasOn ) {
+//        Debug.turnOn();
+//      }
       if ( atc.best != null && !atc.allArgsMatched ) {
       if ( Debug.isOn() ) Debug.errln( "getMethodForArgTypes( cls="
                                        + clsName + ", callName="
@@ -2623,6 +2632,7 @@ public class ClassUtils {
    */
   public static <TT> TT evaluate( Object object, Class< TT > cls,
                                   boolean propagate ) throws ClassCastException {
+    // FIXME -- Need to add a seen set (e.g., Seen<Object> seen) to parameters to avoid infinite recursion.
     if ( object == null ) return null;
     // Check if object is already what we want.
     if ( cls != null && cls.isInstance( object ) || cls.equals( object.getClass() ) ) {

@@ -162,8 +162,10 @@ public class Debug {
                                      Object... maybeNullObjects ) {
       return errorOnNull( stackTrace, stackTrace, msg, maybeNullObjects );
   }
-  public static boolean errorOnNull( boolean forceOutput, boolean stackTrace, String msg,
-                                     Object... maybeNullObjects ) {
+  public synchronized static boolean errorOnNull( boolean forceOutput,
+                                                  boolean stackTrace,
+                                                  String msg,
+                                                  Object... maybeNullObjects ) {
     try {
       if ( maybeNullObjects == null ) throw new Exception();
       for ( Object o : maybeNullObjects ) {
@@ -184,8 +186,9 @@ public class Debug {
       }
       } catch (Throwable t) {
           // TODO?
+      } finally {
+          if ( forceOutput && !wasOn ) turnOff();
       }
-      if ( forceOutput && !wasOn ) turnOff(); 
       return true;
     }
     return false;
