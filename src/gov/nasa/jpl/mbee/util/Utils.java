@@ -645,6 +645,13 @@ public class Utils {
   }
 
 
+  public static boolean contains( Object[] array, Object o ) {
+      for ( Object ao : array ) {
+          if ( valuesEqual( ao, o ) ) return true;
+      }
+      return false;
+  }
+  
   // REVIEW -- consider moving these along with put & get to a CollectionUtils class
 
   /**
