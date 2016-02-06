@@ -2242,12 +2242,16 @@ public class ClassUtils {
     // lowercase on "get" and "type"; Do the same for getId() and getName().
     // REVIEW -- consider genericizing as getMemberValue()
     public static Object getType( Object o ) {
+        if ( o == null ) return null;
         if ( o instanceof Wraps ) {
             Object type = ( (Wraps)o ).getType();
             if ( type != null ) return type;
             return getType( ( (Wraps)o ).getValue( false ) );
         }
         try {
+            if ( o.getClass().getPackage().getName().startsWith( "java" ) ) {
+                return o.getClass();
+            }
             for ( String fieldName : typeStrings ) {
                 Object oId = ClassUtils.getFieldValue( o, fieldName, false, true );
                 if ( oId != null ) return oId;
