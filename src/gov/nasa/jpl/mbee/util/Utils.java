@@ -888,11 +888,13 @@ public class Utils {
     }
     return array;
   }
-  public static <T> T[] scramble( Collection< T > collection ) {
-    if ( isNullOrEmpty( collection ) ) return (T[])new Object[]{};
+  public static <T> List<T> scramble( Collection< T > collection ) {
+    if ( isNullOrEmpty( collection ) ) return getEmptyList();
     T[] a = (T[])new Object[collection.size()];
     collection.toArray( a );
-    return scramble( a );
+    a = scramble( a );
+    List<T> newCollection = Arrays.asList( a );
+    return newCollection;
   }
 
   /**
@@ -1213,6 +1215,16 @@ public class Utils {
     Set< T > newSet = new TreeSet< T >(CompareUtils.GenericComparator.instance());
     newSet.addAll( Arrays.asList( ts ) );
     return newSet;
+  }
+
+  /**
+   * Creates a new {@link ArrayList} and inserts the arguments, {@code ts}.
+   * @param ts
+   * @return the new {@link ArrayList}
+   */
+  public static < T > ArrayList< T > newList() {
+      ArrayList< T > newList = new ArrayList< T >();
+      return newList;
   }
 
   /**

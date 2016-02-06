@@ -1748,14 +1748,24 @@ public class ClassUtils {
         }
         if ( argClass.equals( otherArgClass ) ) return false;
         if ( otherArgClass.equals( parameterType ) ) return false;
-        if ( !parameterType.isAssignableFrom( argClass ) ) {
-            return false;
-        }
-        if ( !parameterType.isAssignableFrom( otherArgClass ) ) {
-            return true;
-        }
-        // both assignable from here
+        boolean aa = parameterType.isAssignableFrom( argClass );
+        boolean oa = parameterType.isAssignableFrom( otherArgClass );
+        if ( aa != oa ) return aa;
 
+        // If neither are assignable, see if the args should or should not be arrays and re-compare based on type of array. 
+        if ( !aa ) {
+            boolean aarr = argClass.isArray();
+            boolean oarr = otherArgClass.isArray();
+            boolean parr = parameterType.isArray();
+            if ( aarr || oarr || parr ) {
+                if ( aarr ) argClass = argClass.getComponentType();
+                if ( oarr ) otherArgClass = otherArgClass.getComponentType();
+                if ( parr ) parameterType = parameterType.getComponentType();
+                return isTypeABetterMatch( argClass, otherArgClass, parameterType );
+            }
+        }
+        
+        // both assignable from here -- see if one is closer than the other
         int argDistance =
                 ClassUtils.distanceToSubclass( parameterType, argClass );
         int otherArgDistance =
