@@ -666,11 +666,11 @@ public class ClassUtils {
             try {
                 cls = cl.loadClass(className);
                 if ( cls != null ) {
-                    Debug.outln( "classForName(" + className + ") = " + cls.getSimpleName() );
+                    if ( Debug.isOn() ) Debug.outln( "classForName(" + className + ") = " + cls.getSimpleName() );
                     break;
                 }
             } catch ( Throwable e ) {
-                Debug.errln( "classForName(" + className
+                if ( Debug.isOn() ) Debug.errln( "classForName(" + className
                              + ") failed for loader: " + cl + "\n"
                              + e.getLocalizedMessage() );
             }
@@ -1395,7 +1395,7 @@ public class ClassUtils {
           bestLength = length;
         }
       }
-      Debug.outln( "Best class " + bestCls.getCanonicalName()
+      if ( Debug.isOn() ) Debug.outln( "Best class " + bestCls.getCanonicalName()
                           + " has length, " + bestLength
                           + ", and common prefix length of packages, "
                           + bestLengthOfCommonPkgPrefix + ", pkg="
@@ -1536,20 +1536,20 @@ public class ClassUtils {
                                              Class<?>[] argTypes,
                                              boolean complainIfNotFound ) {
     //Debug.turnOff();  // DELETE ME -- FIXME
-    Debug.outln("=========================start===============================");
+      if ( Debug.isOn() ) Debug.outln("=========================start===============================");
     //Debug.errln("=========================start===============================");
     //Class< ? > classForName = getClassForName( className, preferredPackage, false );
     String classNameNoParams = noParameterName( className );
     List< Class< ? > > classesForName = getClassesForName( classNameNoParams, false );
     //Debug.err("classForName = " + classForName );
-    Debug.outln("classesForName = " + classesForName );
+    if ( Debug.isOn() ) Debug.outln("classesForName = " + classesForName );
     if ( Utils.isNullOrEmpty( classesForName ) ) {
       if ( complainIfNotFound ) {
         System.err.println( "Couldn't find the class " + className + " for method "
                      + callName
                      + ( argTypes == null ? "" : Utils.toString( argTypes, false ) ) );
       }
-      Debug.outln("===========================end==============================");
+      if ( Debug.isOn() ) Debug.outln("===========================end==============================");
       //Debug.errln("===========================end==============================");
       //Debug.turnOff();  // DELETE ME -- FIXME
       return null;
@@ -1585,7 +1585,7 @@ public class ClassUtils {
     }
     if ( Debug.isOn() ) Debug.errorOnNull( "getMethodForArgTypes(" + className + "." + callName
                  + Utils.toString( argTypes, false ) + "): Could not find method!", best );
-    Debug.outln("===========================end==============================");
+    if ( Debug.isOn() ) Debug.outln("===========================end==============================");
     //Debug.errln("===========================end==============================");
     //Debug.turnOff();  // DELETE ME -- FIXME
     return best;
@@ -2749,7 +2749,7 @@ public class ClassUtils {
     try {
       r = (TT)object;
     } catch ( ClassCastException cce ) {
-      Debug.errln( "Warning! No evaluation of " + object + " with type " + cls.getName() + "!" );
+        if ( Debug.isOn() ) Debug.errln( "Warning! No evaluation of " + object + " with type " + cls.getName() + "!" );
       throw cce;
     }
     if ( cls != null && cls.isInstance( r ) || ( r != null && cls == r.getClass() ) ) {
@@ -2776,9 +2776,6 @@ public class ClassUtils {
                                      boolean allowWrapping ) throws ClassCastException {
     if ( o1 == o2 ) return true;
     if ( o1 == null || o2 == null ) return false;
-    if ( (o1 instanceof Float && o2 instanceof Double ) || (o2 instanceof Float && o1 instanceof Double ) ) {
-      Debug.out( "" );
-    }
     Object v1 = evaluate( o1, cls, propagate );//, false );
     Object v2 = evaluate( o2, cls, propagate );//, false );
     if ( Utils.valuesEqual( v1, v2 ) ) return true;
