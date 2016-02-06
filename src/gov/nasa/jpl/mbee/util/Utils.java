@@ -1222,7 +1222,7 @@ public class Utils {
    * @param ts
    * @return the new {@link ArrayList}
    */
-  public static < T > ArrayList< T > newList() {
+  public static < T > ArrayList< T > newEmptyList() {
       ArrayList< T > newList = new ArrayList< T >();
       return newList;
   }
