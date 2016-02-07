@@ -38,7 +38,6 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -46,7 +45,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -2231,6 +2229,13 @@ public class ClassUtils {
       }
       return null;
     }
+  
+    public static boolean isNonSpecificType( Class< ? > cls ) {
+        boolean nonSpecific =
+                cls == null || cls.equals( Object.class )
+                        || Wraps.class.isAssignableFrom( cls );
+        return nonSpecific;
+    }
 
     protected static final String[] typeStrings =
             new String[] { "type", "TYPE", "Type", "class", "CLASS", "Class" };
@@ -2243,10 +2248,18 @@ public class ClassUtils {
     // REVIEW -- consider genericizing as getMemberValue()
     public static Object getType( Object o ) {
         if ( o == null ) return null;
-        if ( o instanceof Wraps ) {
+        HashSet<Object> seen = new HashSet< Object >();
+        Object originalO = o;
+        while ( o instanceof Wraps ) {
+            if ( seen.contains( o ) ) break;
+            seen.add( o );
             Object type = ( (Wraps)o ).getType();
-            if ( type != null ) return type;
-            return getType( ( (Wraps)o ).getValue( false ) );
+            if ( !(type instanceof Class) || !isNonSpecificType( (Class< ? >)type ) ) {
+                return type;
+            }
+            Object o2 = ( (Wraps)o ).getValue( false );
+            if ( o2 == null ) break;
+            o = o2;
         }
         try {
             if ( o.getClass().getPackage().getName().startsWith( "java" ) ) {
