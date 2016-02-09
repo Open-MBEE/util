@@ -42,9 +42,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -82,6 +82,7 @@ public class ClassUtils {
       public boolean allArgsMatched = false;
       public boolean allNonNullArgsMatched = false;
       public Class<?>[] bestCandidateArgTypes = null;
+      public ArrayList<Integer> bestDistance = null;
       public int bestPreferenceRank = Integer.MAX_VALUE;
       public double bestScore = Double.MAX_VALUE;
 
@@ -116,6 +117,7 @@ public class ClassUtils {
         numNull = 0;
         numDeps = 0;
         preferenceRank = Integer.MAX_VALUE;
+        ArrayList<Integer> argDistance = new ArrayList< Integer >();
         boolean debugWasOn = Debug.isOn();
         if ( debugWasOn ) Debug.turnOff();
   //      double score = numArgsCost + argMismatchCost * argTypes.length;
@@ -132,11 +134,13 @@ public class ClassUtils {
   //      if ( okNumArgs ) score -= numArgsCost;
         for ( int i = 0; i < Math.min( candidateArgsLength,
                                        referenceArgsLength ); ++i ) {
+          int distance = Integer.MAX_VALUE;
           if ( referenceArgTypes[ i ] == null ) {
             if ( Debug.isOn() ) Debug.outln( "null arg[ " + i + " ]" );
             ++numNull;
             ++numDeps;
             //++numMatching;
+            argDistance.add( distance );
             continue;
           }
           if ( candidateArgTypes[ i ] == null ) {
@@ -146,7 +150,17 @@ public class ClassUtils {
                 + " ].getClass()=" + referenceArgTypes[ i ] );
             //++numNull;
             //++numDeps;
+            argDistance.add( distance );
             continue;
+          } else if ( isVarArgs && i == candidateArgsLength-1
+                      && candidateArgTypes[ i ].isArray()
+                      && candidateArgTypes[ i ].getComponentType()
+                                               .isAssignableFrom( referenceArgTypes[ i ] ) ) {
+              if ( Debug.isOn() ) Debug.outln( "varArg argTypes1[ " + i + " ]="
+                      + candidateArgTypes[ i ].getComponentType() + " matches args[ " + i
+                      + " ].getClass()=" + referenceArgTypes[ i ] );
+              distance = subclassDistance( candidateArgTypes[ i ].getComponentType(), referenceArgTypes[ i ] );
+              ++numMatching;
           } else if ( candidateArgTypes[ i ].isAssignableFrom( referenceArgTypes[ i ] ) ) {
               if ( Debug.isOn() ) Debug.outln( "argTypes1[ " + i + " ]="
                            + candidateArgTypes[ i ] + " matches args[ " + i
@@ -171,37 +185,149 @@ public class ClassUtils {
                            + " does not match args[ " + i + " ].getClass()="
                            + referenceArgTypes[ i ] );
           }
+          argDistance.add( distance );
         }
         
         boolean isPreferred = false;
         if ( referenceObject != null && bestCandidateArgTypes != null && hasPreference() ) {
             isPreferred = ((HasPreference)referenceObject).prefer( candidateArgTypes, bestCandidateArgTypes );
-            if ( isPreferred ) System.out.println( "=====================  YEAH!  ======================" );
+            if ( // uncomment this! //Debug.isOn() && 
+                    isPreferred ) System.out.println( "=====================  YEAH!  ======================" );
         }
+        
+        int distComp = bestDistance == null ? -1 : typeDistanceCompare( argDistance, bestDistance );
         
         if ( ( best == null )
             || ( !gotOkNumArgs && okNumArgs )
             || ( ( gotOkNumArgs == okNumArgs )
                  && ( ( numMatching > mostMatchingArgs )
                       || ( ( numMatching == mostMatchingArgs )
-                           && ( ( numDeps > mostDeps )
-                                   || ( ( numDeps == mostDeps )
-                                        && isPreferred ) ) ) ) ) ) {
+                           && ( distComp < 0 )
+                          || ( ( distComp == 0 )
+                               && ( ( numDeps > mostDeps )
+                                       || ( ( numDeps == mostDeps )
+                                            && isPreferred ) ) ) ) ) ) ) {
          best = o;
          gotOkNumArgs = okNumArgs;
          mostMatchingArgs = numMatching;
          mostDeps = numDeps;
          bestCandidateArgTypes = candidateArgTypes;
+         bestDistance = argDistance;
          allArgsMatched = ( numMatching >= candidateArgsLength );
          allNonNullArgsMatched = ( numMatching + numNull >= candidateArgsLength );
            if ( Debug.isOn() ) Debug.outln( "new match " + o + ", mostMatchingArgs="
                         + mostMatchingArgs + ",  allArgsMatched = "
                         + allArgsMatched + " = numMatching(" + numMatching
                         + ") >= candidateArgTypes.length("
-                        + candidateArgsLength + "), numDeps=" + numDeps );
+                        + candidateArgsLength + "), argDistance=" + argDistance
+                        + ", numDeps=" + numDeps );
         }
+        // FIXME -- wrap in a finally clause
         if ( debugWasOn ) Debug.turnOn();
       }
+    }
+      
+      protected static int typeDistanceCompare( ArrayList<Integer> a1,
+                                         ArrayList<Integer> a2 ) {
+          boolean a1Dominates = true;
+          boolean a2Dominates = true;
+          int i = 0;
+          for ( ; i < Math.min( a1.size(), a2.size() ); ++i ) {
+              int comp = Integer.compare( a1.get(i), a2.get(i) );
+              if ( comp < 0 ) {
+                  a2Dominates = false;
+                  if ( !a1Dominates ) return 0;
+              }
+              if ( comp > 0 ) {
+                  a1Dominates = false;
+                  if ( !a2Dominates ) return 0;
+              }
+          }
+          // If one is longer than the other then the longer one dominates if it
+          // has no mismatches (indicated by MAX_VALUE).  If there are mismatches,
+          // then the shorter one dominates.
+          if ( a1Dominates && a2Dominates ) {
+              if ( a1.size() == a2.size() ) return 0;
+              ArrayList<Integer> a = ( a1.size() > a2.size() ? a1 : a2 );
+              for (; i < a.size(); ++i ) {
+                  if ( a.get( i ) == Integer.MAX_VALUE ) {
+                      // mismatch
+                      if ( a1.size() > a2.size() ) return 1;
+                      return -1;
+                  }
+              }
+              if ( a1.size() > a2.size() ) return -1;
+              return 1;
+          }
+          if ( a1Dominates ) return -1;
+          return 1;
+      }
+      
+      protected static Comparator< Pair< Integer, Class< ? > > > classDistanceComparator = 
+              new Comparator< Pair< Integer, Class< ? > > >() {
+          @Override
+          public int compare( Pair< Integer, Class< ? > > p1, Pair< Integer, Class< ? > > p2 ) {
+              int comp = Integer.compare( p1.first, p2.first );
+              if ( comp != 0 ) return comp;
+              comp = CompareUtils.compare( p1.second.getSimpleName(), p2.second.getSimpleName() );
+              if ( comp != 0 ) return comp;
+              return comp;
+          }
+      };
+
+    /**
+     * Determines how many parent/super classes away the superclass is from the subclass.
+     * @param superclass
+     * @param subclass
+     * @return
+     */
+    public static int distanceToSubclass( Class< ? > superclass, Class< ? > subclass ) {
+        return subclassDistance( superclass, subclass );
+    }
+    public static int subclassDistance( Class< ? > superclass, Class< ? > subclass ) {
+//        return subclassDistance( superclass, subclass, new HashMap<String, Integer>() );
+//    }
+//    protected static int subclassDistance( Class< ? > superclass, Class< ? > subclass,
+//                                           Map<String,Integer> distanceCache ) {
+        int distance = Integer.MAX_VALUE;
+        if ( superclass == null || subclass == null ) return distance;
+        if ( superclass.isPrimitive() ) {
+            superclass = classForPrimitive( superclass );
+        }
+        if ( subclass.isPrimitive() ) {
+            subclass = classForPrimitive( subclass );
+        }
+        String subclassName = subclass.getSimpleName();
+//        if ( distanceCache.containsKey( subclassName ) ) {
+//            return distanceCache.get( subclassName );
+//        }
+        boolean isInterface = superclass.isInterface();
+        Class<?> parentClass = subclass;
+        int count = 0;
+        
+        int bestOverallDistance = Integer.MAX_VALUE;
+        TreeSet< Pair< Integer, Class<?> > > queue =
+                new TreeSet< Pair< Integer,Class<?> > >(classDistanceComparator);
+        queue.add( new Pair< Integer, Class<?> >( 0, parentClass ) );
+        while ( !queue.isEmpty() ) {
+            Pair< Integer, Class< ? > > p = queue.first();
+            queue.remove(p);
+            parentClass = p.second;
+            if ( superclass.getSimpleName().equals( parentClass.getSimpleName() ) ) {
+                return p.first;
+            }
+            if ( isInterface && parentClass.getInterfaces() != null ) {
+                //int bestDistance = Integer.MAX_VALUE;
+                for ( Class<?> cls : parentClass.getInterfaces() ) {
+                    queue.add( new Pair< Integer, Class<?> >( p.first + 1, cls ) );                    
+                }
+            }
+            parentClass = parentClass.getSuperclass();
+            if ( parentClass != null ) {
+                queue.add( new Pair< Integer, Class<?> >( p.first + 1, parentClass ) );
+            }
+        }
+        return distance;
     }
 
     // TODO -- this would be useful for TimeVaryingMap.valueFromString();
@@ -538,11 +664,11 @@ public class ClassUtils {
             try {
                 cls = cl.loadClass(className);
                 if ( cls != null ) {
-                    Debug.outln( "classForName(" + className + ") = " + cls.getSimpleName() );
+                    if ( Debug.isOn() ) Debug.outln( "classForName(" + className + ") = " + cls.getSimpleName() );
                     break;
                 }
             } catch ( Throwable e ) {
-                Debug.errln( "classForName(" + className
+                if ( Debug.isOn() ) Debug.errln( "classForName(" + className
                              + ") failed for loader: " + cl + "\n"
                              + e.getLocalizedMessage() );
             }
@@ -1142,11 +1268,15 @@ public class ClassUtils {
       atc.compare( e.getKey(), e.getValue().first, e.getValue().second );
     }
     if ( atc.best != null && !atc.allNonNullArgsMatched ) {
-      System.err.println( "constructor returned (" + atc.best
-                          + ") only matches " + atc.mostMatchingArgs
-                          + " args: " + Utils.toString( argTypes, false ) );
+        if ( Debug.isOn() ) {
+            Debug.outln( "constructor returned (" + atc.best
+                         + ") only matches " + atc.mostMatchingArgs
+                         + " args: " + Utils.toString( argTypes, false ) );
+        }
     } else if ( atc.best == null ) {
-      System.err.println( "best args not found in " + candidates );
+        if ( Debug.isOn() ) {
+            Debug.errln( "best args not found in " + candidates );
+        }
     }
     return atc.best;
   }
@@ -1160,14 +1290,18 @@ public class ClassUtils {
         atc.compare( aCtor, aCtor.getParameterTypes(), aCtor.isVarArgs() );
       }
       if ( atc.best != null && !atc.allNonNullArgsMatched ) {
-        System.err.println( "constructor returned (" + atc.best
-                            + ") only matches " + atc.mostMatchingArgs
-                            + " args: " + Utils.toString( argTypes, false ) );
+          if ( Debug.isOn() ) {
+              Debug.outln( "constructor returned (" + atc.best
+                           + ") only matches " + atc.mostMatchingArgs
+                           + " args: " + Utils.toString( argTypes, false ) );
+          }
       } else if ( atc.best == null ) {
-        System.err.println( "constructor not found in " + ctors );
+          if ( Debug.isOn() ) {
+              Debug.errln( "constructor not found in " + ctors );
   //                          cls.getSimpleName()
   //                          + toString( argTypes, false ) + " not found for "
   //                          + cls.getSimpleName() );
+          }
       }
       return atc.best;
     }
@@ -1259,7 +1393,7 @@ public class ClassUtils {
           bestLength = length;
         }
       }
-      Debug.outln( "Best class " + bestCls.getCanonicalName()
+      if ( Debug.isOn() ) Debug.outln( "Best class " + bestCls.getCanonicalName()
                           + " has length, " + bestLength
                           + ", and common prefix length of packages, "
                           + bestLengthOfCommonPkgPrefix + ", pkg="
@@ -1324,7 +1458,7 @@ public class ClassUtils {
                            CompareUtils.class,
                            FileUtils.class};
     for ( Class<?> c : classes ) {
-      Method m = getMethodForArgTypes( c, functionName, argTypes );
+      Method m = getMethodForArgTypes( c, functionName, argTypes, false );
       if ( m != null ) return m;
     }
     return null;
@@ -1400,20 +1534,20 @@ public class ClassUtils {
                                              Class<?>[] argTypes,
                                              boolean complainIfNotFound ) {
     //Debug.turnOff();  // DELETE ME -- FIXME
-    Debug.outln("=========================start===============================");
+      if ( Debug.isOn() ) Debug.outln("=========================start===============================");
     //Debug.errln("=========================start===============================");
     //Class< ? > classForName = getClassForName( className, preferredPackage, false );
     String classNameNoParams = noParameterName( className );
     List< Class< ? > > classesForName = getClassesForName( classNameNoParams, false );
     //Debug.err("classForName = " + classForName );
-    Debug.outln("classesForName = " + classesForName );
+    if ( Debug.isOn() ) Debug.outln("classesForName = " + classesForName );
     if ( Utils.isNullOrEmpty( classesForName ) ) {
       if ( complainIfNotFound ) {
         System.err.println( "Couldn't find the class " + className + " for method "
                      + callName
                      + ( argTypes == null ? "" : Utils.toString( argTypes, false ) ) );
       }
-      Debug.outln("===========================end==============================");
+      if ( Debug.isOn() ) Debug.outln("===========================end==============================");
       //Debug.errln("===========================end==============================");
       //Debug.turnOff();  // DELETE ME -- FIXME
       return null;
@@ -1449,7 +1583,7 @@ public class ClassUtils {
     }
     if ( Debug.isOn() ) Debug.errorOnNull( "getMethodForArgTypes(" + className + "." + callName
                  + Utils.toString( argTypes, false ) + "): Could not find method!", best );
-    Debug.outln("===========================end==============================");
+    if ( Debug.isOn() ) Debug.outln("===========================end==============================");
     //Debug.errln("===========================end==============================");
     //Debug.turnOff();  // DELETE ME -- FIXME
     return best;
@@ -1505,7 +1639,7 @@ public class ClassUtils {
   //    int mostDeps = 0;
   //    boolean allArgsMatched = false;
   //    double bestScore = Double.MAX_VALUE;
-      boolean debugWasOn = Debug.isOn();
+      //boolean debugWasOn = Debug.isOn();
       //Debug.turnOff();
       if ( Debug.isOn() ) Debug.outln( "calling " + clsName + ".class.getMethod(" + callName + ")"  );
       if ( cls != null ) {
@@ -1542,9 +1676,9 @@ public class ClassUtils {
           }
         }
       }
-      if ( debugWasOn ) {
-        Debug.turnOn();
-      }
+//      if ( debugWasOn ) {
+//        Debug.turnOn();
+//      }
       if ( atc.best != null && !atc.allArgsMatched ) {
       if ( Debug.isOn() ) Debug.errln( "getMethodForArgTypes( cls="
                                        + clsName + ", callName="
@@ -1577,21 +1711,86 @@ public class ClassUtils {
         return methods;
     }
 
-  public static String dominantType( String argType1, String argType2 ) {
-	  if ( argType1 == null ) return argType2;
-	  if ( argType2 == null ) return argType1;
-	  if ( argType1.equals( "String" ) ) return argType1;
-	  if ( argType2.equals( "String" ) ) return argType2;
-	  if ( argType1.toLowerCase().equals( "double" ) ) return argType1;
-	  if ( argType2.toLowerCase().equals( "double" ) ) return argType2;
-      if ( argType1.toLowerCase().equals( "float" ) ) return argType1;
-      if ( argType2.toLowerCase().equals( "float" ) ) return argType2;
-	  if ( argType1.toLowerCase().startsWith( "long" ) ) return argType1;
-	  if ( argType2.toLowerCase().startsWith( "long" ) ) return argType2;
-	  if ( argType1.toLowerCase().startsWith( "int" ) ) return argType1;
-	  if ( argType2.toLowerCase().startsWith( "int" ) ) return argType2;
-	  return argType1;
-	}
+    public static Object bestArgumentForType( Collection<?> arguments,
+                                              Class<?> parameterType ) {
+        Object bestArg = null;
+        for ( Object arg : arguments ) {
+            if ( bestArg == null ||
+                 isArgumentBetterForType( arg, bestArg, parameterType ) ) {
+                bestArg = arg;
+            }
+        }
+        return bestArg;
+    }
+    public static boolean isArgumentBetterForType( Object arg, Object otherArg,
+                                                   Class< ? > parameterType ) {
+        if ( arg == otherArg ) return false;        
+        Class< ? > argClass = arg != null ? arg.getClass() : null;
+        Class< ? > otherArgClass = otherArg != null ? otherArg.getClass() : null;
+        return isTypeABetterMatch( argClass, otherArgClass, parameterType );
+    }
+
+    public static boolean isTypeABetterMatch( Class< ? > argClass,
+                                              Class< ? > otherArgClass,
+                                              Class< ? > parameterType ) {
+        if ( parameterType == null ) return false;
+        parameterType = getNonPrimitiveClass( parameterType );
+        if ( argClass == otherArgClass ) return false;
+        if ( argClass == null ) {
+            boolean isOtherArgAssignable = parameterType.isAssignableFrom( otherArgClass );
+            return !isOtherArgAssignable;
+        }
+        if ( otherArgClass == null ) {
+            boolean isArgAssignable = parameterType.isAssignableFrom( argClass );
+            return isArgAssignable;
+        }
+        if ( argClass.equals( otherArgClass ) ) return false;
+        if ( otherArgClass.equals( parameterType ) ) return false;
+        boolean aa = parameterType.isAssignableFrom( argClass );
+        boolean oa = parameterType.isAssignableFrom( otherArgClass );
+        if ( aa != oa ) return aa;
+
+        // If neither are assignable, see if the args should or should not be arrays and re-compare based on type of array. 
+        if ( !aa ) {
+            boolean aarr = argClass.isArray();
+            boolean oarr = otherArgClass.isArray();
+            boolean parr = parameterType.isArray();
+            if ( aarr || oarr || parr ) {
+                if ( aarr ) argClass = argClass.getComponentType();
+                if ( oarr ) otherArgClass = otherArgClass.getComponentType();
+                if ( parr ) parameterType = parameterType.getComponentType();
+                return isTypeABetterMatch( argClass, otherArgClass, parameterType );
+            }
+        }
+        
+        // both assignable from here -- see if one is closer than the other
+        int argDistance =
+                ClassUtils.distanceToSubclass( parameterType, argClass );
+        int otherArgDistance =
+                ClassUtils.distanceToSubclass( parameterType, argClass );
+
+        int comp = CompareUtils.compare( argDistance, otherArgDistance );
+        // shorter distance wins; comp < 0 means argDistance is smaller
+        return comp < 0;
+    }
+    
+    public static String dominantType( String argType1, String argType2 ) {
+        if ( argType1 == null ) return argType2;
+        if ( argType2 == null ) return argType1;
+        if ( argType1.equals( "String" ) ) return argType1;
+        if ( argType2.equals( "String" ) ) return argType2;
+        String argType1Lower = argType1.toLowerCase();
+        if ( argType1Lower.equals( "double" ) ) return argType1;
+        String argType2Lower = argType2.toLowerCase();
+        if ( argType2Lower.equals( "double" ) ) return argType2;
+        if ( argType1Lower.equals( "float" ) ) return argType1;
+        if ( argType2Lower.equals( "float" ) ) return argType2;
+        if ( argType1Lower.startsWith( "long" ) ) return argType1;
+        if ( argType2Lower.startsWith( "long" ) ) return argType2;
+        if ( argType1Lower.startsWith( "int" ) ) return argType1;
+        if ( argType2Lower.startsWith( "int" ) ) return argType2;
+        return argType1;
+    }
 
   public static Class<?> dominantTypeClass(Class<?> cls1, Class<?> cls2) {
 	  if ( cls1 == null ) return cls2;
@@ -2030,6 +2229,13 @@ public class ClassUtils {
       }
       return null;
     }
+  
+    public static boolean isNonSpecificType( Class< ? > cls ) {
+        boolean nonSpecific =
+                cls == null || cls.equals( Object.class )
+                        || Wraps.class.isAssignableFrom( cls );
+        return nonSpecific;
+    }
 
     protected static final String[] typeStrings =
             new String[] { "type", "TYPE", "Type", "class", "CLASS", "Class" };
@@ -2041,12 +2247,24 @@ public class ClassUtils {
     // lowercase on "get" and "type"; Do the same for getId() and getName().
     // REVIEW -- consider genericizing as getMemberValue()
     public static Object getType( Object o ) {
-        if ( o instanceof Wraps ) {
+        if ( o == null ) return null;
+        HashSet<Object> seen = new HashSet< Object >();
+        Object originalO = o;
+        while ( o instanceof Wraps ) {
+            if ( seen.contains( o ) ) break;
+            seen.add( o );
             Object type = ( (Wraps)o ).getType();
-            if ( type != null ) return type;
-            return getType( ( (Wraps)o ).getValue( false ) );
+            if ( !(type instanceof Class) || !isNonSpecificType( (Class< ? >)type ) ) {
+                return type;
+            }
+            Object o2 = ( (Wraps)o ).getValue( false );
+            if ( o2 == null ) break;
+            o = o2;
         }
         try {
+            if ( o.getClass().getPackage().getName().startsWith( "java" ) ) {
+                return o.getClass();
+            }
             for ( String fieldName : typeStrings ) {
                 Object oId = ClassUtils.getFieldValue( o, fieldName, false, true );
                 if ( oId != null ) return oId;
@@ -2441,6 +2659,7 @@ public class ClassUtils {
    */
   public static <TT> TT evaluate( Object object, Class< TT > cls,
                                   boolean propagate ) throws ClassCastException {
+    // FIXME -- Need to add a seen set (e.g., Seen<Object> seen) to parameters to avoid infinite recursion.
     if ( object == null ) return null;
     // Check if object is already what we want.
     if ( cls != null && cls.isInstance( object ) || cls.equals( object.getClass() ) ) {
@@ -2470,6 +2689,20 @@ public class ClassUtils {
             }
         }
     }
+    
+    if ( cls != null && Collection.class.isAssignableFrom( cls ) ) {
+       if ( cls.isAssignableFrom( ArrayList.class ) ) {
+           return (TT)Utils.newList( object );
+       }
+       if ( cls.isAssignableFrom( Set.class ) ) {
+           return (TT)Utils.newSet( object );
+       }
+    }
+    if ( cls != null && cls.isAssignableFrom( TreeMap.class ) &&
+         object instanceof HasId ) {
+        return (TT)Utils.newMap( new Pair(((HasId)object).getId(), object ) );
+    }
+    
     //    if ( object instanceof Parameter ) {
 //      value = ( (Parameter)object ).getValue( propagate );
 //      return evaluate( value, cls, propagate, allowWrapping );
@@ -2529,7 +2762,7 @@ public class ClassUtils {
     try {
       r = (TT)object;
     } catch ( ClassCastException cce ) {
-      Debug.errln( "Warning! No evaluation of " + object + " with type " + cls.getName() + "!" );
+        if ( Debug.isOn() ) Debug.errln( "Warning! No evaluation of " + object + " with type " + cls.getName() + "!" );
       throw cce;
     }
     if ( cls != null && cls.isInstance( r ) || ( r != null && cls == r.getClass() ) ) {
@@ -2556,9 +2789,6 @@ public class ClassUtils {
                                      boolean allowWrapping ) throws ClassCastException {
     if ( o1 == o2 ) return true;
     if ( o1 == null || o2 == null ) return false;
-    if ( (o1 instanceof Float && o2 instanceof Double ) || (o2 instanceof Float && o1 instanceof Double ) ) {
-      Debug.out( "" );
-    }
     Object v1 = evaluate( o1, cls, propagate );//, false );
     Object v2 = evaluate( o2, cls, propagate );//, false );
     if ( Utils.valuesEqual( v1, v2 ) ) return true;

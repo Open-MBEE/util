@@ -240,6 +240,21 @@ public class Utils {
     return ( s == null || s.isEmpty() );
   }
 
+  public static < T1, T2 >
+  void add( Map< T1, Set< T2 > > map, T1 t1, T2 t2 ) {
+      if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
+                        map, t1, t2 ) ) {
+          return;
+      }
+      Set< T2 > innerMap = map.get( t1 );
+      if ( innerMap == null ) {
+          innerMap = new LinkedHashSet< T2 >();
+          map.put( t1, innerMap );
+      }
+      innerMap.add( t2 );
+  }
+
+
   // generic map<X, map<Y, Z> >.put(x, y, z)
   /**
    * A generic method for putting a triple into a map of a map to emulate
@@ -630,6 +645,13 @@ public class Utils {
   }
 
 
+  public static boolean contains( Object[] array, Object o ) {
+      for ( Object ao : array ) {
+          if ( valuesEqual( ao, o ) ) return true;
+      }
+      return false;
+  }
+  
   // REVIEW -- consider moving these along with put & get to a CollectionUtils class
 
   /**
@@ -866,11 +888,13 @@ public class Utils {
     }
     return array;
   }
-  public static <T> T[] scramble( Collection< T > collection ) {
-    if ( isNullOrEmpty( collection ) ) return (T[])new Object[]{};
+  public static <T> List<T> scramble( Collection< T > collection ) {
+    if ( isNullOrEmpty( collection ) ) return getEmptyList();
     T[] a = (T[])new Object[collection.size()];
     collection.toArray( a );
-    return scramble( a );
+    a = scramble( a );
+    List<T> newCollection = Arrays.asList( a );
+    return newCollection;
   }
 
   /**
@@ -1198,6 +1222,16 @@ public class Utils {
    * @param ts
    * @return the new {@link ArrayList}
    */
+  public static < T > ArrayList< T > newEmptyList() {
+      ArrayList< T > newList = new ArrayList< T >();
+      return newList;
+  }
+
+  /**
+   * Creates a new {@link ArrayList} and inserts the arguments, {@code ts}.
+   * @param ts
+   * @return the new {@link ArrayList}
+   */
   public static < T > ArrayList< T > newList( T... ts ) {
     ArrayList< T > newList = new ArrayList< T >();
     if ( ts != null && ts.length > 0 ) {
@@ -1249,6 +1283,30 @@ public class Utils {
       return newList;
   }
 
+  public static ArrayList<Object> flatten( Collection< ? > list ) {
+      try {
+          return flatten( list, Object.class );
+      } catch ( ClassCastException e ) {
+          e.printStackTrace();
+      }
+      return null;
+  }
+  
+  public static <T> ArrayList<T> flatten( Collection< ? > list, Class< T > cls ) {
+      ArrayList<T> newList = new ArrayList< T >();
+      for ( Object o : list ) {
+          if ( !( o instanceof Collection )
+               && ( cls == null || cls.isInstance( o ) ) ) {
+              @SuppressWarnings( "unchecked" )
+              T t = (T)o;
+              newList.add( t );
+          } else if ( o instanceof Collection ) {
+              newList.addAll( flatten( (Collection< ? >)o, cls ) );
+          }
+      }
+      return newList;
+  }
+  
   protected static final String[] trueStrings = new String[] {"t", "true", "1", "1.0", "yes", "y"};
 
   public static Boolean isTrue(Object o) {
