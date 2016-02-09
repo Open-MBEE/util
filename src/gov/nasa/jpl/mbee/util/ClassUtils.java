@@ -38,7 +38,6 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -46,7 +45,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -224,6 +222,7 @@ public class ClassUtils {
                         + candidateArgsLength + "), argDistance=" + argDistance
                         + ", numDeps=" + numDeps );
         }
+        // FIXME -- wrap in a finally clause
         if ( debugWasOn ) Debug.turnOn();
       }
     }
@@ -282,6 +281,9 @@ public class ClassUtils {
      * @param subclass
      * @return
      */
+    public static int distanceToSubclass( Class< ? > superclass, Class< ? > subclass ) {
+        return subclassDistance( superclass, subclass );
+    }
     public static int subclassDistance( Class< ? > superclass, Class< ? > subclass ) {
 //        return subclassDistance( superclass, subclass, new HashMap<String, Integer>() );
 //    }
@@ -662,11 +664,11 @@ public class ClassUtils {
             try {
                 cls = cl.loadClass(className);
                 if ( cls != null ) {
-                    Debug.outln( "classForName(" + className + ") = " + cls.getSimpleName() );
+                    if ( Debug.isOn() ) Debug.outln( "classForName(" + className + ") = " + cls.getSimpleName() );
                     break;
                 }
             } catch ( Throwable e ) {
-                Debug.errln( "classForName(" + className
+                if ( Debug.isOn() ) Debug.errln( "classForName(" + className
                              + ") failed for loader: " + cl + "\n"
                              + e.getLocalizedMessage() );
             }
@@ -1266,11 +1268,15 @@ public class ClassUtils {
       atc.compare( e.getKey(), e.getValue().first, e.getValue().second );
     }
     if ( atc.best != null && !atc.allNonNullArgsMatched ) {
-      System.err.println( "constructor returned (" + atc.best
-                          + ") only matches " + atc.mostMatchingArgs
-                          + " args: " + Utils.toString( argTypes, false ) );
+        if ( Debug.isOn() ) {
+            Debug.outln( "constructor returned (" + atc.best
+                         + ") only matches " + atc.mostMatchingArgs
+                         + " args: " + Utils.toString( argTypes, false ) );
+        }
     } else if ( atc.best == null ) {
-      System.err.println( "best args not found in " + candidates );
+        if ( Debug.isOn() ) {
+            Debug.errln( "best args not found in " + candidates );
+        }
     }
     return atc.best;
   }
@@ -1284,14 +1290,18 @@ public class ClassUtils {
         atc.compare( aCtor, aCtor.getParameterTypes(), aCtor.isVarArgs() );
       }
       if ( atc.best != null && !atc.allNonNullArgsMatched ) {
-        System.err.println( "constructor returned (" + atc.best
-                            + ") only matches " + atc.mostMatchingArgs
-                            + " args: " + Utils.toString( argTypes, false ) );
+          if ( Debug.isOn() ) {
+              Debug.outln( "constructor returned (" + atc.best
+                           + ") only matches " + atc.mostMatchingArgs
+                           + " args: " + Utils.toString( argTypes, false ) );
+          }
       } else if ( atc.best == null ) {
-        System.err.println( "constructor not found in " + ctors );
+          if ( Debug.isOn() ) {
+              Debug.errln( "constructor not found in " + ctors );
   //                          cls.getSimpleName()
   //                          + toString( argTypes, false ) + " not found for "
   //                          + cls.getSimpleName() );
+          }
       }
       return atc.best;
     }
@@ -1383,7 +1393,7 @@ public class ClassUtils {
           bestLength = length;
         }
       }
-      Debug.outln( "Best class " + bestCls.getCanonicalName()
+      if ( Debug.isOn() ) Debug.outln( "Best class " + bestCls.getCanonicalName()
                           + " has length, " + bestLength
                           + ", and common prefix length of packages, "
                           + bestLengthOfCommonPkgPrefix + ", pkg="
@@ -1524,20 +1534,20 @@ public class ClassUtils {
                                              Class<?>[] argTypes,
                                              boolean complainIfNotFound ) {
     //Debug.turnOff();  // DELETE ME -- FIXME
-    Debug.outln("=========================start===============================");
+      if ( Debug.isOn() ) Debug.outln("=========================start===============================");
     //Debug.errln("=========================start===============================");
     //Class< ? > classForName = getClassForName( className, preferredPackage, false );
     String classNameNoParams = noParameterName( className );
     List< Class< ? > > classesForName = getClassesForName( classNameNoParams, false );
     //Debug.err("classForName = " + classForName );
-    Debug.outln("classesForName = " + classesForName );
+    if ( Debug.isOn() ) Debug.outln("classesForName = " + classesForName );
     if ( Utils.isNullOrEmpty( classesForName ) ) {
       if ( complainIfNotFound ) {
         System.err.println( "Couldn't find the class " + className + " for method "
                      + callName
                      + ( argTypes == null ? "" : Utils.toString( argTypes, false ) ) );
       }
-      Debug.outln("===========================end==============================");
+      if ( Debug.isOn() ) Debug.outln("===========================end==============================");
       //Debug.errln("===========================end==============================");
       //Debug.turnOff();  // DELETE ME -- FIXME
       return null;
@@ -1573,7 +1583,7 @@ public class ClassUtils {
     }
     if ( Debug.isOn() ) Debug.errorOnNull( "getMethodForArgTypes(" + className + "." + callName
                  + Utils.toString( argTypes, false ) + "): Could not find method!", best );
-    Debug.outln("===========================end==============================");
+    if ( Debug.isOn() ) Debug.outln("===========================end==============================");
     //Debug.errln("===========================end==============================");
     //Debug.turnOff();  // DELETE ME -- FIXME
     return best;
@@ -1629,7 +1639,7 @@ public class ClassUtils {
   //    int mostDeps = 0;
   //    boolean allArgsMatched = false;
   //    double bestScore = Double.MAX_VALUE;
-      boolean debugWasOn = Debug.isOn();
+      //boolean debugWasOn = Debug.isOn();
       //Debug.turnOff();
       if ( Debug.isOn() ) Debug.outln( "calling " + clsName + ".class.getMethod(" + callName + ")"  );
       if ( cls != null ) {
@@ -1666,9 +1676,9 @@ public class ClassUtils {
           }
         }
       }
-      if ( debugWasOn ) {
-        Debug.turnOn();
-      }
+//      if ( debugWasOn ) {
+//        Debug.turnOn();
+//      }
       if ( atc.best != null && !atc.allArgsMatched ) {
       if ( Debug.isOn() ) Debug.errln( "getMethodForArgTypes( cls="
                                        + clsName + ", callName="
@@ -1701,21 +1711,86 @@ public class ClassUtils {
         return methods;
     }
 
-  public static String dominantType( String argType1, String argType2 ) {
-	  if ( argType1 == null ) return argType2;
-	  if ( argType2 == null ) return argType1;
-	  if ( argType1.equals( "String" ) ) return argType1;
-	  if ( argType2.equals( "String" ) ) return argType2;
-	  if ( argType1.toLowerCase().equals( "double" ) ) return argType1;
-	  if ( argType2.toLowerCase().equals( "double" ) ) return argType2;
-      if ( argType1.toLowerCase().equals( "float" ) ) return argType1;
-      if ( argType2.toLowerCase().equals( "float" ) ) return argType2;
-	  if ( argType1.toLowerCase().startsWith( "long" ) ) return argType1;
-	  if ( argType2.toLowerCase().startsWith( "long" ) ) return argType2;
-	  if ( argType1.toLowerCase().startsWith( "int" ) ) return argType1;
-	  if ( argType2.toLowerCase().startsWith( "int" ) ) return argType2;
-	  return argType1;
-	}
+    public static Object bestArgumentForType( Collection<?> arguments,
+                                              Class<?> parameterType ) {
+        Object bestArg = null;
+        for ( Object arg : arguments ) {
+            if ( bestArg == null ||
+                 isArgumentBetterForType( arg, bestArg, parameterType ) ) {
+                bestArg = arg;
+            }
+        }
+        return bestArg;
+    }
+    public static boolean isArgumentBetterForType( Object arg, Object otherArg,
+                                                   Class< ? > parameterType ) {
+        if ( arg == otherArg ) return false;        
+        Class< ? > argClass = arg != null ? arg.getClass() : null;
+        Class< ? > otherArgClass = otherArg != null ? otherArg.getClass() : null;
+        return isTypeABetterMatch( argClass, otherArgClass, parameterType );
+    }
+
+    public static boolean isTypeABetterMatch( Class< ? > argClass,
+                                              Class< ? > otherArgClass,
+                                              Class< ? > parameterType ) {
+        if ( parameterType == null ) return false;
+        parameterType = getNonPrimitiveClass( parameterType );
+        if ( argClass == otherArgClass ) return false;
+        if ( argClass == null ) {
+            boolean isOtherArgAssignable = parameterType.isAssignableFrom( otherArgClass );
+            return !isOtherArgAssignable;
+        }
+        if ( otherArgClass == null ) {
+            boolean isArgAssignable = parameterType.isAssignableFrom( argClass );
+            return isArgAssignable;
+        }
+        if ( argClass.equals( otherArgClass ) ) return false;
+        if ( otherArgClass.equals( parameterType ) ) return false;
+        boolean aa = parameterType.isAssignableFrom( argClass );
+        boolean oa = parameterType.isAssignableFrom( otherArgClass );
+        if ( aa != oa ) return aa;
+
+        // If neither are assignable, see if the args should or should not be arrays and re-compare based on type of array. 
+        if ( !aa ) {
+            boolean aarr = argClass.isArray();
+            boolean oarr = otherArgClass.isArray();
+            boolean parr = parameterType.isArray();
+            if ( aarr || oarr || parr ) {
+                if ( aarr ) argClass = argClass.getComponentType();
+                if ( oarr ) otherArgClass = otherArgClass.getComponentType();
+                if ( parr ) parameterType = parameterType.getComponentType();
+                return isTypeABetterMatch( argClass, otherArgClass, parameterType );
+            }
+        }
+        
+        // both assignable from here -- see if one is closer than the other
+        int argDistance =
+                ClassUtils.distanceToSubclass( parameterType, argClass );
+        int otherArgDistance =
+                ClassUtils.distanceToSubclass( parameterType, argClass );
+
+        int comp = CompareUtils.compare( argDistance, otherArgDistance );
+        // shorter distance wins; comp < 0 means argDistance is smaller
+        return comp < 0;
+    }
+    
+    public static String dominantType( String argType1, String argType2 ) {
+        if ( argType1 == null ) return argType2;
+        if ( argType2 == null ) return argType1;
+        if ( argType1.equals( "String" ) ) return argType1;
+        if ( argType2.equals( "String" ) ) return argType2;
+        String argType1Lower = argType1.toLowerCase();
+        if ( argType1Lower.equals( "double" ) ) return argType1;
+        String argType2Lower = argType2.toLowerCase();
+        if ( argType2Lower.equals( "double" ) ) return argType2;
+        if ( argType1Lower.equals( "float" ) ) return argType1;
+        if ( argType2Lower.equals( "float" ) ) return argType2;
+        if ( argType1Lower.startsWith( "long" ) ) return argType1;
+        if ( argType2Lower.startsWith( "long" ) ) return argType2;
+        if ( argType1Lower.startsWith( "int" ) ) return argType1;
+        if ( argType2Lower.startsWith( "int" ) ) return argType2;
+        return argType1;
+    }
 
   public static Class<?> dominantTypeClass(Class<?> cls1, Class<?> cls2) {
 	  if ( cls1 == null ) return cls2;
@@ -2154,6 +2229,13 @@ public class ClassUtils {
       }
       return null;
     }
+  
+    public static boolean isNonSpecificType( Class< ? > cls ) {
+        boolean nonSpecific =
+                cls == null || cls.equals( Object.class )
+                        || Wraps.class.isAssignableFrom( cls );
+        return nonSpecific;
+    }
 
     protected static final String[] typeStrings =
             new String[] { "type", "TYPE", "Type", "class", "CLASS", "Class" };
@@ -2165,12 +2247,24 @@ public class ClassUtils {
     // lowercase on "get" and "type"; Do the same for getId() and getName().
     // REVIEW -- consider genericizing as getMemberValue()
     public static Object getType( Object o ) {
-        if ( o instanceof Wraps ) {
+        if ( o == null ) return null;
+        HashSet<Object> seen = new HashSet< Object >();
+        Object originalO = o;
+        while ( o instanceof Wraps ) {
+            if ( seen.contains( o ) ) break;
+            seen.add( o );
             Object type = ( (Wraps)o ).getType();
-            if ( type != null ) return type;
-            return getType( ( (Wraps)o ).getValue( false ) );
+            if ( !(type instanceof Class) || !isNonSpecificType( (Class< ? >)type ) ) {
+                return type;
+            }
+            Object o2 = ( (Wraps)o ).getValue( false );
+            if ( o2 == null ) break;
+            o = o2;
         }
         try {
+            if ( o.getClass().getPackage().getName().startsWith( "java" ) ) {
+                return o.getClass();
+            }
             for ( String fieldName : typeStrings ) {
                 Object oId = ClassUtils.getFieldValue( o, fieldName, false, true );
                 if ( oId != null ) return oId;
@@ -2565,6 +2659,7 @@ public class ClassUtils {
    */
   public static <TT> TT evaluate( Object object, Class< TT > cls,
                                   boolean propagate ) throws ClassCastException {
+    // FIXME -- Need to add a seen set (e.g., Seen<Object> seen) to parameters to avoid infinite recursion.
     if ( object == null ) return null;
     // Check if object is already what we want.
     if ( cls != null && cls.isInstance( object ) || cls.equals( object.getClass() ) ) {
@@ -2594,6 +2689,20 @@ public class ClassUtils {
             }
         }
     }
+    
+    if ( cls != null && Collection.class.isAssignableFrom( cls ) ) {
+       if ( cls.isAssignableFrom( ArrayList.class ) ) {
+           return (TT)Utils.newList( object );
+       }
+       if ( cls.isAssignableFrom( Set.class ) ) {
+           return (TT)Utils.newSet( object );
+       }
+    }
+    if ( cls != null && cls.isAssignableFrom( TreeMap.class ) &&
+         object instanceof HasId ) {
+        return (TT)Utils.newMap( new Pair(((HasId)object).getId(), object ) );
+    }
+    
     //    if ( object instanceof Parameter ) {
 //      value = ( (Parameter)object ).getValue( propagate );
 //      return evaluate( value, cls, propagate, allowWrapping );
@@ -2653,7 +2762,7 @@ public class ClassUtils {
     try {
       r = (TT)object;
     } catch ( ClassCastException cce ) {
-      Debug.errln( "Warning! No evaluation of " + object + " with type " + cls.getName() + "!" );
+        if ( Debug.isOn() ) Debug.errln( "Warning! No evaluation of " + object + " with type " + cls.getName() + "!" );
       throw cce;
     }
     if ( cls != null && cls.isInstance( r ) || ( r != null && cls == r.getClass() ) ) {
@@ -2680,9 +2789,6 @@ public class ClassUtils {
                                      boolean allowWrapping ) throws ClassCastException {
     if ( o1 == o2 ) return true;
     if ( o1 == null || o2 == null ) return false;
-    if ( (o1 instanceof Float && o2 instanceof Double ) || (o2 instanceof Float && o1 instanceof Double ) ) {
-      Debug.out( "" );
-    }
     Object v1 = evaluate( o1, cls, propagate );//, false );
     Object v2 = evaluate( o2, cls, propagate );//, false );
     if ( Utils.valuesEqual( v1, v2 ) ) return true;

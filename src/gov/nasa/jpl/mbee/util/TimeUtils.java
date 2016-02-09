@@ -227,7 +227,7 @@ public class TimeUtils {
       if (d != null) {
         return toAspenTimeString(d.getTime(), format);
       } else {
-        Debug.errln("Cannot convert null Date");
+          if ( Debug.isOn() ) Debug.errln("Cannot convert null Date");
         return null;
       }
     }
