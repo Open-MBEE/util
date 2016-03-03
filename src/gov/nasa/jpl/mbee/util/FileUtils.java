@@ -130,12 +130,18 @@ public final class FileUtils {
    */
   public static File findFile( final String fileName ) {
     File file = existingFile( fileName );
-    if ( file == null ) {
-      File cwd = new File( getCurrentWorkingDirectory() );
-      assert cwd.exists();
+    if ( file != null ) return file;
+    File cwd = new File( getCurrentWorkingDirectory() );
+    return findFile( cwd, fileName );
+  }
+  public static File findFile( File fromDir, final String fileName ) {
+      File file = existingFile( fileName );
+      if ( file != null ) return file;
+    //      File cwd = new File( getCurrentWorkingDirectory() );
+      assert fromDir.exists();
       List< File > q = new ArrayList< File >();
       List< File > files = new ArrayList< File >();
-      q.add( cwd );
+      q.add( fromDir );
       while ( !q.isEmpty() ) {
         File f = q.get( 0 );
         q.remove( 0 );
@@ -154,10 +160,10 @@ public final class FileUtils {
         int lengthDiff = f.getAbsolutePath().length() - fileName.length();
         if ( lengthDiff >= 0
              && f.getAbsolutePath().endsWith( fileName )
-// uncomment lines below -- untested but it makes this fcn correct
-//             && ( lengthDiff == 0 
-//                  || f.getAbsolutePath().charAt( lengthDiff - 1 )
-//                     == File.separatorChar ) 
+    // uncomment lines below -- untested but it makes this fcn correct
+    //             && ( lengthDiff == 0 
+    //                  || f.getAbsolutePath().charAt( lengthDiff - 1 )
+    //                     == File.separatorChar ) 
                      ) {
           files.add( f );
         }
@@ -172,8 +178,7 @@ public final class FileUtils {
         }
       }
       file = latestModifiedFile;
-    }
-    return file;
+      return file;
   }
   
   public static File[] filesInDirectory( final String fileName ) {
