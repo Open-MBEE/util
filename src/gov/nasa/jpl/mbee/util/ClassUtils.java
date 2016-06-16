@@ -983,6 +983,9 @@ public class ClassUtils {
    * @return whether the Class is in the package with the given name
    */
   public static boolean isInPackage( Class<?> c, String packageName ) {
+    if ( packageName == null || c == null || c.getPackage() == null || c.getPackage().getName() == null ) {
+      return false;
+    }
     if ( c.getPackage().getName().equals( packageName ) ) {
       if ( Debug.isOn() ) Debug.errln("Found package! " + packageName );
       return true;
