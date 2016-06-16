@@ -1367,6 +1367,9 @@ public class ClassUtils {
       boolean bestInPreferredPackage = false;
 
       for ( Class<?> c : classList ) {
+        if (c == null || c.getPackage() == null || c.getPackage().getName() == null ) {
+            continue;
+        }
         boolean best = false;
         int lengthOfCommonPkgPrefix = Integer.MAX_VALUE;
         int lengthOfCommonPreferredPkgPrefix = Integer.MAX_VALUE;
