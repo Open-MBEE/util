@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 import org.junit.Assert;
@@ -125,8 +126,33 @@ public class TimeUtils {
       }
 
     public static final String timestampFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-    public static final String fileTimestampFormat = "yyyy-MM-dd'T'HH.mm.ss.SSSZ";
+    public static final String fileTimestampFormat = timestampFormat;
+    public static final String dayOfYearTimestampFormat = "yyyy-DDD'T'HH:mm:ss.SSSZ";
     public static final String aspenTeeFormat = "yyyy-MM-dd'T'HH:mm:ss";
+    public static final String formatsToTry[] =
+            { TimeUtils.timestampFormat,
+              TimeUtils.timestampFormat.replace( ".SSS", "" ),
+              TimeUtils.timestampFormat.replace( "Z", "" ),
+              TimeUtils.timestampFormat.replace( ".SSSZ", "" ),
+              TimeUtils.dayOfYearTimestampFormat, 
+              TimeUtils.dayOfYearTimestampFormat.replace( ".SSS", "" ),
+              TimeUtils.dayOfYearTimestampFormat.replace( "Z", "" ),
+              TimeUtils.dayOfYearTimestampFormat.replace( ".SSSZ", "" ),
+              "EEE MMM dd HH:mm:ss zzz yyyy" };
+    public static Boolean allFormatsHaveColon = null;
+    public static boolean allFormatsHaveColon() {
+        if ( allFormatsHaveColon == null ) {
+            allFormatsHaveColon = true;
+            for ( int i = 0; i < formatsToTry.length; ++i ) {
+                String format = formatsToTry[i];
+                if ( !format.contains( ":" ) ) {
+                    allFormatsHaveColon = false;
+                    break;
+                }
+            }
+        }
+        return allFormatsHaveColon;
+    }
 
     /**
      * Parse the specified timestamp String in tee format and return the
@@ -135,25 +161,26 @@ public class TimeUtils {
      * @param timestamp
      *            the time in tee format (yyyy-MM-dd'T'HH:mm:ss.SSSZ,
      *            yyyy-MM-dd'T'HH:mm:ssZ, yyyy-MM-dd'T'HH:mm:ss.SSS,
-     *            yyyy-MM-dd'T'HH:mm:ss, or EEE MMM dd HH:mm:ss zzz yyyy)
+     *            yyyy-MM-dd'T'HH:mm:ss, yyyy-DDD'T'HH:mm:ss or variants similar
+     *            to previous, or EEE MMM dd HH:mm:ss zzz yyyy)
      * @return the Date for the timestamp or null if the timestamp format is not
      *         recognized.
      */
     public static Date dateFromTimestamp( String timestamp ) {
-        String formatsToTry[] = { TimeUtils.timestampFormat,
-                                  TimeUtils.timestampFormat.replace( ".SSS", "" ),
-                                  TimeUtils.timestampFormat.replace( "Z", "" ),
-                                  TimeUtils.timestampFormat.replace( ".SSSZ", "" ),
-                                  "EEE MMM dd HH:mm:ss zzz yyyy" };
-    //    ArrayList formatsToTry = new ArrayList();
-    //    format
         if ( Utils.isNullOrEmpty( timestamp ) ) return null;
         int pos = timestamp.lastIndexOf( ':' );
+        // If all formats have a colon, then go ahead and return null if no
+        // colon was found.
+        if ( pos == -1  && allFormatsHaveColon() ) {
+            return null;
+        }
+        // If the last colon is three characters from the end, and the timestamp
+        // has three colons, then remove the last colon (presumably between 
+        // colon.  Why?
         if ( pos == timestamp.length() - 3
              && timestamp.replaceAll( "[^:]", "" ).length() == 3 ) {
           timestamp = timestamp.replaceFirst( ":([0-9][0-9])$", "$1" );
         }
-        //for ( String format : formatsToTry ) {
         for ( int i = 0; i < formatsToTry.length; ++i ) {
           String format = formatsToTry[i];
           DateFormat df = new SimpleDateFormat( format );
@@ -171,7 +198,7 @@ public class TimeUtils {
           }
         }
         return null;
-      }
+    }
 
     public static long fromTimestampToMillis( String timestamp ) {
       long t = 0;
@@ -239,7 +266,27 @@ public class TimeUtils {
       cal.setTimeZone(TimeZone.getTimeZone("GMT"));
       cal.setTimeInMillis(millis);
       String timeString = new SimpleDateFormat(format).format(cal.getTime());
-      return timeString;
+      return timeString;    
+    }
+
+    public static final double Julian_Jan_1_2000 = 2451544.500000;
+    public static final Date Date_Jan_1_1970 = new Date(0); //Calendar.set(year + 1900, month, date)
+    protected static final Calendar gmtCal =
+            Calendar.getInstance( TimeZone.getTimeZone( "GMT" ) );
+    protected static final Calendar cal_Jan_1_2000 = new GregorianCalendar( TimeZone.getTimeZone( "GMT" ) ) {
+        private static final long serialVersionUID = 1L;
+        {
+            set( 2000, Calendar.JANUARY, 1 );
+        }
+    };
+    protected static final long millis_Jan_1_2000 = cal_Jan_1_2000.getTimeInMillis();
+
+
+    public static long julianToMillis( Double julianDate ) {
+        double deltaDays = julianDate - Julian_Jan_1_2000;
+        double deltaMillis = deltaDays * 24 * 3600 * 1000;
+        long millis = millis_Jan_1_2000 + (int)deltaMillis;
+        return millis;
     }
 
 }

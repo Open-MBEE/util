@@ -71,7 +71,7 @@ public abstract class ConstantNumber extends Number implements Comparable< Numbe
                 && !Number.class.isAssignableFrom( pc ) ) {
             pc = pc.getSuperclass();
         }
-        if ( pc != null && !Number.class.isAssignableFrom( pc ) ) {
+        if ( pc != null && Number.class.isAssignableFrom( pc ) ) {
             Class< ? extends Number > c = pc.asSubclass( Number.class );
             n = constant.getValueMap().get( c );
         }
