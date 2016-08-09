@@ -7,9 +7,14 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.Assert;
 
+/**
+ * @author bclement
+ *
+ */
 public class TimeUtils {
 
     public static enum Units { 
@@ -125,6 +130,19 @@ public class TimeUtils {
         }
       }
 
+    public static final double Julian_Jan_1_2000 = 2451544.500000;
+    public static final Date Date_Jan_1_1970 = new Date(0); //Calendar.set(year + 1900, month, date)
+    protected static final Calendar gmtCal =
+            Calendar.getInstance( TimeZone.getTimeZone( "GMT" ) );
+    protected static final Calendar cal_Jan_1_2000 = new GregorianCalendar( TimeZone.getTimeZone( "GMT" ) ) {
+        private static final long serialVersionUID = 1L;
+        {
+            clear();
+            set( 2000, Calendar.JANUARY, 1 );
+        }
+    };
+    protected static final long millis_Jan_1_2000 = cal_Jan_1_2000.getTimeInMillis();
+
     public static final String timestampFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
     public static final String fileTimestampFormat = timestampFormat;
     public static final String dayOfYearTimestampFormat = "yyyy-DDD'T'HH:mm:ss.SSSZ";
@@ -139,6 +157,12 @@ public class TimeUtils {
               TimeUtils.dayOfYearTimestampFormat.replace( "Z", "" ),
               TimeUtils.dayOfYearTimestampFormat.replace( ".SSSZ", "" ),
               "EEE MMM dd HH:mm:ss zzz yyyy" };
+    
+    /**
+     * MaxDate is roughly the year 3000
+     */
+    private static final Date MaxDate = new Date((long)1030 * 365 * 24 * 3600 * 1000);
+    static long f = Long.MAX_VALUE;
     public static Boolean allFormatsHaveColon = null;
     public static boolean allFormatsHaveColon() {
         if ( allFormatsHaveColon == null ) {
@@ -168,15 +192,27 @@ public class TimeUtils {
      */
     public static Date dateFromTimestamp( String timestamp ) {
         if ( Utils.isNullOrEmpty( timestamp ) ) return null;
+        
+        try {
+            Double jd = Double.parseDouble( timestamp );
+            if ( jd != null ) {
+                Date d = julianToDate( jd );
+                if ( d != null && d.after( TimeUtils.Date_Jan_1_1970 ) &&
+                    d.before( TimeUtils.MaxDate ) ) {
+                    return d;
+                }
+            }
+        } catch (NumberFormatException e) {}
+        
         int pos = timestamp.lastIndexOf( ':' );
         // If all formats have a colon, then go ahead and return null if no
         // colon was found.
         if ( pos == -1  && allFormatsHaveColon() ) {
             return null;
         }
-        // If the last colon is three characters from the end, and the timestamp
-        // has three colons, then remove the last colon (presumably between 
-        // colon.  Why?
+        // This converts an xml time zone of format -07:00 to -0700. If the last
+        // colon is three characters from the end, and the timestamp has three
+        // colons, then remove the last colon.
         if ( pos == timestamp.length() - 3
              && timestamp.replaceAll( "[^:]", "" ).length() == 3 ) {
           timestamp = timestamp.replaceFirst( ":([0-9][0-9])$", "$1" );
@@ -269,24 +305,119 @@ public class TimeUtils {
       return timeString;    
     }
 
-    public static final double Julian_Jan_1_2000 = 2451544.500000;
-    public static final Date Date_Jan_1_1970 = new Date(0); //Calendar.set(year + 1900, month, date)
-    protected static final Calendar gmtCal =
-            Calendar.getInstance( TimeZone.getTimeZone( "GMT" ) );
-    protected static final Calendar cal_Jan_1_2000 = new GregorianCalendar( TimeZone.getTimeZone( "GMT" ) ) {
-        private static final long serialVersionUID = 1L;
-        {
-            set( 2000, Calendar.JANUARY, 1 );
-        }
-    };
-    protected static final long millis_Jan_1_2000 = cal_Jan_1_2000.getTimeInMillis();
-
-
+    /**
+     * Return a {@link java.util.Date} for the Julian date number.
+     * @param julianDateNumber
+     * @return
+     */
+    public static Date julianToDate( Double julianDateNumber ) {
+        if ( julianDateNumber == null ) return null;
+        long millis = julianToMillis( julianDateNumber );
+        Date date = new Date(millis);
+        return date;
+    }
+    
+    /**
+     * Return the number of milliseconds since January 1, 1970 for the Julian date number. 
+     * @param julianDate
+     * @return milliseconds
+     */
     public static long julianToMillis( Double julianDate ) {
         double deltaDays = julianDate - Julian_Jan_1_2000;
         double deltaMillis = deltaDays * 24 * 3600 * 1000;
-        long millis = millis_Jan_1_2000 + (int)deltaMillis;
+        long millis = millis_Jan_1_2000 + (long)deltaMillis;
         return millis;
     }
 
+    public static Double toDurationInSeconds( String field ) {
+        Double d = null;
+        // WARNING! -- this assumes that the number is in seconds!
+        try {
+            d = Double.parseDouble( field );
+        } catch (NumberFormatException e) {}
+        if ( d != null ) return d;
+        
+        // Try regex
+        Matcher m = null;
+        if ( field.contains( ":" ) ) {
+            Pattern p = Pattern.compile( "\\s*((\\d+):)?(\\d+):(\\d\\d?)([.](\\d+))?\\s*" );
+            m = p.matcher( field );
+            long hrs = 0;
+            long mins = 0;
+            long secs = 0;
+            long millis = 0;
+            if ( !m.matches() ) {
+                System.out.println( "no match!" );
+            } else {
+                System.out.println( "matches!" );
+                for ( int i = 1; i < m.groupCount() + 1; ++i ) {
+                    System.out.println( i + " " + m.group( i ) );
+                }
+                try {
+                    if ( m.groupCount() == 2 ) {
+                        if ( !Utils.isNullOrEmpty( m.group( 1 ) ) ) {
+                            mins = Integer.parseInt( m.group( 1 ) );
+                        }
+                        if ( !Utils.isNullOrEmpty( m.group( 2 ) ) ) {
+                            secs = Integer.parseInt( m.group( 2 ) );
+                        }
+                    } else if ( m.groupCount() == 4 ) {
+                        if ( m.group(3).contains(".") ) {
+                            if ( !Utils.isNullOrEmpty( m.group( 1 ) ) ) {
+                                mins = Integer.parseInt( m.group( 1 ) );
+                            }
+                            if ( !Utils.isNullOrEmpty( m.group( 2 ) ) ) {
+                                secs = Integer.parseInt( m.group( 2 ) );
+                            }
+                            if ( !Utils.isNullOrEmpty( m.group( 4 ) ) ) {
+                                millis = Integer.parseInt( m.group( 4 ) );
+                            }
+                        } else {
+                            if ( !Utils.isNullOrEmpty( m.group( 2 ) ) ) {
+                                hrs = Integer.parseInt( m.group( 2 ) );
+                            }
+                            if ( !Utils.isNullOrEmpty( m.group( 3 ) ) ) {
+                                mins = Integer.parseInt( m.group( 3 ) );
+                            }
+                            if ( !Utils.isNullOrEmpty( m.group( 4 ) ) ) {
+                                secs = Integer.parseInt( m.group( 4 ) );
+                            }
+                        }
+                    } else if ( m.groupCount() == 6 ) {
+                        if ( !Utils.isNullOrEmpty( m.group( 2 ) ) ) {
+                            hrs = Integer.parseInt( m.group( 2 ) );
+                        }
+                        if ( !Utils.isNullOrEmpty( m.group( 3 ) ) ) {
+                            mins = Integer.parseInt( m.group( 3 ) );
+                        }
+                        if ( !Utils.isNullOrEmpty( m.group( 4 ) ) ) {
+                            secs = Integer.parseInt( m.group( 4 ) );
+                        }
+                        if ( !Utils.isNullOrEmpty( m.group( 6 ) ) ) {
+                            millis = Integer.parseInt( m.group( 6 ) );
+                        }
+                    }
+
+                    double durationInMillis = ((hrs * 60 + mins) * 60 + secs) +  millis / 1000.0; 
+                    return durationInMillis;
+                    
+                } catch (NumberFormatException e) {}
+            }
+        }
+        
+        // try xml duration
+        //long secs = XmlUtils.getDurationInSeconds( field ) ;
+
+        
+        return null;
+    }
+    
+    public static void main( String[] args ) {
+        String s = " 01:01:01";
+        Double d = toDurationInSeconds( s );
+        System.out.println( "duration of " + s + " in millis = " + d );
+        s = "24:00:00.777 ";
+        d = toDurationInSeconds( s );
+        System.out.println( "duration of " + s + " in millis = " + d );
+    }
 }

@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.util;
 
 import java.io.BufferedReader;
 import java.io.Console;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -43,6 +44,9 @@ import java.util.TreeMap;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVUtils;
+import org.apache.commons.csv.CSVStrategy;
 
 /**
  * MoreToString adds options to toString() for recursively nested objects.
@@ -880,6 +884,19 @@ public interface MoreToString {
     }
 
     public static void main( String[] args ) {
+      // Test fromCsvLine()
+      System.out.println("Begin testing fromCsvLine()\n");
+      String[] csvLines = new String[] {"\"str\",,str,\\\"x,\"s,s,\",,'123',123.0,\"str\"s", ",2", "3,", "\"3,\',4\'\"", "\"\\\"\",5", "\\", "\\\""};
+      for ( String csvLine : csvLines ) {
+        ArrayList<String> arr = FileUtils.fromCsvLine( csvLine, ',' );
+        System.out.println( "items from csvLine(" + csvLine + "): BEGIN");
+        for ( String a : arr ) {
+            System.out.println(a);
+        }
+        System.out.println( "items from csvLine(" + csvLine + "): END");
+      }
+      System.out.println("\nEnd testing fromCsvLine()\n");
+      
       String input = "0,1\\n1,2\\n";
       Pattern p = Pattern.compile( "\\s*,\\s*" );
       Matcher m = p.matcher( input );

@@ -28,11 +28,14 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.util;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
 //import java.nio.file.FileSystems;
@@ -230,6 +233,42 @@ public final class FileUtils {
     }
     return s;
   }
+  
+  /**
+   * Reads a file into an array with an entry for each line. Newlines are not
+   * included.
+   * 
+   * @param file
+   * @return array of lines
+   * @throws IOException
+   */
+  public static ArrayList< String > fileToStringArray( String fileName ) throws IOException {
+      File file = findFile( fileName );
+      return fileToStringArray( file );
+  }
+  
+  /**
+   * Reads a file into an array with an entry for each line. Newlines are not
+   * included.
+   * 
+   * @param file
+   * @return array of lines
+   * @throws IOException
+   */
+  public static ArrayList< String > fileToStringArray( File file ) throws IOException {
+     BufferedReader reader = 
+              new BufferedReader( new InputStreamReader( new FileInputStream( file ) ) );
+     ArrayList< String > arr = new ArrayList< String >();
+     try {
+          String line;
+          while ( ( line = reader.readLine() ) != null ) {
+              arr.add( line );
+          }
+          return arr;
+      } finally {
+          reader.close();
+      }
+  }
 
   public static void stringToFile( String s, String fileName ) {
     FileWriter outFile = null;
@@ -243,5 +282,126 @@ public final class FileUtils {
       e.printStackTrace();
     }
   }
+
+    /**
+     * Break up a string into an array as a line of a CSV file with a specified
+     * separator.
+     * 
+     * @param line
+     * @param separator
+     * @return array of substrings of the line delimited by the separator
+     */
+    public static ArrayList< String > fromCsvLine( String line, Character separator ) {
+        if ( line == null ) return null;
+        ArrayList< String > a = new ArrayList< String >();
+        if ( line.isEmpty() ) return a;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        boolean finishedQuote = false;
+        boolean newElement = true;
+        int start = 0, end = 0;
+        for ( int i = 0; i < line.length(); ++i ) {
+            char c = line.charAt( i );
+            if ( newElement ) {
+                if ( Character.isWhitespace( c ) ) continue;
+                newElement = false;
+                start = i;
+                end = i + 1;
+                if ( c == '"' ) {
+                    inDoubleQuote = true;
+                    start = i + 1;
+                } else if ( c == '\'' ) {
+                    inSingleQuote = true;
+                    start = i + 1;
+                } else if ( c == '\\' ) {
+                    if ( i < line.length() - 1 ) {
+                        i += 1; // skip next char
+                    }
+                    end = i + 1;
+                } else if ( c == separator ) {
+                    a.add( "" );
+                    newElement = true;
+                    start = i + 1;
+                }
+                continue;
+            }
+            if ( inDoubleQuote ) {
+                if ( c == '"' ) {
+                    inDoubleQuote = false;
+                    finishedQuote = true;
+                    end = i;
+                }
+            } else if ( inSingleQuote ) {
+                if ( c == '\'' ) {
+                    inSingleQuote = false;
+                    finishedQuote = true;
+                    end = i;
+                }
+            } else if ( finishedQuote ) {
+                if ( Character.isWhitespace( c ) ) continue;
+                finishedQuote = false;
+                if ( c == separator ) {
+                    a.add( line.substring( start, end ) );
+                    newElement = true;
+                    start = i + 1;
+                    end = i + 1;
+                } else {
+                    --start;
+                    end = i + 1;
+                }
+            } else {
+                if ( c == separator ) {
+                    end = i;
+                    newElement = true;
+                    a.add( line.substring( start, end ) );
+                    start = i + 1;
+                    end = i + 1;
+                } else if ( Character.isWhitespace( c ) ) {
+
+                } else {
+                    end = i + 1;
+                }
+            }
+        }
+        if ( start <= end ) {
+            a.add( line.substring( start, end ) );
+        }
+        return a;
+    }
+
+    /**
+     * Find the specified file, read it as a CSV, and write the values into a
+     * matrix as an array of arrays.
+     * 
+     * @param fileName
+     * @return array of arrays of strings, the outer array as lines, and the
+     *         inner arrays as values/columns/cells
+     * @throws IOException
+     */
+    public static ArrayList< ArrayList< String > > fromCsvFile( String fileName ) throws IOException {
+        File csvData = findFile( fileName );
+        return fromCsvFile( csvData );
+    }
+
+    /**
+     * Read the specified file as a CSV and write the values into a
+     * matrix as an array of arrays.
+     * 
+     * @param file
+     * @return array of arrays of strings, the outer array as lines, and the
+     *         inner arrays as values/columns/cells
+     * @throws IOException
+     */
+    public static ArrayList< ArrayList< String > > fromCsvFile( File file ) throws IOException {
+        ArrayList< ArrayList< String > > csvArr = new ArrayList< ArrayList< String > >();
+        ArrayList< String > lines = fileToStringArray( file );
+        for ( String line : lines ) {
+            ArrayList< String > arr = fromCsvLine( line, ',' );
+            if ( !Utils.isNullOrEmpty( arr ) ) {
+                csvArr.add( arr );
+            }
+        }
+        return csvArr;
+    }
 
 }
