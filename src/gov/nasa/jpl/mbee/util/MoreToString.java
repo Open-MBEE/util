@@ -29,8 +29,6 @@
 package gov.nasa.jpl.mbee.util;
 
 import java.io.BufferedReader;
-import java.io.Console;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -41,12 +39,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVUtils;
-import org.apache.commons.csv.CSVStrategy;
+
 
 /**
  * MoreToString adds options to toString() for recursively nested objects.
