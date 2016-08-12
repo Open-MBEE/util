@@ -178,6 +178,14 @@ public class TimeUtils {
         return allFormatsHaveColon;
     }
 
+    protected static int lastFormat = 0;
+    protected static synchronized int getLastFormat() {
+        return lastFormat;
+    }
+    protected static synchronized void setLastFormat(int i) {
+        lastFormat = i;
+    }
+    
     /**
      * Parse the specified timestamp String in tee format and return the
      * corresponding Date.
@@ -193,18 +201,21 @@ public class TimeUtils {
     public static Date dateFromTimestamp( String timestamp ) {
         if ( Utils.isNullOrEmpty( timestamp ) ) return null;
         
+        int pos = timestamp.lastIndexOf( ':' );
+
         try {
-            Double jd = Double.parseDouble( timestamp );
-            if ( jd != null ) {
-                Date d = julianToDate( jd );
-                if ( d != null && d.after( TimeUtils.Date_Jan_1_1970 ) &&
-                    d.before( TimeUtils.MaxDate ) ) {
-                    return d;
+            if ( pos == -1 ) {
+                Double jd = Double.parseDouble( timestamp );
+                if ( jd != null ) {
+                    Date d = julianToDate( jd );
+                    if ( d != null && d.after( TimeUtils.Date_Jan_1_1970 ) &&
+                        d.before( TimeUtils.MaxDate ) ) {
+                        return d;
+                    }
                 }
             }
         } catch (NumberFormatException e) {}
         
-        int pos = timestamp.lastIndexOf( ':' );
         // If all formats have a colon, then go ahead and return null if no
         // colon was found.
         if ( pos == -1  && allFormatsHaveColon() ) {
@@ -217,18 +228,25 @@ public class TimeUtils {
              && timestamp.replaceAll( "[^:]", "" ).length() == 3 ) {
           timestamp = timestamp.replaceFirst( ":([0-9][0-9])$", "$1" );
         }
-        for ( int i = 0; i < formatsToTry.length; ++i ) {
+        int i = getLastFormat();
+        for ( int j = 0; j < formatsToTry.length; ++j ) {
+          // use the last format for j == 0; then skip the last format if it is not 0.
+          if ( j > 0 ) {
+              if ( j <= i ) i = j - 1;
+              else i = j;
+          }
           String format = formatsToTry[i];
           DateFormat df = new SimpleDateFormat( format );
           try {
             Date d = df.parse( timestamp );
+            setLastFormat( i );
             return d;
           } catch ( IllegalArgumentException e1 ) {
-            if ( i == formatsToTry.length - 1 ) {
+            if ( j == formatsToTry.length - 1 ) {
               e1.printStackTrace();
             }
           } catch ( ParseException e ) {
-            if ( i == formatsToTry.length - 1 ) {
+            if ( j == formatsToTry.length - 1 ) {
               e.printStackTrace();
             }
           }
