@@ -132,12 +132,13 @@ public class TimeUtils {
 
     public static final double Julian_Jan_1_2000 = 2451544.500000;
     public static final Date Date_Jan_1_1970 = new Date(0); //Calendar.set(year + 1900, month, date)
-    protected static final Calendar gmtCal =
+    public static final Calendar gmtCal =
             Calendar.getInstance( TimeZone.getTimeZone( "GMT" ) );
     protected static final Calendar cal_Jan_1_2000 = new GregorianCalendar( TimeZone.getTimeZone( "GMT" ) ) {
         private static final long serialVersionUID = 1L;
         {
             clear();
+            setTimeZone( TimeZone.getTimeZone( "GMT" ) );
             set( 2000, Calendar.JANUARY, 1 );
         }
     };
@@ -237,6 +238,8 @@ public class TimeUtils {
           }
           String format = formatsToTry[i];
           DateFormat df = new SimpleDateFormat( format );
+          df.setCalendar( TimeUtils.gmtCal );
+          df.setTimeZone( TimeZone.getTimeZone( "GMT" ) );
           try {
             Date d = df.parse( timestamp );
             setLastFormat( i );
