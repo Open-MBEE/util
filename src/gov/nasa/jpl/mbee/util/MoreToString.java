@@ -190,6 +190,10 @@ public interface MoreToString {
     public static String toShortString( Object object ) {
       if ( object == null ) return "null";
       
+      if ( object instanceof MoreToString ) {
+          return ( (MoreToString)object ).toShortString();
+      }
+
       // We have to make sure we get to the right method since collections
       // require an extra boolean argument.
       if ( object instanceof Collection ) {
@@ -205,9 +209,6 @@ public interface MoreToString {
         return toShortString( (Map.Entry<?,?>)object, null, true );
       }
       
-      if ( object instanceof MoreToString ) {
-        return ( (MoreToString)object ).toShortString();
-      }
       return object.toString();
     }
 
