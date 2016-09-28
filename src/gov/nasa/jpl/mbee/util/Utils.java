@@ -1595,4 +1595,52 @@ public class Utils {
         return n.doubleValue() < 0.0;
     }
 
+    /**
+     * Determine whether the method is directly or indirectly calling itself recursively.
+     * @return whether the calling method is in the call stack more than once for any line number.
+     */
+    public static boolean callingRecursively() {
+        StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+        if ( stack == null ) return false;
+        if ( stack.length < 4 ) return false;
+        StackTraceElement caller = stack[2];
+        if ( Debug.isOn() ) Debug.outln( "callIsRecursive(): caller = " + caller.getClassName() + "."
+                                                     + caller.getMethodName() + " line " + caller.getLineNumber() );
+
+        Set<Integer> lineNumbersVisitedInCallingMethod = new HashSet< Integer >();
+        
+        for ( int i = 3; i < stack.length; ++i ) {
+            StackTraceElement nextCaller = stack[i];
+//            if ( nextCaller.getFileName().equals( caller.getFileName() )
+//                    && nextCaller.getLineNumber() == caller.getLineNumber() ) {
+            if ( nextCaller.getClassName().equals( caller.getClassName() )
+                 && nextCaller.getMethodName() == caller.getMethodName() ) {
+                if ( lineNumbersVisitedInCallingMethod.contains( nextCaller.getLineNumber() ) ) {
+                    if ( Debug.isOn() ) Debug.outln( "callIsRecursive(): recursive call at "
+                                                     + caller.getFileName() + ", line "
+                                                     + caller.getLineNumber() );
+                    return true;
+                }
+                lineNumbersVisitedInCallingMethod.add( nextCaller.getLineNumber() );
+            }
+        }
+        return false;
+    }
+    
+    private static void infLoopCall1() {
+        System.out.println( "infLoopCall1()" );
+        if ( callingRecursively() ) {
+            System.out.println( "detected infinite loop!" );
+            return;
+        }
+        infLoopCall2();
+    }
+    private static void infLoopCall2() {
+        System.out.println( "infLoopCall2()" );
+        infLoopCall1();
+    }
+    public static void main(String[] args) {
+        infLoopCall1();
+    }
+    
 }
