@@ -186,6 +186,49 @@ public class TimeUtils {
     protected static synchronized void setLastFormat(int i) {
         lastFormat = i;
     }
+    protected static int lastTimestampLength = 0;
+    protected static synchronized int getLastTimestampLength() {
+        return lastTimestampLength;
+    }
+    protected static synchronized void setLastTimestampLength(int i) {
+        lastTimestampLength = i;
+    }
+    
+    public static boolean timestampHasMilliseconds( String timestamp ) {
+        int posPeriod = timestamp.lastIndexOf( '.' );
+        if ( posPeriod < 0 ) return false;
+        int posColon = timestamp.lastIndexOf( ':' );
+        if ( posColon < posPeriod ) return true;
+        return false;
+    }
+    public static boolean timestampHasTimezone( String timestamp ) {
+        int posColon = timestamp.lastIndexOf( ':' );
+        // ex. 2020-04-04T12:34:56.789-0700
+        int colonCharsFromEnd = timestamp.length() - posColon - 1;
+        if ( colonCharsFromEnd > 6 ) return true;
+        if ( colonCharsFromEnd < 4 ) return false;
+        int posMinus = timestamp.lastIndexOf( '-' );
+        int minusCharsFromEnd = timestamp.length() - posMinus - 1;
+        if ( minusCharsFromEnd < colonCharsFromEnd && minusCharsFromEnd > 5 ) return true;
+//        boolean hasMillis = timestampHasMilliseconds( timestamp );
+//        if ( hasMillis ) {
+//            int posPeriod = timestamp.lastIndexOf( '.' );
+//            posPeriod < 
+//        }
+        int posPlus = timestamp.lastIndexOf( '+' );
+        int plusCharsFromEnd = timestamp.length() - posPlus - 1;
+        if ( plusCharsFromEnd < colonCharsFromEnd && plusCharsFromEnd < 5 ) return true;
+
+        return false;
+    }
+    protected static boolean timestampFormatHasMilliseconds( String timestamp ) {
+        if ( timestamp.contains(".SSS") ) return true;
+        return false;
+    }
+    protected static boolean timestampFormatHasTimezone( String timestamp ) {
+        if ( timestamp.endsWith( "Z") ) return true;
+        return false;
+    }
     
     /**
      * Parse the specified timestamp String in tee format and return the
@@ -229,7 +272,17 @@ public class TimeUtils {
              && timestamp.replaceAll( "[^:]", "" ).length() == 3 ) {
           timestamp = timestamp.replaceFirst( ":([0-9][0-9])$", "$1" );
         }
+        
+        // A format without a time zone will match a string that has a time
+        // zone, so we need to make sure the format includes a time zone and
+        // milliseconds if the date string does.
+        boolean stringHasTimezone = timestampHasTimezone( timestamp ); 
+        boolean stringHasMillis = timestampHasMilliseconds( timestamp );
+        int timestampLength = timestamp.length();
+
+        
         int i = getLastFormat();
+        int lastLength = getLastTimestampLength();
         for ( int j = 0; j < formatsToTry.length; ++j ) {
           // use the last format for j == 0; then skip the last format if it is not 0.
           if ( j > 0 ) {
@@ -237,12 +290,20 @@ public class TimeUtils {
               else i = j;
           }
           String format = formatsToTry[i];
+          
+          // Check to see if format has timezone and millis as appropriate. 
+          if ( i != getLastFormat() || lastLength != timestampLength  ) {
+              if ( stringHasTimezone != timestampFormatHasTimezone( format ) ) continue;
+              if ( stringHasMillis != timestampFormatHasMilliseconds( format ) ) continue;
+          }
+          
           DateFormat df = new SimpleDateFormat( format );
           df.setCalendar( TimeUtils.gmtCal );
           df.setTimeZone( TimeZone.getTimeZone( "GMT" ) );
           try {
             Date d = df.parse( timestamp );
             setLastFormat( i );
+            setLastTimestampLength( timestampLength );
             return d;
           } catch ( IllegalArgumentException e1 ) {
             if ( j == formatsToTry.length - 1 ) {
