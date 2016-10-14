@@ -222,11 +222,11 @@ public class TimeUtils {
         return false;
     }
     protected static boolean timestampFormatHasMilliseconds( String timestamp ) {
-        if ( timestamp.contains(".SSS") ) return true;
+        if ( timestamp.contains( ".SSS" ) ) return true;
         return false;
     }
     protected static boolean timestampFormatHasTimezone( String timestamp ) {
-        if ( timestamp.endsWith( "Z") ) return true;
+        if ( timestamp.endsWith( "Z" ) ) return true;
         return false;
     }
     
@@ -242,7 +242,7 @@ public class TimeUtils {
      * @return the Date for the timestamp or null if the timestamp format is not
      *         recognized.
      */
-    public static Date dateFromTimestamp( String timestamp ) {
+    public static Date dateFromTimestamp( String timestamp, TimeZone defaultTimeZone ) {
         if ( Utils.isNullOrEmpty( timestamp ) ) return null;
         
         int pos = timestamp.lastIndexOf( ':' );
@@ -299,7 +299,11 @@ public class TimeUtils {
           
           DateFormat df = new SimpleDateFormat( format );
           df.setCalendar( TimeUtils.gmtCal );
-          df.setTimeZone( TimeZone.getTimeZone( "GMT" ) );
+          if ( defaultTimeZone != null ) {
+              df.setTimeZone( defaultTimeZone );
+          } else {
+              df.setTimeZone( TimeZone.getTimeZone( "GMT" ) );
+          }
           try {
             Date d = df.parse( timestamp );
             setLastFormat( i );
