@@ -149,6 +149,8 @@ public class TimeUtils {
     public static final String dayOfYearTimestampFormat = "yyyy-DDD'T'HH:mm:ss.SSSZ";
     public static final String aspenTeeFormat = "yyyy-MM-dd'T'HH:mm:ss";
     public static final String formatsToTry[] =
+            // WARNING! timestampHasTimezone() is written to take advantage of this
+            // restricted set, so it may need to be modified if formatToTry is modified.
             { TimeUtils.timestampFormat,
               TimeUtils.timestampFormat.replace( ".SSS", "" ),
               TimeUtils.timestampFormat.replace( "Z", "" ),
@@ -194,6 +196,13 @@ public class TimeUtils {
         lastTimestampLength = i;
     }
     
+    /**
+     * Determine whether the input timestamp specifies milliseconds, for
+     * example, like "333" in "2021-01-01T01:01.333."
+     * 
+     * @param timestamp
+     * @return
+     */
     public static boolean timestampHasMilliseconds( String timestamp ) {
         int posPeriod = timestamp.lastIndexOf( '.' );
         if ( posPeriod < 0 ) return false;
@@ -201,14 +210,18 @@ public class TimeUtils {
         if ( posColon < posPeriod ) return true;
         return false;
     }
+    
     /**
      * Determine whether the input timestamp have a timezone of the style -0700 or +0300.
      * @param timestamp
      * @return
      */
     public static boolean timestampHasTimezone( String timestamp ) {
-   	    // This assumes that the timestamp follows one of the TimeUtils.formatsToTry.
-   	    // We could implement this easily with just timestamp.matches("[+-][0-2]?[0-9][0-9][0-9]"), but we want this to be really fast, so we try to to better than regex matching.
+        // We could simply return timestamp.matches("
+        // [+-][0-2]?[0-9][0-9][0-9]") but we want to be faster than a regex
+        // match.
+        // WARNING! The implementation assumes that the format is one of those
+        // in TimeUtils.formatsToTry().
         int length = timestamp.length();
         int posColon = timestamp.lastIndexOf( ':' );
         // ex. 2020-04-04T12:34:56.789-0700
