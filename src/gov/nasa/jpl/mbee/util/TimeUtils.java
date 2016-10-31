@@ -201,14 +201,27 @@ public class TimeUtils {
         if ( posColon < posPeriod ) return true;
         return false;
     }
+    /**
+     * Determine whether the input timestamp have a timezone of the style -0700 or +0300.
+     * @param timestamp
+     * @return
+     */
     public static boolean timestampHasTimezone( String timestamp ) {
+   	    // This assumes that the timestamp follows one of the TimeUtils.formatsToTry.
+   	    // We could implement this easily with just timestamp.matches("[+-][0-2]?[0-9][0-9][0-9]"), but we want this to be really fast, so we try to to better than regex matching.
+        int length = timestamp.length();
         int posColon = timestamp.lastIndexOf( ':' );
         // ex. 2020-04-04T12:34:56.789-0700
-        int colonCharsFromEnd = timestamp.length() - posColon - 1;
-        if ( colonCharsFromEnd > 6 ) return true;
+        int colonCharsFromEnd = length - posColon - 1;
         if ( colonCharsFromEnd < 4 ) return false;
+        if ( colonCharsFromEnd > 6 ) {
+            // For xml format, "EEE MMM dd HH:mm:ss zzz yyyy", we want to return
+            // false since we're looking for a -0700 style timezone.
+            if ( length > 9 && timestamp.substring( length - 9 ).matches( " [A-Z][A-Z][A-Z]" ) ) return false;
+            return true;
+        }
         int posMinus = timestamp.lastIndexOf( '-' );
-        int minusCharsFromEnd = timestamp.length() - posMinus - 1;
+        int minusCharsFromEnd = length - posMinus - 1;
         if ( minusCharsFromEnd < colonCharsFromEnd && minusCharsFromEnd > 5 ) return true;
 //        boolean hasMillis = timestampHasMilliseconds( timestamp );
 //        if ( hasMillis ) {
@@ -216,7 +229,7 @@ public class TimeUtils {
 //            posPeriod < 
 //        }
         int posPlus = timestamp.lastIndexOf( '+' );
-        int plusCharsFromEnd = timestamp.length() - posPlus - 1;
+        int plusCharsFromEnd = length - posPlus - 1;
         if ( plusCharsFromEnd < colonCharsFromEnd && plusCharsFromEnd < 5 ) return true;
 
         return false;
