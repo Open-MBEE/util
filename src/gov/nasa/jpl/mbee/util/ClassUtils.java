@@ -1164,6 +1164,11 @@ public class ClassUtils {
     return argTypes;
   }
 
+  public static Class<?>[] getClasses( Collection<?> objects ) {
+      if ( objects == null ) return null;
+      return getClasses( objects.toArray() );
+  }
+
   /**
    * Determines whether the array contains only Class<?> objects possibly with
    * some (but not all nulls).
@@ -1272,7 +1277,7 @@ public class ClassUtils {
     }
     if ( atc.best != null && !atc.allNonNullArgsMatched ) {
         if ( Debug.isOn() ) {
-            Debug.outln( "constructor returned (" + atc.best
+            Debug.outln( "The constructor or method returned by getBestArgTypes() (" + atc.best
                          + ") only matches " + atc.mostMatchingArgs
                          + " args: " + Utils.toString( argTypes, false ) );
         }
@@ -1780,6 +1785,12 @@ public class ClassUtils {
         return comp < 0;
     }
     
+    public static Class<?> dominantObjectType( Object o1, Object o2 ) {
+        Class<?> cls1 = o1 == null ? null : o1.getClass();
+        Class<?> cls2 = o2 == null ? null : o2.getClass();
+        return dominantTypeClass(cls1, cls2);
+    }
+    
     public static String dominantType( String argType1, String argType2 ) {
         if ( argType1 == null ) return argType2;
         if ( argType2 == null ) return argType1;
@@ -1812,6 +1823,33 @@ public class ClassUtils {
 	  }
   }
 
+  public static String dominantType(Collection<String> classes) {
+      Set<String> set = new HashSet<String>(classes);
+      String dominantClass = null;
+      for ( String cls : set ) {
+          dominantClass = dominantType( dominantClass, cls );
+      }
+      return dominantClass;
+  }
+
+  public static Class<?> dominantTypeClass(Collection<Class<?>> classes) {
+      Set<Class<?>> set = new HashSet<Class<?>>(classes);
+      Class<?> dominantClass = null;
+      for ( Class<?> cls : set ) {
+          dominantClass = dominantTypeClass( dominantClass, cls );
+      }
+      return dominantClass;
+  }
+
+  public static Class<?> dominantObjectType(Collection<?> objects) {
+      Set<Class<?>> set = Utils.asSet( ClassUtils.getClasses( objects ) );
+      Class<?> dominantClass = null;
+      for ( Class<?> cls : set ) {
+          dominantClass = dominantTypeClass( dominantClass, cls );
+      }
+      return dominantClass;
+  }
+  
 /**
    * Find and invoke the named method from the given object with the given
    * arguments.
