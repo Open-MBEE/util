@@ -230,7 +230,7 @@ public class TimeUtils {
         if ( colonCharsFromEnd > 6 ) {
             // For xml format, "EEE MMM dd HH:mm:ss zzz yyyy", we want to return
             // false since we're looking for a -0700 style timezone.
-            if ( length > 9 && timestamp.substring( length - 9 ).matches( " [A-Z][A-Z][A-Z]" ) ) return false;
+            if ( length > 9 && timestamp.substring( length - 9 ).matches( ".* [A-Z][A-Z][A-Z].*" ) ) return false;
             return true;
         }
         int posMinus = timestamp.lastIndexOf( '-' );
