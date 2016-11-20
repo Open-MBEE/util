@@ -988,9 +988,39 @@ public class Utils {
     String newFileName = prefix + timestampForFile() + suffix;
     return newFileName;
   }
+  
+  public static int compare( double d1, double d2 ) {
+      if ( d1 == d2 ) return 0;
+      double diff = Math.abs( d1 - d2 );
+      if ( diff < Math.abs( d1 * 1.0e-14 ) ) {
+          return 0;
+      }
+      return Double.compare( d1,  d2 );
+  }
+  
+  public static int compare( float f1, float f2 ) {
+      if ( f1 == f2 ) return 0;
+      float diff = Math.abs( f1 - f2 );
+      if ( diff < Math.abs( f1 * 1.0e-5) ) {
+          return 0;
+      }
+      return Float.compare( f1,  f2 );
+  }
 
   public static <T1, T2> boolean valuesEqual( T1 v1, T2 v2 ) {
-    return v1 == v2 || ( v1 != null && v1.equals( v2 ) );
+      if ( v1 == v2 ) return true;
+      if ( v1 == null || v2 == null ) return false;
+      if ( v1 instanceof Number && v2 instanceof Number ) {
+          Number n1 = (Number)v1;
+          Number n2 = (Number)v2;
+          if ( n1 instanceof Double || n2 instanceof Double ) {
+              return compare(n1.doubleValue(), n2.doubleValue()) == 0;
+          }
+          if ( n1 instanceof Float || n2 instanceof Float ) {
+              return compare(n1.floatValue(), n2.floatValue()) == 0;
+          }
+      }
+      return v1.equals( v2 );
   }
   
   public static <T1, T2> boolean valuesLooselyEqual( T1 v1, T2 v2,
@@ -1485,6 +1515,14 @@ public class Utils {
         return coll;
     }
 
+    /**
+     * Set the first collection to its intersection with the second collection
+     * by removing elements not contained by the second.
+     * 
+     * @param coll1
+     * @param coll2
+     * @return whether there is an intersection
+     */
     public static boolean intersect( Collection< ? > coll1,
                                      Collection< ? > coll2 ) {
         if ( isNullOrEmpty( coll1 ) ) return false;
@@ -1504,6 +1542,7 @@ public class Utils {
         coll1.removeAll( deleteList );
         return anySame;
     }
+    
     public static String toCamelCase( String s ) {
         if ( s == null ) return null;
         if ( s.isEmpty() || !Character.isLetter( s.codePointAt( 0 ) ) )

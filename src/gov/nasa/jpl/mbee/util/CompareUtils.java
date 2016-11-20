@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.SortedMap;
 
 /**
  *
@@ -95,6 +96,18 @@ public class CompareUtils {
     if ( useId && o1 instanceof HasId && o2 instanceof HasId ) {
       return CompareUtils.compare( ( (HasId)o1 ).getId(), ( (HasId)o2 ).getId() );
     }
+    if ( o1 instanceof Number && o2 instanceof Number ) {
+        Number n1 = (Number)o1;
+        Number n2 = (Number)o2;
+        if ( n1 instanceof Double || n2 instanceof Double ) {
+            return compare(n1.doubleValue(), n2.doubleValue());
+        }
+        if ( n1 instanceof Float || n2 instanceof Float ) {
+            return compare(n1.floatValue(), n2.floatValue());
+        }
+        if ( n1 == n2 ) return 0; 
+        return ((Double)((Number)o1).doubleValue()).compareTo( ((Number)o2).doubleValue() );
+    }
     if ( checkComparable ) {
       if ( o1 instanceof Comparable ) {
           try {
@@ -102,9 +115,6 @@ public class CompareUtils {
           } catch ( ClassCastException e ) {
           }
       }
-    }
-    if ( o1 instanceof Number && o2 instanceof Number ) {
-        return ((Double)((Number)o1).doubleValue()).compareTo( ((Number)o2).doubleValue() );
     }
     int compare = o1.getClass().getName().compareTo( o2.getClass().getName() );
     if ( compare != 0 ) return compare;
@@ -118,9 +128,18 @@ public class CompareUtils {
                                  checkComparable, useId );
     }
     if (o1 instanceof Map && o2 instanceof Map ) {
-      return CompareUtils.compareCollections( (Map)o1, (Map)o2,
-                                 checkComparable, useId );
+        if (o1 instanceof SortedMap && o2 instanceof SortedMap ) {
+            return CompareUtils.compareCollections( (SortedMap)o1, (SortedMap)o2,
+                                                    checkComparable, useId );
+        } else {
+            return CompareUtils.compareCollections( (Map)o1, (Map)o2,
+                                                    checkComparable, useId );
+        }
     }
+    if (o1 instanceof Map.Entry && o2 instanceof Map.Entry ) {
+        return CompareUtils.compareEntries( (Map.Entry)o1, (Map.Entry)o2,
+                                   checkComparable, useId );
+      }
     compare = CompareUtils.compareToStringNoHash( o1, o2 );
     if ( compare != 0 ) return compare;
     return compare;
@@ -140,11 +159,20 @@ public class CompareUtils {
     Iterator< T > i1 = coll1.iterator();
     Iterator< T > i2 = coll2.iterator();
     int compare = 0;
+    int ct = 0;
+    T lastT2 = null;
     while ( i1.hasNext() && i2.hasNext() ) {
       T t1 = i1.next();
       T t2 = i2.next();
       compare = compare( t1, t2, checkComparable, useId );
-      if ( compare != 0 ) return compare;
+      if ( compare != 0 ) {
+//          if ( Utils.valuesEqual( t2, lastT2 ) ) {
+//              System.out.println( "SSSSSSSSSSSSSSSSSSTOPPPPPPPPPPPPPPPPP" );
+//          }
+          return compare;
+      }
+      ++ct;
+      lastT2 = t2;
     }
     if ( i1.hasNext() ) return 1;
     if ( i2.hasNext() ) return -1;
@@ -178,9 +206,39 @@ public class CompareUtils {
     if ( m1 == m2 ) return 0;
     if ( m1 == null ) return -1;
     if ( m2 == null ) return 1;
-    return compareCollections( m1.entrySet(), m2.entrySet(), checkComparable, useId );
+    for ( K k : m1.keySet() ) {
+        V v1 = m1.get( k );
+        V v2 = m2.get( k );
+        int comp = compare( v1, v2, checkComparable, useId );
+        if ( comp != 0 ) return comp;
+    }
+    if ( m1.size() == m2.size() ) return 0;
+    int comp = compareCollections( m1.keySet(), m2.keySet(), checkComparable, useId );
+    return comp;
   }
 
+  public static <K,V> int
+  compareCollections( SortedMap< K, V > m1,
+                      SortedMap< K, V > m2,
+                      boolean checkComparable,
+                      boolean useId ) {
+  if ( m1 == m2 ) return 0;
+  if ( m1 == null ) return -1;
+  if ( m2 == null ) return 1;
+  return compareCollections( m1.entrySet(), m2.entrySet(), checkComparable, useId );
+}
+
+  public static <K,V> int
+  compareEntries( Map.Entry< K, V > e1, Map.Entry< K, V > e2,
+                      boolean checkComparable,
+                      boolean useId ) {
+      int comp = compare(e1.getKey(), e2.getKey(), checkComparable, useId);
+      if ( comp != 0 )
+          return comp;
+      comp = compare(e1.getValue(), e2.getValue(), checkComparable, useId);
+      return comp;
+  }
+  
   public static int compareToStringNoHash( Object o1, Object o2 ) {
     assert o1 != null;
     assert o2 != null;
@@ -212,6 +270,26 @@ public class CompareUtils {
 //    int compare = Utils.toStringNoHash(o1).compareTo( Utils.toStringNoHash(o2) );
 //    return compare;
   }
+  
+  public static int compare( double d1, double d2 ) {
+      if ( d1 == d2 ) return 0;
+      double diff = Math.abs( d1 - d2 );
+      double epsilon = Math.abs( d1 * 1.0e-14 );
+      if ( diff < epsilon ) {
+          return 0;
+      }
+      return Double.compare( d1,  d2 );
+  }
+  
+  public static int compare( float f1, float f2 ) {
+      if ( f1 == f2 ) return 0;
+      float diff = Math.abs( f1 - f2 );
+      if ( diff < Math.abs( f1 * 1.0e-5) ) {
+          return 0;
+      }
+      return Float.compare( f1,  f2 );
+  }
+  
   public static int compare( int i1, int i2 ) {
     if ( i1 < i2 ) return -1;
     if ( i1 > i2 ) return 1;
@@ -224,4 +302,25 @@ public class CompareUtils {
     return s1.compareTo( s2 );
   }
 
+  public static void main( String args[] ) {
+      double d1 = 3.333e100;
+      double d3 = Math.sqrt( d1 );
+      d3 = Math.sqrt( d3 );
+      System.out.println( "d1 = " + d1 );
+      System.out.println( "d3 = sqrt(sqrt(d1)) = " + d3 );
+      
+      d3 = d3 * d3 * d3 * d3;
+      System.out.println( "d3 = d3 * d3 * d3 * d3 = " + d3 );
+
+      int comp = CompareUtils.compare(d3, d1);
+      assert(comp == 0);
+      System.out.println("CompareUtils.compare(d3, d1) = " + comp );
+
+      comp = Double.compare(d3, d1);
+      System.out.println("Double.compare(d3, d1) = " + comp );
+      
+      comp = CompareUtils.compare(3.332999999e100, d1);
+      assert(comp == -1);
+      System.out.println("CompareUtils.compare(3.332999999e100, d1) = " + comp );
+  }
 }
