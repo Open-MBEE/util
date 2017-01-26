@@ -495,6 +495,7 @@ public class ClassUtils {
    * @return whether the object is a primitive class (like int or Integer) or an instance of one
    */
   public static boolean isPrimitive( Object o ) {
+      if ( o == null ) return false;
     if ( o instanceof Class ) {
       return isPrimitive( (Class<?>)o );
     }
@@ -1458,6 +1459,8 @@ public class ClassUtils {
     Class< ? >[] classes =
         new Class< ? >[] { Math.class, //StringUtils.class,
                            Integer.class,
+                           Long.class,
+                           Float.class,
                            Double.class, Character.class, Boolean.class,
                            String.class,
                            //org.apache.commons.lang.ArrayUtils.class,
@@ -2428,6 +2431,17 @@ public class ClassUtils {
   public static boolean isInteger( Class< ? > type ) {
     if ( type == null ) return false;
     return ( Integer.class.isAssignableFrom( type ) );
+//    Class<?> forPrim = classForPrimitive( type );
+//    if ( forPrim != null ) type = forPrim;
+  }
+
+  /**
+   * @param type
+   * @return whether the input type has an integer domain (int, short, long, etc).
+   */
+  public static boolean isLong( Class< ? > type ) {
+    if ( type == null ) return false;
+    return ( Long.class.isAssignableFrom( type ) );
 //    Class<?> forPrim = classForPrimitive( type );
 //    if ( forPrim != null ) type = forPrim;
   }

@@ -166,12 +166,27 @@ public class Debug {
                                                   boolean stackTrace,
                                                   String msg,
                                                   Object... maybeNullObjects ) {
+      boolean nullBad = false;
     try {
-      if ( maybeNullObjects == null ) throw new Exception();
-      for ( Object o : maybeNullObjects ) {
+      if ( maybeNullObjects == null ) nullBad = true;
+      else for ( Object o : maybeNullObjects ) {
         if ( o == null ) {
-          throw new Exception();
+            nullBad = true;
+            break;
         }
+      }
+      if ( nullBad ) {
+          if (stackTrace) throw new Exception();
+          boolean wasOn = isOn();
+          if ( forceOutput ) turnOn();
+          try { // make sure to turn off debug output!
+              Debug.errln( msg );
+          } catch (Throwable t) {
+              // TODO?
+          } finally {
+              if ( forceOutput && !wasOn ) turnOff();
+          }
+          return true;
       }
     } catch ( Exception e ) {
       boolean wasOn = isOn();
