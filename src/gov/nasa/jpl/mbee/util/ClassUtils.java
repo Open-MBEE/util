@@ -2717,21 +2717,38 @@ public class ClassUtils {
    */
   public static <TT> TT evaluate( Object object, Class< TT > cls,
                                   boolean propagate ) throws ClassCastException {
+      return evaluate(object, cls, false, propagate, null);
+  }
+  public static <TT> TT evaluate( Object object, Class< TT > cls, boolean strictString,
+                                  boolean propagate, Seen<Object> seen ) throws ClassCastException {
     // FIXME -- Need to add a seen set (e.g., Seen<Object> seen) to parameters to avoid infinite recursion.
     if ( object == null ) return null;
     // Check if object is already what we want.
-    if ( cls != null && cls.isInstance( object ) || cls.equals( object.getClass() ) ) {
+    if ( cls != null && cls.equals( object.getClass() ) ) {
       return (TT)object;
     }
 
+    // Make sure we're not recursing infinitely.
+    Pair< Boolean, Seen< Object > > p = Utils.seen( object, true, seen );
+    if ( p.first ) return null;
+    seen = p.second;
+    
     // Try to evaluate object or dig inside to get the object of the right type.
     Object value = null;
 
     if ( object instanceof Wraps ) {
         Object wrappedObj = ( (Wraps)object ).getValue( propagate );
         try {
-            value = evaluate( wrappedObj, cls, propagate );
+            value = evaluate( wrappedObj, cls, strictString, propagate, seen );
             if ( value != null ) return (TT)value;
+        } catch ( Throwable e ) {
+            // ignore
+        }
+    }
+    
+    if ( cls != null && cls.isInstance( object ) ) {
+        try {
+            return (TT)object;
         } catch ( Throwable e ) {
             // ignore
         }
@@ -2742,7 +2759,7 @@ public class ClassUtils {
         if ( coll.size() == 1 ) {
             value = coll.iterator().next();
             if ( value != null ) {
-                value = evaluate( value, cls, propagate );
+                value = evaluate( value, cls, strictString, propagate, seen );
                 if ( value != null ) return (TT)value;
             }
         }
@@ -2792,17 +2809,17 @@ public class ClassUtils {
         } else {
             // try to make the string a number
             try {
-                String s = evaluate( object, String.class, propagate );
+                String s = evaluate( object, String.class, strictString, propagate, seen );
                 Double d = new Double( s );
                 if ( d != null ) {
-                    return evaluate( d, cls, propagate );
+                    return evaluate( d, cls, strictString, propagate, seen );
                 }
             } catch (Throwable t) {}
         }
     }
 
     // if
-    if ( cls.equals( String.class ) ) {
+    if ( !strictString && cls != null && cls.isAssignableFrom( String.class ) ) {
         @SuppressWarnings( "unchecked" )
         TT r = (TT)object.toString();
         return r;
@@ -2816,6 +2833,7 @@ public class ClassUtils {
 //        return (TT)( new Expression( object ) );
 //      }
 //    }
+    // Try to force it?!
     TT r = null;
     try {
       r = (TT)object;
@@ -2823,7 +2841,7 @@ public class ClassUtils {
         if ( Debug.isOn() ) Debug.errln( "Warning! No evaluation of " + object + " with type " + cls.getName() + "!" );
       throw cce;
     }
-    if ( cls != null && cls.isInstance( r ) || ( r != null && cls == r.getClass() ) ) {
+    if ( cls != null && r != null && (cls.isInstance( r ) || cls == r.getClass() ) ) {
       return r;
     }
     return null;
