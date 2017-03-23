@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -38,7 +39,7 @@ public interface Evaluatable {
      *         interpreted as having a T value.
      */
     public static < T > T evaluate( Object o, Class< T > cls, boolean propagate,
-                             boolean checkEvaluatable ) {
+                                    boolean checkEvaluatable ) {
       return evaluate(o, cls, true, propagate, checkEvaluatable, null);
     }
     
@@ -110,13 +111,30 @@ public interface Evaluatable {
       
       if ( object instanceof Collection ) {
           Collection<?> coll = (Collection<?>)object;
-          if ( coll.size() == 1 ) {
-              value = coll.iterator().next();
-              if ( value != null ) {
-                  value = evaluate( value, cls, true, propagate, checkEvaluatable, seen );
-                  if ( value != null ) return (T)value;
-              }
+          value = commonValue(coll);
+          if ( value != null ) {
+               value = evaluate( value, cls, true, propagate, checkEvaluatable, seen );
+               if ( value != null ) return (T)value;
           }
+      }
+      
+      if ( object instanceof Map ) {
+           Map< ?, ? > map = (Map< ?, ? >)object;
+          value = commonValue( map.values() );
+          if ( value != null ) {
+               value = evaluate( value, cls, true, propagate,
+                                 checkEvaluatable, seen );
+              if ( value != null ) return (T)value;
+          }
+      }
+      
+      if ( object.getClass().isArray() ) {
+        Object[] objs = (Object[])object;
+        value = commonValue(objs);
+        if ( value != null ) {
+            value = evaluate( value, cls, true, propagate, checkEvaluatable, seen );
+            if ( value != null ) return (T)value;
+        }
       }
       
       if ( cls != null && Collection.class.isAssignableFrom( cls ) ) {
@@ -221,6 +239,72 @@ public interface Evaluatable {
 //      T t = ClassUtils.evaluate( o, cls, propagate );
 //      //
 //      return t;
+    }
+    
+    public static Object commonValue( Object[] coll ) {
+        Collection< Object > list = Utils.newList( coll );
+        return commonValue( list );
+    }
+
+    public static Object commonValue( Collection< ? > coll ) {
+        if ( coll == null ) return null;
+        Object value = null;
+        for ( Object o : coll ) {
+            if ( value == null ) {
+                value = o;
+            } else if ( !valuesEqual( value, o ) ) {
+                value = null;
+                break;
+            }
+        }
+        return value;
+    }
+   
+    /**
+     * Determine whether the values of two objects are equal by evaluating them.
+     * @param o1
+     * @param o2
+     * @return whether the evaluations of o1 and o2 are equal.
+     * @throws ClassCastException
+     */
+    public static boolean valuesEqual( Object o1, Object o2 ) throws ClassCastException {
+      return valuesEqual( o1, o2, null, false, false );
+    }
+    public static boolean valuesEqual( Object o1, Object o2, Class<?> cls ) throws ClassCastException {
+      return valuesEqual( o1, o2, cls, false, false );
+    }
+
+    public static boolean valuesEqual( Object o1, Object o2, Class<?> cls,
+                                       boolean propagate,
+                                       boolean allowWrapping ) throws ClassCastException {
+      if ( o1 == o2 ) return true;
+      if ( o1 == null || o2 == null ) return false;
+      Object v1 = evaluate( o1, cls, propagate, true );
+      Object v2 = evaluate( o2, cls, propagate, true );
+      if ( Utils.valuesEqual( v1, v2 ) ) return true;
+      Class< ? > cls1 = null;
+      if ( v1 != null ) {
+        cls1 = v1.getClass();
+      }
+      if ( v1 != o1 || v2 != o2 ) {
+        if ( cls1 != null && cls1 != cls && valuesEqual( v2, v1, cls1, propagate, false ) ) return true;
+      }
+      if ( v2 != null ) {
+        if ( v1 != o2 || v2 != o1 ) {
+          Class< ? > cls2 = v2.getClass();
+          if ( cls2 != cls && cls2 != cls1 && valuesEqual( v1, v2, cls2, propagate, false ) ) return true;
+        }
+      }
+      return false;
+    }
+
+    public static void main(String[] args) {
+      Integer[] ints1 = new Integer[] { 1, 1, 1 };
+      Integer[] ints2 = new Integer[] { 1, 1, 2 };
+      Object o1 = commonValue( ints1 );
+      System.out.println( "o1 = " + o1 );
+      Object o2 = commonValue( ints2 );
+      System.out.println( "o2 = " + o2 );
     }
   }
 }

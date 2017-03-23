@@ -2746,7 +2746,7 @@ public class ClassUtils {
         }
     }
     
-    if ( cls != null && cls.isInstance( object ) ) {
+    if ( cls == null || cls.isInstance( object ) ) {
         try {
             return (TT)object;
         } catch ( Throwable e ) {
