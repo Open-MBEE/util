@@ -181,7 +181,8 @@ public interface Evaluatable {
           } else {
               // try to make the string a number
               try {
-                  String s = evaluate( object, String.class, true, propagate, checkEvaluatable, seen );
+                  seen.remove( object );
+                  String s = evaluate( object, String.class, false, propagate, checkEvaluatable, seen );
                   Double d = new Double( s );
                   if ( d != null ) {
                       return evaluate( d, cls, true, propagate, checkEvaluatable, seen );
