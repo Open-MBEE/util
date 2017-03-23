@@ -83,7 +83,7 @@ public interface Evaluatable {
       T t = null;
       
       // Check if o is already Evaluatable.
-      if ( cls != null && object instanceof Evaluatable ) {
+      if ( checkEvaluatable && cls != null && object instanceof Evaluatable ) {
         t = ( (Evaluatable)object ).evaluate( cls, propagate );
         if ( t != null ) return t;
       }
