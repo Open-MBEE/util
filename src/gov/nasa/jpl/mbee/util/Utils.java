@@ -1293,6 +1293,7 @@ public class Utils {
   }
   
   public static <T> ArrayList<T> flatten( Collection< ? > list, Class< T > cls ) {
+    if ( list == null ) return null;
       ArrayList<T> newList = new ArrayList< T >();
       for ( Object o : list ) {
           if ( !( o instanceof Collection )
