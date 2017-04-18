@@ -817,6 +817,17 @@ public class Utils {
     return set;
   }
 
+  public static < T, TT > Set< TT > asSet( Collection< T > c,
+                                           Class< TT > cls ) {
+    LinkedHashSet< TT > set = new LinkedHashSet< TT >();
+    for ( T t : c ) {
+      if ( cls.isInstance( t ) ) {
+        set.add( (TT)t );
+      }
+    }
+    return set;
+  }
+
 //  public static Constructor< ? >
 //      getConstructorForArgTypes( Class< ? > cls, String packageName,
 //                                 Class< ? >... argTypes ) {
