@@ -1350,6 +1350,7 @@ public class Utils {
   }
   
   protected static final String[] trueStrings = new String[] {"t", "true", "1", "1.0", "yes", "y"};
+  protected static final String[] falseStrings = new String[] {"f", "false", "0", "0.0", "no", "n"};
 
   public static Boolean isTrue(Object o) {
       return isTrue(o, true);
@@ -1369,6 +1370,30 @@ public class Utils {
       if (strict)
           return null;
       for (String t: trueStrings) {
+          if (lower.equals(t))
+              return true;
+      }
+      return false;
+  }
+
+  public static Boolean isFalse(Object o) {
+      return isFalse(o, true);
+  }
+
+  public static Boolean isFalse(Object o, boolean strict) {
+      if (o == null)
+          return strict ? null : true;
+      if (Boolean.class.isAssignableFrom(o.getClass())) {
+          return !(Boolean)o;
+      }
+      String lower = o.toString().toLowerCase();
+      if (lower.equals("true"))
+          return false;
+      if (lower.equals("false"))
+          return true;
+      if (strict)
+          return null;
+      for (String t: falseStrings) {
           if (lower.equals(t))
               return true;
       }
