@@ -140,6 +140,18 @@ public class CompareUtils {
         return CompareUtils.compareEntries( (Map.Entry)o1, (Map.Entry)o2,
                                    checkComparable, useId );
       }
+    if ( o1 instanceof Wraps || o2 instanceof Wraps ) {
+        Object wo1 = o1 instanceof Wraps ? ((Wraps<?>)o1).getValue( false ) : o1;
+        Object wo2 = o2 instanceof Wraps ? ((Wraps<?>)o2).getValue( false ) : o2;
+        // check wrapped and unwrapped objects for equality first
+        if ( ( wo1 != o1 && wo1.equals( o2 ) )
+             || ( wo2 != o2 && wo2.equals( o1 ) ) ) {
+            return 0;
+        }
+        // If they weren't found to be equal, 
+        compare = compare(wo1, wo2, checkComparable, useId );
+        return compare;
+    }
     compare = CompareUtils.compareToStringNoHash( o1, o2 );
     if ( compare != 0 ) return compare;
     return compare;
