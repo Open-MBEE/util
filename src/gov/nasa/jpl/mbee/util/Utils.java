@@ -241,17 +241,17 @@ public class Utils {
   }
 
   public static < T1, T2 >
-  void add( Map< T1, Set< T2 > > map, T1 t1, T2 t2 ) {
+  boolean add( Map< T1, Set< T2 > > map, T1 t1, T2 t2 ) {
       if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
                         map, t1, t2 ) ) {
-          return;
+          return false;
       }
       Set< T2 > innerMap = map.get( t1 );
       if ( innerMap == null ) {
           innerMap = new LinkedHashSet< T2 >();
           map.put( t1, innerMap );
       }
-      innerMap.add( t2 );
+      return innerMap.add( t2 );
   }
 
 
