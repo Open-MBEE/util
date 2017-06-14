@@ -1645,9 +1645,9 @@ public class ClassUtils {
   //                                             double argMismatchCost,
   //                                             Map< Class< ? >, Map< Class< ? >, Double > > transformCost ) {
 
-      Method m = MethodUtils.getMatchingAccessibleMethod( cls, callName, argTypes );
-      if ( m != null ) {
-          return m;
+      Method md = MethodUtils.getMatchingAccessibleMethod( cls, callName, argTypes );
+      if ( md != null ) {
+          return md;
       }
 
       if ( argTypes == null ) argTypes = new Class<?>[] {};
