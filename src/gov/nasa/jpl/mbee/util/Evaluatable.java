@@ -91,16 +91,6 @@ public interface Evaluatable {
       // Try to evaluate object or dig inside to get the object of the right type.
       Object value = null;
 
-      if ( object instanceof Wraps ) {
-          Object wrappedObj = ( (Wraps)object ).getValue( propagate );
-          try {
-              value = evaluate( wrappedObj, cls, true, propagate, checkEvaluatable, seen );
-              if ( value != null ) return (T)value;
-          } catch ( Throwable e ) {
-              // ignore
-          }
-      }
-      
       if ( cls != null && cls.isInstance( object ) ) {
           try {
               return (T)object;
@@ -135,6 +125,16 @@ public interface Evaluatable {
             value = evaluate( value, cls, true, propagate, checkEvaluatable, seen );
             if ( value != null ) return (T)value;
         }
+      }
+
+      if ( object instanceof Wraps ) {
+          Object wrappedObj = ( (Wraps)object ).getValue( propagate );
+          try {
+              value = evaluate( wrappedObj, cls, true, propagate, checkEvaluatable, seen );
+              if ( value != null ) return (T)value;
+          } catch ( Throwable e ) {
+              // ignore
+          }
       }
       
       if ( cls != null && Collection.class.isAssignableFrom( cls ) ) {
