@@ -53,6 +53,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
 
+import org.apache.commons.lang3.reflect.MethodUtils;
+
 import junit.framework.Assert;
 
 public class ClassUtils {
@@ -1503,6 +1505,7 @@ public class ClassUtils {
                                                          : cls.getName() )
                                          + ", callName=" + callName + ", args="
                                          + Utils.toString( args ) + " )" );
+        
       Class< ? > argTypes[] = null;
   //    boolean allClasses = areClasses( args );
   //    if ( allClasses ) {
@@ -1641,6 +1644,12 @@ public class ClassUtils {
   //                                             double numArgsCost,
   //                                             double argMismatchCost,
   //                                             Map< Class< ? >, Map< Class< ? >, Double > > transformCost ) {
+
+      Method md = MethodUtils.getMatchingAccessibleMethod( cls, callName, argTypes );
+      if ( md != null ) {
+          return md;
+      }
+
       if ( argTypes == null ) argTypes = new Class<?>[] {};
       String clsName = ( cls == null ? "null" : cls.getName() );
       if ( Debug.isOn() ) Debug.outln( "getMethodForArgTypes( cls=" + clsName
