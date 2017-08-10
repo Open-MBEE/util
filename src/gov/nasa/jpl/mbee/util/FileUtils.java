@@ -94,14 +94,14 @@ public final class FileUtils {
     return f.getParent();
   }
 
-  protected static String existingFolder( URL url ) {
+  public static String existingFolder( URL url ) {
     File f = existingFile( url );
     if ( f == null ) return null;
     if ( f.isDirectory() ) return f.getPath();
     return f.getParent();
   }
   
-  protected static String getCurrentWorkingDirectory() {
+  public static String getCurrentWorkingDirectory() {
     String curDir = System.getProperty("user.dir");
     return curDir;
   }
