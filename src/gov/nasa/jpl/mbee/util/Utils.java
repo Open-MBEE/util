@@ -683,6 +683,7 @@ public class Utils {
   
   public static <V, T extends V> List<V> arrayAsList( T[] c ) {
       List<V> list = new ArrayList< V >();
+      if ( c == null ) return list;
       for ( T co : c ) {
           list.add(co);
       }
@@ -691,6 +692,7 @@ public class Utils {
 
   public static <V, T extends V> List<V> arrayAsList( T[] c, Class<V> cls ) {
       List<V> list = new ArrayList< V >();
+      if ( c == null ) return list;
       for ( T co : c ) {
           try {
               V v  = cls.cast( co );

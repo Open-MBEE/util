@@ -51,7 +51,7 @@ public class SocketClient {
 
   // default host & port
   String hostName = "127.0.0.1";
-  int port = 5432;
+  int port = 60002;
   
   public SocketClient( String hostName, int port ) {
     init( hostName, port );
@@ -111,9 +111,16 @@ public class SocketClient {
     if ( Debug.isOn() ) Debug.outln("sending int size of double array: " + size );    
     dataOutputStream.writeInt( size );
     dataOutputStream.flush();
+    //System.out.println("sleepy loop $$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
     for ( double d : doubleArray ) {
       if ( Debug.isOn() ) Debug.outln("sending double " + d );
       dataOutputStream.writeDouble( d );
+//      try {
+//        Thread.sleep( 10 );
+//    } catch ( InterruptedException e ) {
+//        // TODO Auto-generated catch block
+//        e.printStackTrace();
+//    }
     }
     dataOutputStream.flush();
   }
@@ -210,7 +217,7 @@ public class SocketClient {
 
   public static void main( String[] args ) throws IOException {
 
-    Debug.turnOn();
+    //Debug.turnOn();
     
     // default host & port
     String hostName = "127.0.0.1";
