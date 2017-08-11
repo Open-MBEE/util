@@ -31,6 +31,8 @@ package gov.nasa.jpl.mbee.util;
 //import gov.nasa.jpl.ae.event.Expression;
 //import japa.parser.ast.body.Parameter;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -38,24 +40,19 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.net.URL;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.Vector;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.ClassPath;
 import org.apache.commons.lang3.reflect.MethodUtils;
 
 import junit.framework.Assert;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import javax.print.DocFlavor;
 
 public class ClassUtils {
 
@@ -2935,5 +2932,148 @@ public class ClassUtils {
       set.add( c );
     }
     return classes;
+  }
+
+  /**
+   * Returns an ArrayList of string containing all the packages loaded in the JVM at the moment.
+   * @return ArrayList of Strings
+   */
+  public static ArrayList<String> getAllPackages(){
+    Package[] pkgList = Package.getPackages();
+    ArrayList<String> pkgStrList = new ArrayList<>();
+
+    for(Package p : pkgList){
+      pkgStrList.add(p.getName());
+    }
+    return pkgStrList;
+  }
+
+  /**
+   * Returns an ImmutableSet of classes
+   * @return ImmutableSet of classes
+   */
+  public static ImmutableSet<ClassPath.ClassInfo> getAllClasses() {
+    ClassPath classPath;
+    try {
+      classPath = ClassPath.from(ClassLoader.getSystemClassLoader());
+      return classPath.getAllClasses();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  /**
+   * Returns a JSONObject with the class and the methods that belong the class.
+   * @param classInfo Class
+   * @return JSONObject
+   */
+  public static JSONObject getJsonClass(ClassPath.ClassInfo classInfo) {
+    // Create JSON Object
+    JSONObject jsonClass = new JSONObject();
+    jsonClass.put("name", classInfo.getSimpleName());
+    jsonClass.put("value", classInfo.getSimpleName());
+    jsonClass.put("kType", "class");
+    jsonClass.put("type", "class");
+
+    // Get Methods and properties belonging to class
+    JSONArray children = getClassMethods(classInfo.getClass().getMethods());
+    JSONArray properties = getClassProperties(classInfo);
+    for(int i = 0; i < properties.length(); ++i){
+      children.put(properties.getJSONObject(i));
+    }
+    jsonClass.put("children", children);
+    return jsonClass;
+  }
+
+  public static JSONArray getClassProperties(ClassPath.ClassInfo classInfo) {
+    JSONArray propertiesArray = new JSONArray();
+    try {
+      Field[] fields = ClassUtils.getAllFields(classInfo.load());
+      for (Field f : fields) {
+        JSONObject properties = new JSONObject();
+        properties.put("name", f.getName());
+        properties.put("value", "var " + f.getName() + " : " + f.getType().getSimpleName());
+        properties.put("kType", "PropertyType");
+        properties.put("type", "property");
+        propertiesArray.put(properties);
+      }
+    } catch (NoClassDefFoundError e) {
+      Debug.out(e.getMessage());
+    }
+    return propertiesArray;
+  }
+
+  /**
+   * Returns a formatted JSONArray of all the methods given
+   * @param methods Array of Methods
+   * @return JSONArray
+   */
+  public static JSONArray getClassMethods(Method[] methods){
+    JSONArray jsonMethods = new JSONArray();
+    for (Method m : methods) {
+      JSONObject methodJson = new JSONObject();
+
+      String typeString;
+      StringBuilder stringBuilder = new StringBuilder();
+      stringBuilder.append("(");
+
+      for(Class<?> t : m.getParameterTypes()) {
+        stringBuilder.append(t.getSimpleName());
+      }
+      typeString = stringBuilder.toString();
+
+      if (typeString.length() > 2 && typeString.contains(",")) {
+        typeString = typeString.substring(0, typeString.length()-2)  + ")";
+      } else {
+        typeString += ")";
+      }
+
+      methodJson.put("name", m.getName());
+      methodJson.put("value", m.getName() + typeString + " : "+ m.getReturnType().getSimpleName());
+      methodJson.put("kType", "fun");
+      methodJson.put("type", "function");
+
+      jsonMethods.put(methodJson);
+    }
+    return jsonMethods;
+  }
+
+  public static JSONArray getClassesJSON() {
+    ImmutableSet<ClassPath.ClassInfo> classes = getAllClasses();
+
+    Set<String> packagesSeen = new HashSet<>();
+
+    JSONArray packages = new JSONArray();
+
+    JSONObject pkg = new JSONObject();
+    JSONArray children;
+    JSONObject jsonClass;
+    String previous = "";
+    for (ClassPath.ClassInfo c : classes) {
+      if (!c.getPackageName().equals(previous) && !previous.equals("")) {
+        packages.put(pkg);
+      }
+      if (!packagesSeen.contains(c.getPackageName())) {
+        pkg = new JSONObject();
+        // Add package to seen packages
+        packagesSeen.add(c.getPackageName());
+
+        pkg.put("name", c.getPackageName());
+        pkg.put("value", c.getPackageName());
+        pkg.put("kType", "package");
+        pkg.put("type", "package");
+
+        children = new JSONArray();
+      } else {
+        children = pkg.getJSONArray("children");
+      }
+      jsonClass = getJsonClass(c);
+      children.put(jsonClass);
+      pkg.put("children", children);
+      previous = c.getPackageName();
+    }
+
+    return packages;
   }
 }
