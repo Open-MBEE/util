@@ -1642,9 +1642,16 @@ public class ClassUtils {
   //                                             double argMismatchCost,
   //                                             Map< Class< ? >, Map< Class< ? >, Double > > transformCost ) {
 
-      Method md = MethodUtils.getMatchingAccessibleMethod( cls, callName, argTypes );
-      if ( md != null ) {
-          return md;
+      if ( Debug.isOn() ) {
+          Method md = MethodUtils.getMatchingAccessibleMethod( cls, callName, argTypes );
+          if ( md != null ) {
+              System.err.println( "getMethodForArgTypes( cls="
+                      + cls + ", callName="
+                      + callName + ", argTypes="
+                      + Utils.toString( argTypes )
+                      + " ): apache returned " + md  );
+              //return md;
+          }
       }
 
       if ( argTypes == null ) argTypes = new Class<?>[] {};
@@ -1711,6 +1718,13 @@ public class ClassUtils {
       } else if ( atc.best == null && complain ) {
         Debug.error(true, false, "method " + callName + "(" + Utils.toString( argTypes ) + ")"
                             + " not found for " + clsName );
+      }
+      if ( Debug.isOn() ) {
+          Debug.outln( "getMethodForArgTypes( cls="
+                  + cls + ", callName="
+                  + callName + ", argTypes="
+                  + Utils.toString( argTypes )
+                  + " ): ClassUtils returned " + atc.best  );
       }
       return (Method)atc.best;
     }
