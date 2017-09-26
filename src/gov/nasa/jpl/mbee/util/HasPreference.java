@@ -68,7 +68,7 @@ public interface HasPreference< T > {
                         if ( rank.containsKey( tc ) ) {
                             int rr = rank( tc );
                             if ( r == null || rr < r ) {
-                                r = rr;
+                                r = (Integer) rr;
                                 // remember rank
                                 rank.put( t, r );
                                 break; // We can assume that the first match

@@ -272,12 +272,16 @@ public class CompareUtils {
           gotAmp = false;
         }
       }
-      if ( c1 < c2 ) return -1;
-      if ( c1 > c2 ) return 1;
+      if ( c1 < c2 )
+          return -1;
+      if ( c1 > c2 )
+          return 1;
       if ( c1 == '@' ) gotAmp = true;
     }
-    if ( pos < s1.length() ) return 1;
-    if ( pos < s2.length() ) return -1;
+    if ( pos < s1.length() )
+        return 1;
+    if ( pos < s2.length() )
+        return -1;
     return 0;
 //    int compare = Utils.toStringNoHash(o1).compareTo( Utils.toStringNoHash(o2) );
 //    return compare;

@@ -333,7 +333,7 @@ public interface MoreToString {
         stuffOptionsFromKey( otherOptions, formatKey );
         return ((MoreToString)collection).toString(withHash, deep, seen, otherOptions);
       }
-      return toString( collection.toArray(), withHash, deep, seen, otherOptions, formatKey );
+      return toString( collection == null ? new Object[]{} : collection.toArray(), withHash, deep, seen, otherOptions, formatKey );
     }
     public static < T > String toString( Collection< T > collection,
                                          boolean withHash, boolean deep,

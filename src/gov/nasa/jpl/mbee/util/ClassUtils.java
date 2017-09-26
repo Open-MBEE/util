@@ -85,11 +85,6 @@ public class ClassUtils {
       public int bestPreferenceRank = Integer.MAX_VALUE;
       public double bestScore = Double.MAX_VALUE;
 
-      /**
-       * @param argTypes1
-       * @param argTypes2
-       * @param isVarArgs
-       */
       public ArgTypeCompare( Class< ? >[] referenceArgTypes ) {
         super();
         this.referenceArgTypes = referenceArgTypes;
@@ -105,7 +100,7 @@ public class ClassUtils {
       public boolean hasPreference() {
           if ( referenceObject != null ) return referenceObject instanceof HasPreference;
           if ( hasPreference == null && referenceClass != null ) {
-              hasPreference = HasPreference.Helper.classHasPreference( referenceClass );
+              hasPreference = (Boolean) HasPreference.Helper.classHasPreference( referenceClass );
           }
           return hasPreference;
       }
@@ -1675,12 +1670,20 @@ public class ClassUtils {
             if ( method != null ) return method;
         } catch ( NoSuchMethodException e1 ) {
         } catch ( SecurityException e1 ) {
+        } catch ( NoClassDefFoundError e1 ) {
+            Debug.error(true, false, "Got exception/error calling " + clsName
+                    + ".getMethod(): " + e1.getMessage() );
+            e1.printStackTrace();
         }
         try {
             Method method = cls.getDeclaredMethod( callName, argTypes );
             if ( method != null ) return method;
         } catch ( NoSuchMethodException e1 ) {
         } catch ( SecurityException e1 ) {
+        } catch ( NoClassDefFoundError e1 ) {
+            Debug.error(true, false, "Got exception/error calling " + clsName
+                    + ".getMethod(): " + e1.getMessage() );
+            e1.printStackTrace();
         }
       }
       Method[] methods = null;
@@ -1688,9 +1691,9 @@ public class ClassUtils {
                                        + clsName );
       try {
         methods = cls == null ? null : cls.getMethods();
-      } catch ( Exception e ) {
+      } catch ( Throwable e ) {
           if ( complain ) {
-        Debug.error(true, false, "Got exception calling " + clsName
+        Debug.error(true, false, "Got exception/error calling " + clsName
                             + ".getMethod(): " + e.getMessage() );
           }
       }
@@ -1942,7 +1945,8 @@ public class ClassUtils {
 
   public static boolean isStatic( Class<?> cls ) {
     if ( cls == null ) return false;
-    return ( Modifier.isStatic( cls.getModifiers() ) );
+    boolean s = !cls.isMemberClass() || Modifier.isStatic(cls.getModifiers());
+    return s;
   }
 
   public static boolean isStatic( Member member ) {
