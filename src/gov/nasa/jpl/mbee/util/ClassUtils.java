@@ -1816,7 +1816,34 @@ public class ClassUtils {
         Class<?> cls2 = o2 == null ? null : o2.getClass();
         return dominantTypeClass(cls1, cls2);
     }
-    
+
+    protected static Map<String, Integer> lowerCaseNumTypeNames = new HashMap<String, Integer>() {
+        {
+            // assign numbers to express an ordering for dominance.
+            int ct = 0;
+            put("bigdecimal", ct++);
+            put("doubleaccumulator", ct);
+            put("doubleadder", ct);
+            put("double", ct++);
+            put("float", ct++);
+            put("biginteger", ct++);
+            put("longaccumulator", ct);
+            put("longadder", ct);
+            put("long", ct);
+            put("atomiclong", ct++);
+            put("int", ct);
+            put("integer", ct);
+            put("atomicinteger", ct++);
+            put("short", ct++);
+            put("byte", ct++);
+        }
+    };
+    public static boolean isTypeNameNumber( String typeName ) {
+        String lower = typeName.toLowerCase();
+        boolean isNum = lowerCaseNumTypeNames.keySet().contains(lower);
+        return isNum;
+    }
+
     public static String dominantType( String argType1, String argType2 ) {
         if ( argType1 == null ) return argType2;
         if ( argType2 == null ) return argType1;
@@ -1832,6 +1859,37 @@ public class ClassUtils {
         if ( argType2Lower.startsWith( "long" ) ) return argType2;
         if ( argType1Lower.startsWith( "int" ) ) return argType1;
         if ( argType2Lower.startsWith( "int" ) ) return argType2;
+        return argType1;
+    }
+
+    public static String newDominantType( String argType1, String argType2 ) {
+        // Anything dominates null.
+        if ( argType1 == null ) return argType2;
+        if ( argType2 == null ) return argType1;
+
+        // Object dominates all types.
+        if ( argType1.equals( "Object" ) ) return argType1;
+        if ( argType2.equals( "Object" ) ) return argType2;
+
+        // String dominates all types except Object.
+        if ( argType1.equals( "String" ) ) return argType1;
+        if ( argType2.equals( "String" ) ) return argType2;
+
+        // Check for Number types.
+        String argType1Lower = argType1.toLowerCase();
+        String argType2Lower = argType2.toLowerCase();
+        Integer i1 = lowerCaseNumTypeNames.get(argType1Lower);
+        Integer i2 = lowerCaseNumTypeNames.get(argType2Lower);
+        if ( i1 != null && i2 != null ) {
+            if ( i1 <= i2 ) {
+                return argType1;
+            }
+            return argType2;
+        }
+        // Non-numbers dominate Numbers
+        if ( i1 != null && i2 == null ) {
+            return argType2;
+        }
         return argType1;
     }
 
