@@ -836,7 +836,10 @@ public class ClassUtils {
     Class< ? > cls2 = classCache.get( className );
     if ( cls2 != null ) {
       if ( Utils.isNullOrEmpty( memberName ) || hasMember( cls2, memberName ) ) {
-        return cls2;
+          if ( inPackage(cls2, preferredPackage) ) {
+              classCache.put( className, cls2 );
+              return cls2;
+          }
       }
       if ( cls == null ) cls = cls2;
     }
@@ -845,14 +848,19 @@ public class ClassUtils {
       classList = getClassesForName( className, !initialize );
     }
     if ( !Utils.isNullOrEmpty( classList ) ) {
-//        Class< ? > best = null;
-//        boolean bestHasSpecifier = false;
-//        boolean bestInPreferredPackage = false;
+//        Class< ? > best = cls;
+//        boolean bestHasSpecifier = cls == null ? false : hasMember(cls, memberName);
+//        boolean bestInPreferredPackage = cls == null ? false : inPackage(cls, preferredPackage);
 //        for ( Class< ? > c : classList ) {
-//          boolean inPreferredPackage = false;
-//          boolean hasSpecifier = hasMember( c, specifier );
-//          if ( inPackage( c, preferredPackage ) ) {
-//            classCache.put( className, c );
+//          boolean inPreferredPackage = inPackage( c, preferredPackage );
+//          boolean hasSpecifier = hasMember( c, memberName );
+//          if ( best == null ||
+//               (hasSpecifier &&
+//                (!bestHasSpecifier ||
+//                 ( inPreferredPackage && !bestInPreferredPackage )))) {
+//            //classCache.put( className, c );
+//              bestHasSpecifier = hasSpecifier;
+//              bestInPreferredPackage = inPreferredPackage;
 //            if ( hasSpecifier ) return c;
 //            inPreferredPackage = true;
 //          }
@@ -886,7 +894,7 @@ public class ClassUtils {
     }
     classList = new ArrayList< Class< ? > >();
     if ( Utils.isNullOrEmpty( className ) ) {
-      if ( Debug.isOn() ) Debug.outln( "getClassesForName( " + className + " ) rempty className - returning null" );
+      if ( Debug.isOn() ) Debug.outln( "getClassesForName( " + className + " ) empty className - returning null" );
       return null;
     }
   //    ClassLoader loader = Utils.class.getClassLoader();
@@ -1948,7 +1956,11 @@ public class ClassUtils {
   public static Pair< Boolean, Object > runMethod( boolean suppressErrors,
                                                    Object o, String methodName,
                                                    Object... args ) {
-    Method m = getMethodForArgs( o.getClass(), methodName, args );
+    Class<?> cls = o instanceof Class ? (Class<?>)o : (o == null ? null : o.getClass());
+    Method m = getMethodForArgs( cls, methodName, args );
+    if ( m == null && o == cls ) {
+        m = getMethodForArgs( o.getClass(), methodName, args );
+    }
     return runMethod( suppressErrors, o, m, args );
   }
 
