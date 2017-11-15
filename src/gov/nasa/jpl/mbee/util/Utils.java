@@ -254,6 +254,20 @@ public class Utils {
       return innerMap.add( t2 );
   }
 
+  public static < T1, T2, T3 >
+  boolean add( Map< T1, Map<T2, Set< T3 > > > map, T1 t1, T2 t2, T3 t3 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
+            map, t1, t2 ) ) {
+      return false;
+    }
+    Map< T2, Set< T3 > > innerMap = map.get( t1 );
+    if ( innerMap == null ) {
+      innerMap = new LinkedHashMap< T2, Set< T3 > >();
+      map.put( t1, innerMap );
+    }
+    return add(innerMap, t2, t3 );
+  }
+
 
   // generic map<X, map<Y, Z> >.put(x, y, z)
   /**
@@ -1263,8 +1277,7 @@ public class Utils {
   }
 
   /**
-   * Creates a new {@link ArrayList} and inserts the arguments, {@code ts}.
-   * @param ts
+   * Creates a new empty {@link ArrayList}.
    * @return the new {@link ArrayList}
    */
   public static < T > ArrayList< T > newEmptyList() {
