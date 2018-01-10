@@ -66,6 +66,24 @@ public class Utils {
 
   public static ClassLoader loader = null;
 
+  public static Double JAVA_VERSION = null;
+  public static double getJavaVersion() {
+    if ( JAVA_VERSION == null ) {
+      String version = System.getProperty("java.version");
+      int pos = version.indexOf('.');
+      pos = version.indexOf('.', pos + 1);
+      try {
+        JAVA_VERSION = Double.parseDouble(version.substring(0, pos));
+      } catch( NumberFormatException e ) {
+        e.printStackTrace();
+      }
+    }
+    if ( JAVA_VERSION != null ) {
+      return JAVA_VERSION;
+    }
+    return 1.7;  // should never get here!
+  }
+
   // empty collection constants
   public static final List<?> emptyList = Collections.EMPTY_LIST;//new ArrayList( 0 );
   public static final ArrayList<?> emptyArrayList = new ArrayList( 0 );
