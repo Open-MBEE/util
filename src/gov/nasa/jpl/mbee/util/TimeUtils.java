@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.util;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -439,6 +440,26 @@ public class TimeUtils {
         double deltaMillis = deltaDays * 24 * 3600 * 1000;
         long millis = millis_Jan_1_2000 + (long)deltaMillis;
         return millis;
+    }
+
+//    // When compiling with Java 1.8
+//    public static String toDurationStringHHMMSS(Duration dur) {
+//        return nanosToDurationStringHHMMSS(dur.toNanos());
+//    }
+    public static String nanosToDurationStringHHMMSS(long nanos) {
+        long n = nanos;
+        long m = n / 1000000;
+        long s = m / 1000;
+        long d = s / (24 * 3600);
+//        if ( d > 365 ) {
+//            Debug.error(true, false, "WARNING! Duration nanos is a year or bigger: " + nanos);
+//        }
+        String hhmmss = String.format("%02d:%02d:%02d", (s / 3600) % 24, (s % 3600) / 60, (s % 60));
+        String ms = ( ( m % 1000 == 0 ) ? "" :  String.format(".%03d", m % 1000) );
+        String ds = ( (d == 0L) ? "" : String.format("%03dT", d) );
+        String dStr = ds + hhmmss + ms;
+        return dStr;
+
     }
 
     public static Double toDurationInSeconds( String field ) {
