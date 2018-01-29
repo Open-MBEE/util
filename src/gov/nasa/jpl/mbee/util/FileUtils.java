@@ -270,7 +270,7 @@ public final class FileUtils {
       }
   }
 
-  public static void stringToFile( String s, String fileName ) {
+  public static boolean stringToFile( String s, String fileName ) {
     FileWriter outFile = null;
     try {
       outFile = new FileWriter(fileName);
@@ -280,7 +280,9 @@ public final class FileUtils {
     } catch ( IOException e ) {
       // TODO Auto-generated catch block
       e.printStackTrace();
+      return false;
     }
+    return true;
   }
 
     /**
