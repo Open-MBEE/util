@@ -41,6 +41,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
 import java.net.URL;
+import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -1470,6 +1471,8 @@ public class ClassUtils {
                            Collections.class,
                            Utils.class,
                            ClassUtils.class,
+                           Duration.class,
+                           Date.class,
                            TimeUtils.class,
                            CompareUtils.class,
                            FileUtils.class};
@@ -1550,13 +1553,13 @@ public class ClassUtils {
                                              String callName,
                                              Class<?>[] argTypes,
                                              boolean complainIfNotFound ) {
-    //Debug.turnOff();  // DELETE ME -- FIXME
-      if ( Debug.isOn() ) Debug.outln("=========================start===============================");
-    //Debug.errln("=========================start===============================");
-    //Class< ? > classForName = getClassForName( className, preferredPackage, false );
+    if ( className == null ) {
+        Method m = getJavaMethodForCommonFunction(callName, argTypes);
+        return m;
+    }
+    if ( Debug.isOn() ) Debug.outln("=========================start===============================");
     String classNameNoParams = noParameterName( className );
     List< Class< ? > > classesForName = getClassesForName( classNameNoParams, false );
-    //Debug.err("classForName = " + classForName );
     if ( Debug.isOn() ) Debug.outln("classesForName = " + classesForName );
     if ( Utils.isNullOrEmpty( classesForName ) ) {
       if ( complainIfNotFound ) {
@@ -1565,8 +1568,6 @@ public class ClassUtils {
                      + ( argTypes == null ? "" : Utils.toString( argTypes, false ) ) );
       }
       if ( Debug.isOn() ) Debug.outln("===========================end==============================");
-      //Debug.errln("===========================end==============================");
-      //Debug.turnOff();  // DELETE ME -- FIXME
       return null;
     }
     Method best = null;
