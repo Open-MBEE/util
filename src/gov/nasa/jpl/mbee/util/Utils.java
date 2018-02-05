@@ -1367,19 +1367,39 @@ public class Utils {
       }
       return null;
   }
-  
+
+  public static <T> ArrayList<T> flatten(Object o, Class<T> cls) {
+    ArrayList<T> newList = new ArrayList< T >();
+    if ( o == null ) return newList;
+    if ( o instanceof Collection ) {
+      newList.addAll( flatten( (Collection< ? >)o, cls ) );
+    } else if ( o.getClass().isArray() ) {
+      newList.addAll( flatten( (T[])o, cls ) );
+    } else if ( cls == null || cls.isInstance( o ) ) {
+      @SuppressWarnings( "unchecked" )
+      T t = (T)o;
+      newList.add( t );
+    }
+    return newList;
+  }
+
+  public static <T> ArrayList<T> flatten(T[] list) {
+    return flatten(list, null);
+  }
+
+  public static <T> ArrayList<T> flatten(T[] list, Class<T> cls) {
+    if ( list == null ) return null;
+    ArrayList<T> newList = new ArrayList< T >();
+    for ( T o : list ) {
+      newList.addAll( flatten((Object)o, cls) );
+    }
+    return newList;
+  }
   public static <T> ArrayList<T> flatten( Collection< ? > list, Class< T > cls ) {
     if ( list == null ) return null;
       ArrayList<T> newList = new ArrayList< T >();
       for ( Object o : list ) {
-          if ( !( o instanceof Collection )
-               && ( cls == null || cls.isInstance( o ) ) ) {
-              @SuppressWarnings( "unchecked" )
-              T t = (T)o;
-              newList.add( t );
-          } else if ( o instanceof Collection ) {
-              newList.addAll( flatten( (Collection< ? >)o, cls ) );
-          }
+        newList.addAll( flatten(o, cls) );
       }
       return newList;
   }
