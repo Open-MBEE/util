@@ -160,12 +160,14 @@ public class ClassUtils {
               if ( Debug.isOn() ) Debug.outln( "argTypes1[ " + i + " ]="
                            + candidateArgTypes[ i ] + " matches args[ " + i
                            + " ].getClass()=" + referenceArgTypes[ i ] );
+              distance = subclassDistance( candidateArgTypes[ i ], referenceArgTypes[ i ] );
             ++numMatching;
           } else if ( candidateArgTypes[ i ].isPrimitive() &&
                       classForPrimitive(candidateArgTypes[ i ]).isAssignableFrom( referenceArgTypes[ i ] ) ) {
             if ( Debug.isOn() ) Debug.outln( "argTypes1[ " + i + " ]="
                          + candidateArgTypes[ i ] + " matches args[ " + i
                          + " ].getClass()=" + referenceArgTypes[ i ] );
+            distance = subclassDistance( classForPrimitive(candidateArgTypes[ i ]), referenceArgTypes[ i ] );
             ++numMatching;
 //          } else if ( Parameter.class.isAssignableFrom( candidateArgTypes[ i ] ) &&
 //                      Expression.class.isAssignableFrom( referenceArgTypes[ i ] ) ) {
@@ -1074,13 +1076,21 @@ public class ClassUtils {
     return getConstructorForArgs( classForName, args );
   }
 
-  public static Constructor< ? > getConstructorForArgTypes( String className,
+    public static Constructor< ? > getConstructorForArgTypes( String className,
+                                                              Class<?>[] argTypes,
+                                                              String preferredPackage ) {
+      return getConstructorForArgTypes( className, argTypes, preferredPackage, false );
+    }
+    public static Constructor< ? > getConstructorForArgTypes( String className,
                                                             Class<?>[] argTypes,
-                                                            String preferredPackage ) {
+                                                            String preferredPackage,
+                                                            boolean complain ) {
     Class< ? > classForName = getClassForName( className, null, preferredPackage, false );
     if ( classForName == null ) {
-      System.err.println( "Couldn't find the class " + className
-                          + " to get constructor with args=" + Utils.toString( argTypes, false ) );
+        if ( complain ) {
+            System.err.println("Couldn't find the class " + className
+                    + " to get constructor with args=" + Utils.toString(argTypes, false));
+        }
       return null;
     }
     return getConstructorForArgTypes( classForName, argTypes );
@@ -1958,7 +1968,7 @@ public class ClassUtils {
                                                    Object o, String methodName,
                                                    Object... args ) {
     Class<?> cls = o instanceof Class ? (Class<?>)o : (o == null ? null : o.getClass());
-    Method m = getMethodForArgs( cls, methodName, !suppressErrors && o == cls, args );
+    Method m = getMethodForArgs( cls, methodName, !suppressErrors && o != cls, args );
     if ( m == null && o == cls ) {
         m = getMethodForArgs( o.getClass(), methodName, !suppressErrors, args );
     }
