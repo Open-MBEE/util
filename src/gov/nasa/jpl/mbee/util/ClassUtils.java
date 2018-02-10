@@ -1493,13 +1493,13 @@ public class ClassUtils {
                       classForName ) ) {
       return null;
     }
-    return getMethodForArgs( classForName, callName, args );
+    return getMethodForArgs( classForName, callName, true, args );
   }
 
-  public static Method getMethodForArgs( Class< ? > cls, String callName,
-                                         Object... args ) {
-      return getMethodForArgs(cls, callName, true, args );
-  }
+//  public static Method getMethodForArgs( Class< ? > cls, String callName,
+//                                         Object... args ) {
+//      return getMethodForArgs(cls, callName, true, args );
+//  }
   public static Method getMethodForArgs( Class< ? > cls, String callName,
                                          boolean complain,
                                          Object... args ) {
@@ -1958,9 +1958,9 @@ public class ClassUtils {
                                                    Object o, String methodName,
                                                    Object... args ) {
     Class<?> cls = o instanceof Class ? (Class<?>)o : (o == null ? null : o.getClass());
-    Method m = getMethodForArgs( cls, methodName, args );
+    Method m = getMethodForArgs( cls, methodName, !suppressErrors && o == cls, args );
     if ( m == null && o == cls ) {
-        m = getMethodForArgs( o.getClass(), methodName, args );
+        m = getMethodForArgs( o.getClass(), methodName, !suppressErrors, args );
     }
     return runMethod( suppressErrors, o, m, args );
   }
@@ -2048,7 +2048,7 @@ public class ClassUtils {
                  Object... args ) throws IllegalArgumentException,
                                          IllegalAccessException,
                                          InvocationTargetException {
-    Method m = getMethodForArgs( o.getClass(), methodName, args );
+    Method m = getMethodForArgs( o.getClass(), methodName, true, args );
     return runMethod( o, m, args );
   }
 
@@ -2134,8 +2134,8 @@ public class ClassUtils {
     Object result = null;
     if ( tryMethods ) {
     for ( String mName : candidateMethodNames ) {
-      Method m = getMethodForArgs( o.getClass(), mName, fieldName );
-      if ( m == null ) m = getMethodForArgs( o.getClass(), mName );
+      Method m = getMethodForArgs( o.getClass(), mName, false, fieldName );
+      if ( m == null ) m = getMethodForArgs( o.getClass(), mName, false );
       if ( m != null ) {
         try {
           boolean gotArgs = Utils.isNullOrEmpty( m.getParameterTypes() );
@@ -2204,8 +2204,8 @@ public class ClassUtils {
     Object result = null;
     String[] candidateMethodNames = new String[]{ "getMember", "getValueNoPropagate", "getValue", "getField", "get" };
     for ( String mName : candidateMethodNames ) {
-      Method m = getMethodForArgs( o.getClass(), mName, fieldName );
-      if ( m == null ) m = getMethodForArgs( o.getClass(), mName );
+      Method m = getMethodForArgs( o.getClass(), mName, false, fieldName );
+      if ( m == null ) m = getMethodForArgs( o.getClass(), mName, false );
       if ( m != null ) {
         try {
           boolean gotArgs = Utils.isNullOrEmpty( m.getParameterTypes() );
@@ -2629,7 +2629,7 @@ public class ClassUtils {
    *         the given arguments
    */
   public static boolean hasMethod( Class< ? > cls, String methodName, Object[] args ) {
-    return getMethodForArgs( cls, methodName, args ) != null;
+    return getMethodForArgs( cls, methodName, false, args ) != null;
   }
 
   /**
