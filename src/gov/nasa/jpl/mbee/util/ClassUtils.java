@@ -1405,17 +1405,21 @@ public class ClassUtils {
         }
         best = ( bestCls == null ||
                  ( hasSpecifier && !bestHasSpecifier ) ||
-                 ( inPreferredPackage && !bestInPreferredPackage ) ||
-                 ( lengthOfCommonPreferredPkgPrefix > bestLengthOfCommonPreferredPkgPrefix ) ||
-                 ( ( lengthOfCommonPreferredPkgPrefix == bestLengthOfCommonPreferredPkgPrefix ) &&
-                     ( ( lengthOfCommonPkgPrefix > bestLengthOfCommonPkgPrefix ) ||
-                       ( ( lengthOfCommonPkgPrefix == bestLengthOfCommonPkgPrefix ) &&
-                         ( length < bestLength ) ) ) ) );
+                 ( !bestHasSpecifier &&
+                   ( ( inPreferredPackage && !bestInPreferredPackage ) ||
+                     ( !bestInPreferredPackage &&
+                       ( ( lengthOfCommonPreferredPkgPrefix > bestLengthOfCommonPreferredPkgPrefix ) ||
+                         ( ( lengthOfCommonPreferredPkgPrefix == bestLengthOfCommonPreferredPkgPrefix ) &&
+                           ( ( lengthOfCommonPkgPrefix > bestLengthOfCommonPkgPrefix ) ||
+                             ( ( lengthOfCommonPkgPrefix == bestLengthOfCommonPkgPrefix ) &&
+                               ( length < bestLength ) ) ) ) ) ) ) ) );
         if ( best ) {
           bestCls = c;
           bestLengthOfCommonPreferredPkgPrefix = lengthOfCommonPreferredPkgPrefix;
           bestLengthOfCommonPkgPrefix = lengthOfCommonPkgPrefix;
           bestLength = length;
+          bestHasSpecifier = hasSpecifier;
+          bestInPreferredPackage = inPreferredPackage;
         }
       }
       if ( Debug.isOn() ) Debug.outln( "Best class " + bestCls.getCanonicalName()
