@@ -44,5 +44,12 @@ public interface Wraps< V > {
    *          the new value to be wrapped
    */
   public void setValue( V value );
-  
+
+  /**
+   * Return true if there is an object wrapped.  If getValue() returns null, this call distinguishes whether null is a
+   * valid value or not.  If multiple objects are wrapped, then getValue() may return null also in this case.
+   * @return true if there is a wrapped value
+   */
+  public boolean hasValue();
+
 }
