@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.util;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public abstract class ConstantNumber extends Number implements Comparable< Number > {
     private static final long serialVersionUID = -8761617466495267383L;
@@ -41,7 +42,7 @@ public abstract class ConstantNumber extends Number implements Comparable< Numbe
 
     protected static HashMap< Class< ? >, Number > constructValueMap( ConstantNumber n ) {
         HashMap< Class< ? >, Number > valueMap =
-                new HashMap< Class< ? >, Number >();
+                new LinkedHashMap< Class< ? >, Number >();
         valueMap.put( Integer.class, n.intValue() );
         valueMap.put( Long.class, n.longValue() );
         valueMap.put( Float.class, n.floatValue() );

@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.util;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public interface HasPreference< T > {
@@ -12,7 +13,7 @@ public interface HasPreference< T > {
     public static class Helper< T > implements HasPreference< T > {
 
         final List< T > totalOrder;
-        HashMap< T, Integer > rank = new HashMap< T, Integer >();
+        HashMap< T, Integer > rank = new LinkedHashMap< T, Integer >();
         
         public static boolean classHasPreference( Class<?> cls ) {
             boolean hasPreference = false;

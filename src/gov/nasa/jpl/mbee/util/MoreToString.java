@@ -31,14 +31,7 @@ package gov.nasa.jpl.mbee.util;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -768,7 +761,7 @@ public interface MoreToString {
                                    String keyValueDelimiter,
                                    String keyValueSuffix ) {
       
-      if ( map == null ) map = new HashMap< String, String >();
+      if ( map == null ) map = new LinkedHashMap< String, String >();
       map.clear();
       
       Pattern p = Pattern.compile(prefix);
@@ -924,7 +917,7 @@ public interface MoreToString {
 //        if ( op == null ) break;
       }
       
-      Map<String, String> map = new HashMap< String, String >();
+      Map<String, String> map = new LinkedHashMap< String, String >();
       String mapString = "{(0=2.31359797761508),(84600=2.080913063156552),(85500=2.3810581138436953)}";
       fromString( map, mapString );
       System.out.println( "string to parse into map: " + mapString );

@@ -4,16 +4,7 @@ package gov.nasa.jpl.mbee.util;
 import gov.nasa.jpl.mbee.util.CompareUtils.MappedValueComparator;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public class MethodCall {
     /**
@@ -277,7 +268,7 @@ public class MethodCall {
      * @param comparator
      *            specifies precedence relation on a pair of MethodCall return
      *            values; null defaults to {@link CompareUtils.GenericComparator}.
-     * @param indexOfElementArgument
+     * @param indexOfObjectArgument
      *            where in the list of arguments an Object from the collection
      *            is substituted (1 to total number of args or 0 to indicate
      *            that the Objects are each substituted for
@@ -289,7 +280,7 @@ public class MethodCall {
                                           Comparator< V > comparator,
                                           int indexOfObjectArgument ) {
         List< K > result = new ArrayList< K >( objects );
-        Map< K, V > map = new HashMap< K, V >();
+        Map< K, V > map = new LinkedHashMap< K, V >();
         for ( K o : objects ) {
             sub( indexOfObjectArgument, o );
             Pair< Boolean, Object > r = invoke();
@@ -318,7 +309,7 @@ public class MethodCall {
         closedSet.addAll( initialSet );
         ArrayList< XX > queue =
                 new ArrayList< XX >( initialSet );
-        Set< XX > seen = new HashSet< XX >();
+        Set< XX > seen = new LinkedHashSet< XX >();
         while ( !queue.isEmpty() ) {
             XX item = queue.get( 0 );
             queue.remove( 0 );
@@ -346,7 +337,7 @@ public class MethodCall {
     
     /**
      * Compute a transitive closure of a map using this MethodCall to specify for each key in the map a set of items that should have a superset of related items in the map.
-     * @param initialSet the Set of initial items to be substituted for an argument or the object of this MethodCall
+     * @param relationMapToClose the Set of initial items to be substituted for an argument or the object of this MethodCall
      * @param indexOfObjectArgument
      *            where in the list of arguments an object from the set
      *            is substituted (1 to total number of args or 0 to indicate
@@ -358,7 +349,7 @@ public class MethodCall {
     public < XX, C extends Map< XX, Set< XX > > > C mapClosure( C relationMapToClose, int indexOfObjectArgument, int maximumSetSize ) {
         ArrayList< XX > queue =
                 new ArrayList< XX >( relationMapToClose.keySet() );
-//        Set< XX > seen = new HashSet< XX >();
+//        Set< XX > seen = new LinkedHashSet< XX >();
         while ( !queue.isEmpty() ) {
             XX item = queue.get( 0 );
             queue.remove( 0 );

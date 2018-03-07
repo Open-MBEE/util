@@ -282,7 +282,7 @@ public class ClassUtils {
         return subclassDistance( superclass, subclass );
     }
     public static int subclassDistance( Class< ? > superclass, Class< ? > subclass ) {
-//        return subclassDistance( superclass, subclass, new HashMap<String, Integer>() );
+//        return subclassDistance( superclass, subclass, new LinkedHashMap<String, Integer>() );
 //    }
 //    protected static int subclassDistance( Class< ? > superclass, Class< ? > subclass,
 //                                           Map<String,Integer> distanceCache ) {
@@ -429,7 +429,7 @@ public class ClassUtils {
 
   // boolean, byte, char, short, int, long, float, double, and void
   private static Map< Class< ? >, Class< ? > > initializePrimToNonPrim() {
-    primToNonPrim = new HashMap< Class< ? >, Class<?> >();
+    primToNonPrim = new LinkedHashMap< Class< ? >, Class<?> >();
     primToNonPrim.put( boolean.class, Boolean.class );
     primToNonPrim.put( byte.class, Byte.class );
     primToNonPrim.put( char.class, Character.class );
@@ -444,7 +444,7 @@ public class ClassUtils {
 
   // boolean, byte, char, short, int, long, float, and double
   private static Map< Class< ? >, Class< ? > > initializeNonPrimToPrim() {
-    nonPrimToPrim = new HashMap< Class< ? >, Class<?> >();
+    nonPrimToPrim = new LinkedHashMap< Class< ? >, Class<?> >();
     for ( Entry< Class< ? >, Class< ? > > e : getPrimToNonPrim().entrySet() ) {
       nonPrimToPrim.put( e.getValue(), e.getKey() );
     }
@@ -800,7 +800,7 @@ public class ClassUtils {
 
   // TODO -- expand to include member names, too: className -> memberName -> Class
   public static Map< String, Class< ? > > classCache =
-      Collections.synchronizedMap( new HashMap< String, Class< ? > >() );
+      Collections.synchronizedMap( new LinkedHashMap< String, Class< ? > >() );
   
 
   public static Class<?> getClassForName(String className, String memberName,
@@ -880,7 +880,7 @@ public class ClassUtils {
   //  }
 
   public static HashMap< String, List< Class<?> > > classesCache =
-      new HashMap< String, List<Class<?>> >();
+      new LinkedHashMap< String, List<Class<?>> >();
 
   public static boolean optimistic = false;  // try to find again even if failed in the past
   
@@ -1840,7 +1840,7 @@ public class ClassUtils {
         return dominantTypeClass(cls1, cls2);
     }
 
-    protected static Map<String, Integer> lowerCaseNumTypeNames = new HashMap<String, Integer>() {
+    protected static Map<String, Integer> lowerCaseNumTypeNames = new LinkedHashMap<String, Integer>() {
         {
             // assign numbers to express an ordering for dominance.
             int ct = 0;
@@ -1931,7 +1931,7 @@ public class ClassUtils {
   }
 
   public static String dominantType(Collection<String> classes) {
-      Set<String> set = new HashSet<String>(classes);
+      Set<String> set = new LinkedHashSet<String>(classes);
       String dominantClass = null;
       for ( String cls : set ) {
           dominantClass = dominantType( dominantClass, cls );
@@ -1940,7 +1940,7 @@ public class ClassUtils {
   }
 
   public static Class<?> dominantTypeClass(Collection<Class<?>> classes) {
-      Set<Class<?>> set = new HashSet<Class<?>>(classes);
+      Set<Class<?>> set = new LinkedHashSet<Class<?>>(classes);
       Class<?> dominantClass = null;
       for ( Class<?> cls : set ) {
           dominantClass = dominantTypeClass( dominantClass, cls );
@@ -2404,7 +2404,7 @@ public class ClassUtils {
     // REVIEW -- consider genericizing as getMemberValue()
     public static Object getType( Object o ) {
         if ( o == null ) return null;
-        HashSet<Object> seen = new HashSet< Object >();
+        HashSet<Object> seen = new LinkedHashSet< Object >();
         Object originalO = o;
         while ( o instanceof Wraps ) {
             if ( seen.contains( o ) ) break;
@@ -3020,7 +3020,7 @@ public class ClassUtils {
    */
   public static List< Class< ? > > getAllClasses( Object o ) {
     Class< ? > cls = (Class< ? >)(o instanceof Class ? o : o.getClass() );
-    HashSet< Class< ? > > set = new HashSet< Class< ? > >();
+    HashSet< Class< ? > > set = new LinkedHashSet< Class< ? > >();
     List< Class< ? > > classes = new ArrayList< Class< ? > >();
     List<Class<?>> queue = new ArrayList< Class<?> >();
     queue.add( cls );
@@ -3145,7 +3145,7 @@ public class ClassUtils {
   public static JSONArray getClassesJSON() {
     ImmutableSet<ClassPath.ClassInfo> classes = getAllClasses();
 
-    Set<String> packagesSeen = new HashSet<>();
+    Set<String> packagesSeen = new LinkedHashSet<>();
 
     JSONArray packages = new JSONArray();
 

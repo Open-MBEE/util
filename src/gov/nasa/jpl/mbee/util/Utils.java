@@ -618,7 +618,7 @@ public class Utils {
     }
 //    ++notSeenCt;
     if ( seen == null && recursive == true ) {
-      seen = new HashSet< T >(); // ok to use hash here since we never iterate
+      seen = new LinkedHashSet< T >(); // ok to use hash here since we never iterate
                                  // over the contents
     }
     if ( seen != null ) seen.add( o );
@@ -1322,7 +1322,7 @@ public class Utils {
    * @return the new {@link Map}
    */
   public static < K, V > HashMap< K, V > newHashMap( Pair< K, V >... pairs ) {
-    HashMap< K, V > map = new HashMap< K, V >();
+    HashMap< K, V > map = new LinkedHashMap< K, V >();
     if ( pairs != null && pairs.length > 0 ) {
         for ( Pair< K, V > pair : pairs ) {
             map.put(pair.first, pair.second);
@@ -1737,7 +1737,7 @@ public class Utils {
         if ( Debug.isOn() ) Debug.outln( "callIsRecursive(): caller = " + caller.getClassName() + "."
                                                      + caller.getMethodName() + " line " + caller.getLineNumber() );
 
-        Set<Integer> lineNumbersVisitedInCallingMethod = new HashSet< Integer >();
+        Set<Integer> lineNumbersVisitedInCallingMethod = new LinkedHashSet< Integer >();
         
         for ( int i = 3; i < stack.length; ++i ) {
             StackTraceElement nextCaller = stack[i];
