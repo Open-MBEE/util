@@ -1090,8 +1090,19 @@ public class Utils {
               seen2 = p2.second;
               
               if ( valuesLooselyEqualNoWrap( vv1, vv2, propagate ) ) return true;
-              
-              if ( checkWrap && vv2 instanceof Wraps )
+
+              if ( checkWrap ) {
+                if (vv1 instanceof Wraps && !((Wraps) vv1).hasValue()) {
+                  if (vv2 instanceof Wraps) {
+                    return !((Wraps) v2).hasValue();
+                  }
+                  return vv2 == null;  // REVIEW -- not sure about this
+                } else if (vv2 instanceof Wraps && !((Wraps) vv2).hasValue()) {
+                  return false;
+                }
+              }
+
+            if ( checkWrap && vv2 instanceof Wraps )
                   vv2 = ((Wraps<?>)vv2).getValue( propagate );
               else break;
           }
