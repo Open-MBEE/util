@@ -705,6 +705,27 @@ public class Utils {
     return list;
   }
 
+  /**
+   * @param i the iterator
+   * @return the elements that the iterator generates as a {@link List}
+   */
+  public static <V, T extends V> List<V> toList( Iterator<T> i ) {
+    return asList( i );
+  }
+  /**
+   * @param i the iterator
+   * @return the elements that the iterator generates as a {@link List}
+   */
+  public static <V, T extends V> List<V> asList( Iterator<T> i ) {
+    List<V> list = new ArrayList< V >();
+    if ( i == null ) return list;
+    while ( i.hasNext() ) {
+      T e = i.next();
+      list.add(e);
+    }
+    return list;
+  }
+
   public static <V, T> List<V> asList( Object o, Class<V> cls ) {
       if ( o == null ) return null;
       if ( o instanceof Collection ) {
