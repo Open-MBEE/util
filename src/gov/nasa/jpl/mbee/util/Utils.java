@@ -1315,6 +1315,16 @@ public class Utils {
     return capitalizedWord;
   }
 
+  public static String uncapitalize( String word ) {
+    String uncapitalizedWord = word;
+    if ( Character.isUpperCase( word.charAt( 0 ) ) ) {
+      uncapitalizedWord =
+              "" + Character.toLowerCase( word.charAt( 0 ) )
+              + word.substring( 1 );
+    }
+    return uncapitalizedWord;
+  }
+
   /**
    * Creates a new {@link TreeSet} and inserts the arguments, {@code ts}.
    * @param ts
@@ -1804,5 +1814,5 @@ public class Utils {
     public static void main(String[] args) {
         infLoopCall1();
     }
-    
+
 }
