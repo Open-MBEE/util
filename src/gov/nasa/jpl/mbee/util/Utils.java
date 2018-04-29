@@ -1217,6 +1217,33 @@ public class Utils {
     return o.toString().replace( Integer.toHexString(o.hashCode()), "" );
   }
 
+  /**
+   * @param s1
+   * @param s2
+   * @return the longest common prefix
+   */
+  public static String longestCommonPrefix( String s1, String s2 ) {
+      int pos = longestCommonPrefixLength( s1, s2 );
+      if ( pos >= 0 ) {
+          return s1.substring( 0, pos );
+      }
+      return null;
+  }
+
+  /**
+   * @param s1
+   * @param s2
+   * @return the length of the longest common prefix
+   */
+  public static int longestCommonPrefixLength( String s1, String s2 ) {
+      int i = 0;
+      for ( i = 0; i < Math.min( s1.length(), s2.length() ); ++i ) {
+          if ( s1.charAt( i ) != s2.charAt( i ) ) {
+              break;
+          }
+      }
+      return i;
+  }
 
   /**
    * @param s1
@@ -1224,6 +1251,7 @@ public class Utils {
    * @return the length of the longest common substring which is also a prefix of one of the strings.
    */
   public static int longestPrefixSubstring( String subcontext, String subc ) {
+    // FIXME!  This looks wrong.
     int numMatch = 0;
     if ( subcontext.contains( subc ) ) {
       if ( numMatch < subc.length() ) {
