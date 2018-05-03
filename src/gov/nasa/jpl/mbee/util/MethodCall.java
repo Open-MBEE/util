@@ -45,7 +45,7 @@ public class MethodCall {
      * arguments to be passed into the call of the method
      */
     public Object[] arguments;
-    
+
     public Pair< Boolean, Object > invoke() {
         return invoke( true );
     }
@@ -158,19 +158,46 @@ public class MethodCall {
         }
         return coll;
     }
-    
+
+    public static Collection< Object > map( Collection< ? > objects,
+                                            Object objectOfCall,
+                                            String className,
+                                            String methodCallName,
+                                            Collection<?> arguments,
+                                            int indexOfObjectArgument ) {
+        Object[] newArgs = Utils.toArrayOfType(arguments, Object.class);
+        Collection<Object> result = map(objects, objectOfCall, className, methodCallName, newArgs, indexOfObjectArgument);
+        return result;
+    }
+
+    public static Collection< Object > map( Collection< ? > objects,
+                                            Object objectOfCall,
+                                            String className,
+                                            String methodCallName,
+                                            Object[] arguments,
+                                            int indexOfObjectArgument ) {
+        String clsName = className;
+        if ( Utils.isNullOrEmpty(className ) && objectOfCall != null ) {
+            clsName = objectOfCall.getClass().getCanonicalName();
+        }
+        Method m = ClassUtils.getMethodForArgs(clsName, null, methodCallName, arguments);
+        MethodCall mc = new MethodCall( objectOfCall, m, arguments);
+        Collection<Object> result = mc.map(objects, indexOfObjectArgument);
+        return result;
+    }
+
     /**
      * Inductively combine the results of applying the method to each of the
      * elements and the return results for the prior element.
      * <p>
      * For example, fold() is used below to sum an array of numbers.<br>
      * {@code int plus(int a, int b) ( return a+b; )} <br>
-     * {@code MethodCall plusCall = new MethodCall( null, ClassUtils.getMethodForName(this.getClass(), "plus"), 0, 0} <br>
+     * {@code MethodCall plusCall = new MethodCall( null, ClassUtils.getMethodForName(this.getClass(), "plus"), 0, 0)} <br>
      * {@code int[] array = new int[] ( 2, 5, 6, 5 );}<br>
      * {@code int result = fold(Arrays.asList(array), 0, 1, 2); // result = 18}
-     * 
+     *
      * @param objects collection of Objects
-     * @param methodCall the MethodCall to invoke on each Object in the Collection 
+     * @param methodCall the MethodCall to invoke on each Object in the Collection
      * @param initialValue
      *            an initial value to act as the initial argument to the first
      *            invocation of this MethodCall.

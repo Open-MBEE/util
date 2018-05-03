@@ -654,9 +654,9 @@ public class ClassUtils {
     if (Utils.isNullOrEmpty( className )) return null;
     Thread t = Thread.currentThread();
     Class< ? > cls = null;
-    ClassLoader[] loaders = new ClassLoader[] { t.getContextClassLoader(),
-                                                ClassLoader.getSystemClassLoader(),
-                                                ClassUtils.class.getClassLoader() };
+    Set<ClassLoader> loaders = Utils.newSet( t.getContextClassLoader(),
+                                             ClassLoader.getSystemClassLoader(),
+                                             ClassUtils.class.getClassLoader() );
     for ( ClassLoader cl : loaders ) {
         if ( cl != null ) {
             try {
@@ -870,6 +870,10 @@ public class ClassUtils {
 //        }
       cls2 = getClassFromClasses( classList, memberName, preferredPackage );
       if ( cls2 != null ) cls = cls2;
+    }
+    // The class loader can't find a class unless its
+    if ( cls == null && !className.contains( "." )) {
+
     }
     if ( cls != null ) classCache.put( className, cls );
     return cls;
