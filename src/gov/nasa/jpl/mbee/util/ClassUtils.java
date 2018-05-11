@@ -2923,7 +2923,7 @@ public class ClassUtils {
             // try to make the string a number
             try {
                 String s = evaluate( object, String.class, strictString, propagate, seen );
-                Double d = new Double( s );
+                Double d = ( s == null ? null : new Double( s ) );
                 if ( d != null ) {
                     return evaluate( d, cls, strictString, propagate, seen );
                 }

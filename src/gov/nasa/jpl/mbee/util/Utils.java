@@ -236,6 +236,23 @@ public class Utils {
     return suffix;
   }
 
+  public static String indent(String s, int numSpaces) {
+    if ( s == null ) return "";
+    String prefix = spaces(numSpaces);
+    String indented = prefixLines(s, prefix);
+    return indented;
+  }
+
+  public static String prefixLines(String s, String prefix) {
+    if ( s == null ) return "";
+    String indented = s.replaceAll("^", prefix).replaceAll("\n", "\n" + prefix);
+    if ( indented.endsWith(prefix) ) {
+      indented = indented.replaceFirst(prefix + "$", "");
+    }
+    return indented;
+  }
+
+
 
   // Check if string has really got something.
   public static boolean isNullOrEmpty( String s ) {
@@ -1795,7 +1812,7 @@ public class Utils {
         return n.doubleValue() < 0.0;
     }
 
-    /**
+  /**
      * Determine whether the method is directly or indirectly calling itself recursively.
      * @return whether the calling method is in the call stack more than once for any line number.
      */
