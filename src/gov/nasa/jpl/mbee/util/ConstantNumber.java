@@ -59,9 +59,9 @@ public abstract class ConstantNumber extends Number implements Comparable< Numbe
         return valueMap;
     }
 
-    public static < T > T forClass( ConstantNumber constant, Class< T > cls1, Class< T > cls2  )
+    public static < T1, T2 > Object forClass( ConstantNumber constant, Class< T1 > cls1, Class< T2 > cls2  )
             throws ClassCastException {
-        T t = forClass( constant, cls1 );
+        Object t = forClass( constant, cls1 );
         if ( t == null ) {
             t = forClass( constant, cls2 );
         }

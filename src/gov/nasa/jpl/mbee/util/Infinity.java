@@ -77,7 +77,7 @@ public class Infinity extends ConstantNumber {
     public static <T> T forClass(Class<T> cls) throws ClassCastException {
         return ConstantNumber.forClass( inf, cls );
     }
-    public static < T > T forClass( Class< T > cls1, Class< T > cls2 ) throws ClassCastException {
+    public static < T1, T2 > Object forClass( Class< T1 > cls1, Class< T2 > cls2 ) throws ClassCastException {
         return ConstantNumber.forClass( inf, cls1, cls2 );
     }
 
