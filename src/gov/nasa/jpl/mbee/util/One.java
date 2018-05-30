@@ -69,4 +69,7 @@ public class One extends ConstantNumber {
     public static < T > T forClass( Class< T > cls ) throws ClassCastException {
         return ConstantNumber.forClass( one, cls );
     }
+    public static < T > T forClass( Class< T > cls1, Class< T > cls2 ) throws ClassCastException {
+        return ConstantNumber.forClass( one, cls1, cls2 );
+    }
 }

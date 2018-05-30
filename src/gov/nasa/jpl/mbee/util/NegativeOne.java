@@ -21,6 +21,9 @@ public class NegativeOne extends Negative< One > {
     public static < T > T forClass( Class< T > cls ) throws ClassCastException {
         return ConstantNumber.forClass( negOne, cls );
     }
+    public static < T > T forClass( Class< T > cls1, Class< T > cls2 ) throws ClassCastException {
+        return ConstantNumber.forClass( negOne, cls1, cls2 );
+    }
     @Override
     protected HashMap< Class< ? >, Number > getValueMap() {
         return valueMap;
