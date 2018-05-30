@@ -111,6 +111,12 @@ public interface MoreToString {
     public static String toString( Object object, boolean withHash,
                                    boolean deep, Set< Object > seen,
                                    Map< String, Object > otherOptions ) {
+//      return toString(object, withHash, deep, seen, otherOptions, (Integer) null);
+//    }
+//
+//    public static String toString( Object object, boolean withHash,
+//          boolean deep, Set< Object > seen,
+//            Map< String, Object > otherOptions, Integer formatKey ) {
       if ( object == null ) return "null";
       
       // We have to make sure we get to the right method since collections
@@ -139,6 +145,16 @@ public interface MoreToString {
                                                   otherOptions );
       }
       return object.toString();
+    }
+
+    public static String toStringWithSquareBracesForLists(Object object, boolean withHash, boolean deep, Set<Object> seen) {
+      Map<String, Object> options = new TreeMap<>();
+
+      if(object instanceof List) {
+        MoreToString.Helper.stuffOptionsFromKey(options, MoreToString.SQUARE_BRACES);
+      }
+
+      return toString(object, withHash, deep, seen, options);
     }
 
     /**
