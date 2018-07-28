@@ -1006,7 +1006,9 @@ public class ClassUtils {
   public static String simpleName( String longName ) {
     if ( longName == null ) return null;
     int pos = longName.lastIndexOf( "." );
-    return longName.substring( pos+1 ); // pos is -1 if no '.'
+    String s = longName.substring( pos+1 ); // pos is -1 if no '.'
+    pos = s.lastIndexOf( "$" );
+    return s.substring( pos+1 ); // pos is -1 if no '.'
   }
 
   public static String getFullyQualifiedName( String classOrInterfaceName,
@@ -1332,27 +1334,57 @@ public class ClassUtils {
       return atc.best;
     }
 
+  protected static boolean newWay = true;
+
   public static Constructor< ? > getConstructorForArgTypes( Class< ? > cls,
-                                                              Class< ? >... argTypes ) {
+                                                            Class< ? >... argTypes ) {
       if ( argTypes == null ) argTypes = new Class< ? >[] {};
       if ( Debug.isOn() ) Debug.outln( "getConstructorForArgTypes( cls=" + cls.getName()
                    + ", argTypes=" + Utils.toString( argTypes ) + " )" );
-      return getConstructorForArgTypes( cls.getConstructors(), argTypes );
-  /*    ArgTypeCompare atc = new ArgTypeCompare( argTypes );
-      for ( Constructor< ? > aCtor : cls.getConstructors() ) {
-        atc.compare( aCtor, aCtor.getParameterTypes(), aCtor.isVarArgs() );
+      Constructor<?>[] ctors = cls.getConstructors();
+      // If an inner class, add the enclosing class to the front of the list of argument types.
+      if ( newWay && !isStatic( cls ) ) {
+          Class<?> ecls = cls.getEnclosingClass();
+          if ( ecls != null && argTypes.length > 0 && argTypes[0] != null &&
+               (!argTypes[0].equals(ecls) ||
+                !Utils.isNullOrEmpty( constructorsWithClassAsFirstParameter(cls, ecls) ) ) ) {
+              argTypes = Utils.prepend( ecls, argTypes, Class.class );
+          }
       }
-      if ( atc.best != null && !atc.allArgsMatched ) {
-        System.err.println( "constructor returned (" + atc.best
-                            + ") only matches " + atc.mostMatchingArgs
-                            + " args: " + toString( argTypes, false ) );
-      } else if ( atc.best == null ) {
-        System.err.println( "constructor " + cls.getSimpleName()
-                            + toString( argTypes, false ) + " not found for "
-                            + cls.getSimpleName() );
+      return getConstructorForArgTypes( ctors, argTypes );
+  }
+
+    /**
+     * Return the constructors of the specified Class which can take an object of
+     * the specified Class as its first parameter discluding the enclosing object
+     * argumnent for inner classes.
+     * @param classToConstruct the Class whose contructors are tested
+     * @param classForParameter the type of the argument passed to the first parameter
+     * @return constructors with matching first argument types
+     */
+    protected static ArrayList<Constructor> constructorsWithClassAsFirstParameter( Class<?> classToConstruct,
+                                                                                   Class<?> classForParameter ) {
+      if ( classToConstruct == null || classForParameter == null ) {
+          return null;
       }
-      return (Constructor< ? >)atc.best;
-  */  }
+      ArrayList<Constructor> matches = new ArrayList<>();
+      Constructor<?>[] ctors = classToConstruct.getConstructors();
+      if ( ctors == null ) {
+          return matches;
+      }
+      boolean isInnerClass = !isStatic(classToConstruct);
+      int i = isInnerClass ? 1 : 0;
+      for ( ; i < ctors.length; ++i ) {
+          Constructor<?> ctor = ctors[ i ];
+          Class<?>[] types = ctor.getParameterTypes();
+          if ( !Utils.isNullOrEmpty( types ) ) {
+              if ( types[0] != null && types[0].isAssignableFrom( classForParameter ) ) {
+                  matches.add( ctor );
+              }
+          }
+      }
+      return matches;
+    }
 
   public static Constructor< ? >
     getConstructorForArgTypes( Class< ? > cls, String packageName ) {
@@ -1577,6 +1609,7 @@ public class ClassUtils {
     }
     if ( Debug.isOn() ) Debug.outln("=========================start===============================");
     String classNameNoParams = noParameterName( className );
+    classNameNoParams = classNameNoParams.replaceFirst( "[.]class$","" );
     List< Class< ? > > classesForName = getClassesForName( classNameNoParams, false );
     if ( Debug.isOn() ) Debug.outln("classesForName = " + classesForName );
     if ( Utils.isNullOrEmpty( classesForName ) ) {

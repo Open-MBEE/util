@@ -182,7 +182,7 @@ public class Utils {
   public static Long toLong( String s ) {
     Long l = null;
     try {
-      l = Long.parseLong( s );
+      l = Long.parseLong( s.replaceFirst("[lL]$","") );
     } catch ( NumberFormatException e ) {
       // leave i = null
     }
@@ -743,7 +743,7 @@ public class Utils {
     return list;
   }
 
-  public static <V, T> List<V> asList( Object o, Class<V> cls ) {
+  public static <V, T> ArrayList<V> asList( Object o, Class<V> cls ) {
       if ( o == null ) return null;
       if ( o instanceof Collection ) {
           return asList( (Collection<?>)o, cls );
@@ -947,6 +947,37 @@ public class Utils {
                                                 Class< T2 > newType ) {
     return toArrayOfType( source.toArray(), target, newType );
   }
+
+  public static <T> T[] concatentate(T[] arr1, T[] arr2, Class<T> tClass) {
+    if ( arr2 == null ) return arr1;
+    if ( arr1 == null ) return arr2;
+    if ( arr2.length == 0 ) return arr1;
+    if ( arr1.length == 0 ) return arr2;
+    T[] arr3 = (T[])Array.newInstance( tClass, arr1.length + arr2.length );
+    int i = 0;
+    for ( ; i < arr1.length; ++i ) {
+      arr3[i] = arr1[i];
+    }
+    for ( ; i < arr1.length + arr2.length; ++i ) {
+      arr3[i] = arr2[i-arr1.length];
+    }
+    return arr3;
+  }
+
+  public static <T> T[] prepend(T t, T[] arr, Class<T> tClass) {
+    if ( isNullOrEmpty( arr ) ) {
+      T[] newArr = (T[])Array.newInstance( tClass, 1 );
+      newArr[0] = t;
+      return newArr;
+    }
+    T[] newArr = (T[])Array.newInstance( tClass, arr.length + 1 );
+    newArr[0] = t;
+    for ( int i = 0; i < arr.length; ++i ) {
+      newArr[i+1] = arr[i];
+    }
+    return newArr;
+  }
+
 
   public static <T> String join( Collection<T> things, String delim ) {
     return join( things.toArray(), delim );
