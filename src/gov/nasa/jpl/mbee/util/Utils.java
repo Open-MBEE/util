@@ -948,7 +948,7 @@ public class Utils {
     return toArrayOfType( source.toArray(), target, newType );
   }
 
-  public static <T> T[] concatentate(T[] arr1, T[] arr2, Class<T> tClass) {
+  public static <T> T[] concatenate(T[] arr1, T[] arr2, Class<T> tClass) {
     if ( arr2 == null ) return arr1;
     if ( arr1 == null ) return arr2;
     if ( arr2.length == 0 ) return arr1;
