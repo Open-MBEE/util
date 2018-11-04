@@ -726,11 +726,11 @@ public interface MoreToString {
         } else {
           sb.append( delimiter );
         }
-        if ( deep && ( seen == null || !seen.contains( object ) ) ) {
+        if ( seen != null && seen.contains( object ) ) {
+          sb.append( MoreToString.Helper.toShortString( object ) );
+        } else {
           sb.append( MoreToString.Helper.toString( object, withHash, deep, seen,
                                                    otherOptions ) );
-        } else {
-          sb.append( MoreToString.Helper.toShortString( object ) );
         }
       }
       sb.append( suffix );

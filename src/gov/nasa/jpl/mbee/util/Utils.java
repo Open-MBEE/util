@@ -276,8 +276,22 @@ public class Utils {
   }
 
   public static < T1, T2 >
+  boolean addToCollection( Map< T1, Collection< T2 > > map, T1 t1, T2 t2 ) {
+    if ( Debug.errorOnNull( "Error! Called Utils.addToCollection() with null argument!",
+                            map, t1, t2 ) ) {
+      return false;
+    }
+    Collection< T2 > innerMap = map.get( t1 );
+    if ( innerMap == null ) {
+      innerMap = new ArrayList< T2 >();
+      map.put( t1, innerMap );
+    }
+    return innerMap.add( t2 );
+  }
+
+  public static < T1, T2 >
   boolean add( Map< T1, Set< T2 > > map, T1 t1, T2 t2 ) {
-      if ( Debug.errorOnNull( "Error! Called Utils.put() with null argument!",
+      if ( Debug.errorOnNull( "Error! Called Utils.add() with null argument!",
                         map, t1, t2 ) ) {
           return false;
       }
@@ -1014,9 +1028,9 @@ public class Utils {
   }
 
   /**
-   * @param o
-   * @param T
-   * @return the number of occurrences of o in the Collection c
+   * @param value
+   * @param c
+   * @return the number of occurrences of value in the Collection c
    */
   public static < T > int occurrences( T value, Collection< T > c ) {
     if ( c == null ) return 0;
@@ -1294,8 +1308,8 @@ public class Utils {
   }
 
   /**
-   * @param s1
-   * @param s2
+   * @param subcontext
+   * @param subc
    * @return the length of the longest common substring which is also a prefix of one of the strings.
    */
   public static int longestPrefixSubstring( String subcontext, String subc ) {

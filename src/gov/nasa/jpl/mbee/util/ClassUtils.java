@@ -31,7 +31,6 @@ package gov.nasa.jpl.mbee.util;
 //import gov.nasa.jpl.ae.event.Expression;
 //import japa.parser.ast.body.Parameter;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -40,7 +39,6 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
-import java.net.URL;
 import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
@@ -52,8 +50,6 @@ import org.apache.commons.lang3.reflect.MethodUtils;
 import junit.framework.Assert;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import javax.print.DocFlavor;
 
 public class ClassUtils {
 
@@ -266,7 +262,10 @@ public class ClassUtils {
           public int compare( Pair< Integer, Class< ? > > p1, Pair< Integer, Class< ? > > p2 ) {
               int comp = Integer.compare( p1.first, p2.first );
               if ( comp != 0 ) return comp;
-              comp = CompareUtils.compare( p1.second.getSimpleName(), p2.second.getSimpleName() );
+              if ( p1.second == p2.second ) {
+                  return 0;
+              }
+              comp = CompareUtils.compare( getSimpleName(p1.second), getSimpleName(p2.second) );
               if ( comp != 0 ) return comp;
               return comp;
           }
@@ -294,10 +293,10 @@ public class ClassUtils {
         if ( subclass.isPrimitive() ) {
             subclass = classForPrimitive( subclass );
         }
-        String subclassName = subclass.getSimpleName();
-//        if ( distanceCache.containsKey( subclassName ) ) {
-//            return distanceCache.get( subclassName );
-//        }
+//        String subclassName = subclass.getSimpleName();
+////        if ( distanceCache.containsKey( subclassName ) ) {
+////            return distanceCache.get( subclassName );
+////        }
         boolean isInterface = superclass.isInterface();
         Class<?> parentClass = subclass;
         int count = 0;
@@ -310,13 +309,14 @@ public class ClassUtils {
             Pair< Integer, Class< ? > > p = queue.first();
             queue.remove(p);
             parentClass = p.second;
-            if ( superclass.getSimpleName().equals( parentClass.getSimpleName() ) ) {
+            if ( Utils.valuesEqual( getSimpleName(superclass),
+                                    getSimpleName(parentClass) ) ) {
                 return p.first;
             }
             if ( isInterface && parentClass.getInterfaces() != null ) {
                 //int bestDistance = Integer.MAX_VALUE;
                 for ( Class<?> cls : parentClass.getInterfaces() ) {
-                    queue.add( new Pair< Integer, Class<?> >( p.first + 1, cls ) );                    
+                    queue.add( new Pair< Integer, Class<?> >( p.first + 1, cls ) );
                 }
             }
             parentClass = parentClass.getSuperclass();
@@ -404,7 +404,7 @@ public class ClassUtils {
   private static Map< String, Class< ? > > initializeNonPrimitives() {
     nonPrimitives = new TreeMap< String, Class<?> >();
     for ( Class< ? > c : getNonPrimToPrim().keySet() ) {
-      nonPrimitives.put( c.getSimpleName(), c );
+      nonPrimitives.put( getSimpleName(c), c );
     }
     return nonPrimitives;
   }
@@ -413,7 +413,7 @@ public class ClassUtils {
   private static Map< String, Class< ? > > initializePrimitives() {
     primitives = new TreeMap< String, Class<?> >();
     for ( Class< ? > c : getPrimToNonPrim().keySet() ) {
-      primitives.put( c.getSimpleName(), c );
+      primitives.put( getSimpleName(c), c );
     }
 //    primitives.put( "boolean", boolean.class );
 //    primitives.put( "byte", byte.class );
@@ -482,8 +482,8 @@ public class ClassUtils {
    * @return whether the object is a primitive class (like int or Integer) or an instance of one
    */
   public static boolean isPrimitive( Class<?> c ) {
-    return ( getNonPrimitives().containsKey( c.getSimpleName() ) ||
-             getPrimitives().containsKey( c.getSimpleName() ) );
+    return ( getNonPrimitives().containsKey( getSimpleName(c) ) ||
+             getPrimitives().containsKey( getSimpleName(c) ) );
   }
 
 
@@ -521,7 +521,7 @@ public class ClassUtils {
     if ( prim != null ) {
       Class<?> nonPrim = getPrimToNonPrim().get( prim );
       Assert.assertNotNull( nonPrim );
-      newName = nonPrim.getSimpleName();
+      newName = getSimpleName(nonPrim);
     }
 //    Class< ? > cls = getNonPrimitiveClass( type );
 //    String newName = type;
@@ -662,7 +662,7 @@ public class ClassUtils {
             try {
                 cls = cl.loadClass(className);
                 if ( cls != null ) {
-                    if ( Debug.isOn() ) Debug.outln( "classForName(" + className + ") = " + cls.getSimpleName() );
+                    if ( Debug.isOn() ) Debug.outln( "classForName(" + className + ") = " + getSimpleName(cls) );
                     break;
                 }
             } catch ( Throwable e ) {
@@ -778,12 +778,12 @@ public class ClassUtils {
         Class< ? >[] classes = cls.getClasses();
         if ( classes != null ) {
           String clsName = cls.getName();
-          String clsSimpleName = cls.getSimpleName();
+          String clsSimpleName = getSimpleName(cls);
           String longName = clsName + "." + clsOfClsName;
           String shorterName = clsSimpleName + "." + clsOfClsName;
           for ( int i = 0; i < classes.length; ++i ) {
             String n = classes[ i ].getName();
-            String sn = classes[ i ].getSimpleName();
+            String sn = getSimpleName(classes[ i ]);
             if ( n.equals( longName )
                  || n.equals( shorterName )
                  || sn.equals( clsOfClsName )
@@ -798,10 +798,115 @@ public class ClassUtils {
       return null;
     }
 
-  // TODO -- expand to include member names, too: className -> memberName -> Class
+    public static Map< Class< ? >, String > simpleNameCache = null;
+    public static void initSimpleNameCache() {
+      simpleNameCache = Collections.synchronizedMap( new LinkedHashMap< Class<?>, String >() );
+    }
+
+
+    public static String getSimpleName(Class<?> cls) {
+        if ( cls == null ) return null;
+        if ( simpleNameCache == null ) initSimpleNameCache();
+        String n = simpleNameCache.get( cls );
+        if ( n != null ) return n;
+        n = cls.getSimpleName();
+        if ( n != null ) {
+            simpleNameCache.put( cls, n );
+        }
+        return n;
+    }
+
+    protected static Comparator<Class<?>[]> arrayComparator = new Comparator<Class<?>[]>() {
+        @Override public int compare( Class<?>[] o1, Class<?>[] o2 ) {
+            if ( o1 == o2 ) return 0;
+            if ( o1 == null ) return -1;
+            if ( o2 == null ) return 1;
+            if ( o1.length == 0 && o2.length == 0 ) return 0;
+            if ( o1.length == 0 ) return -1;
+            if ( o2.length == 0 ) return 1;
+            for ( int i=0; i < Math.min(o1.length, o2.length); ++i ) {
+                if ( !valuesEqual( o1[i], o2[i] ) ) {
+                    if ( o1[i] == null ) return -1;
+                    if ( o2[i] == null ) return 1;
+                    int c = getSimpleName(o1[i]).compareTo( getSimpleName(o2[i]));
+                    if ( c != 0 ) return c;
+                    return Integer.compare( o1.hashCode(), o2.hashCode() );
+                }
+            }
+            if ( o1.length < o2.length ) return -1;
+            if ( o1.length > o2.length ) return 1;
+            return 0;
+        }
+    };
+
+    protected static Map<Class<?>[], Class<?>[]> argTypeArrays =
+            new TreeMap<>( arrayComparator );
+    protected static Class<?>[] getArgTypeArray( Class<?>[] a ) {
+        Class<?>[] f = argTypeArrays.get(a);
+        if ( f != null ) return f;
+        argTypeArrays.put( a, a );
+        return a;
+    }
+
+    protected static Method nullMethod = null;
+    protected static Method getNullMethod() {
+        if ( nullMethod == null ) {
+            try {
+                nullMethod = ClassUtils.class.getDeclaredMethod( "getNullMethod" );
+            } catch ( NoSuchMethodException e ) {
+                e.printStackTrace();
+            }
+        }
+        return nullMethod;
+    }
+
+    protected static Map<Class<?>, Map<String, Map<Class<?>[], Method>>> declaredMethodCache =
+            Collections.synchronizedMap( new LinkedHashMap<>() );
+
+    public static Method getDeclaredMethod( Class<?> cls, String callName,
+                                            Class<?>... argTypes ) {
+        return getMethod( cls, callName, true, argTypes );
+    }
+    public static Method getMethod( Class<?> cls, String callName,
+                                    Class<?>... argTypes ) {
+        return getMethod( cls, callName, false, argTypes );
+    }
+    public static Method getMethod( Class<?> cls, String callName,
+                                    boolean declared,
+                                    Class<?>... argTypes ) {
+        if ( cls == null ) return null;
+        if ( Utils.isNullOrEmpty( callName ) ) return null;
+        Method method = null;
+        Map<Class<?>[], Method> argTypes2method =
+                Utils.get( declaredMethodCache, cls, callName );
+        Class<?>[] cachedArgTypes = getArgTypeArray( argTypes );
+
+        if ( argTypes2method != null && argTypes2method.containsKey( cachedArgTypes ) ) {
+            method = argTypes2method.get(cachedArgTypes);
+            if ( method == getNullMethod() ) {
+                return null;
+            }
+            return method;
+        }
+        try {
+            if ( declared ) {
+                method = cls.getDeclaredMethod( callName, cachedArgTypes );
+            } else {
+                method = cls.getMethod( callName, cachedArgTypes );
+            }
+        } catch ( Throwable e ) {
+        }
+        // Note that method may be null.  We especially want to remember the
+        // ones that failed.
+        Utils.put(declaredMethodCache, cls, callName, cachedArgTypes,
+                  method == null ? getNullMethod() : method);
+        return method;
+    }
+
+    // TODO -- expand to include member names, too: className -> memberName -> Class
   public static Map< String, Class< ? > > classCache =
       Collections.synchronizedMap( new LinkedHashMap< String, Class< ? > >() );
-  
+
 
   public static Class<?> getClassForName(String className, String memberName,
 		  								 String[] packages,  boolean initialize) {
@@ -1725,26 +1830,10 @@ public class ClassUtils {
       //Debug.turnOff();
       if ( Debug.isOn() ) Debug.outln( "calling " + clsName + ".class.getMethod(" + callName + ")"  );
       if ( cls != null ) {
-        try {
-            Method method = cls.getMethod( callName, argTypes );
-            if ( method != null ) return method;
-        } catch ( NoSuchMethodException e1 ) {
-        } catch ( SecurityException e1 ) {
-        } catch ( NoClassDefFoundError e1 ) {
-            Debug.error(true, false, "Got exception/error calling " + clsName
-                    + ".getMethod(): " + e1.getMessage() );
-            e1.printStackTrace();
-        }
-        try {
-            Method method = cls.getDeclaredMethod( callName, argTypes );
-            if ( method != null ) return method;
-        } catch ( NoSuchMethodException e1 ) {
-        } catch ( SecurityException e1 ) {
-        } catch ( NoClassDefFoundError e1 ) {
-            Debug.error(true, false, "Got exception/error calling " + clsName
-                    + ".getMethod(): " + e1.getMessage() );
-            e1.printStackTrace();
-        }
+        Method method = getMethod( cls, callName, argTypes );
+        if ( method != null ) return method;
+        method = getDeclaredMethod( cls, callName, argTypes );
+        if ( method != null ) return method;
       }
       Method[] methods = null;
       if ( Debug.isOn() ) Debug.outln( "calling getMethods() on class "
@@ -1956,8 +2045,8 @@ public class ClassUtils {
   public static Class<?> dominantTypeClass(Class<?> cls1, Class<?> cls2) {
 	  if ( cls1 == null ) return cls2;
       if ( cls2 == null ) return cls1;
-	  String name1 = cls1.getSimpleName();
-	  String name2 = cls2.getSimpleName();
+	  String name1 = getSimpleName(cls1);
+	  String name2 = getSimpleName(cls2);
 
 	  if (name1.equals(dominantType(name1, name2))) {
 		  return cls1;
@@ -3133,7 +3222,7 @@ public class ClassUtils {
       for (Field f : fields) {
         JSONObject properties = new JSONObject();
         properties.put("name", f.getName());
-        properties.put("value", "var " + f.getName() + " : " + f.getType().getSimpleName());
+        properties.put("value", "var " + f.getName() + " : " + getSimpleName(f.getType()));
         properties.put("kType", "PropertyType");
         properties.put("type", "property");
         propertiesArray.put(properties);
@@ -3159,7 +3248,7 @@ public class ClassUtils {
       stringBuilder.append("(");
 
       for(Class<?> t : m.getParameterTypes()) {
-        stringBuilder.append(t.getSimpleName());
+        stringBuilder.append(getSimpleName(t));
       }
       typeString = stringBuilder.toString();
 
@@ -3170,7 +3259,7 @@ public class ClassUtils {
       }
 
       methodJson.put("name", m.getName());
-      methodJson.put("value", m.getName() + typeString + " : "+ m.getReturnType().getSimpleName());
+      methodJson.put("value", m.getName() + typeString + " : "+ getSimpleName(m.getReturnType()));
       methodJson.put("kType", "fun");
       methodJson.put("type", "function");
 
