@@ -238,7 +238,7 @@ public final class FileUtils {
    * Reads a file into an array with an entry for each line. Newlines are not
    * included.
    * 
-   * @param file
+   * @param fileName
    * @return array of lines
    * @throws IOException
    */
