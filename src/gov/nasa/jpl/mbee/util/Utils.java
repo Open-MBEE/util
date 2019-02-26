@@ -908,8 +908,9 @@ public class Utils {
   public static < T, TT > Set< TT > asSet( Collection< T > c,
                                            Class< TT > cls ) {
     LinkedHashSet< TT > set = new LinkedHashSet< TT >();
+    if ( c == null ) return set;
     for ( T t : c ) {
-      if ( cls.isInstance( t ) ) {
+      if ( t == null || cls.isInstance( t ) ) {
         set.add( (TT)t );
       }
     }
@@ -1182,25 +1183,27 @@ public class Utils {
 //                  return false;
 //                }
                 if (vv1 instanceof Wraps && !((Wraps) vv1).hasValue()) {
-                  if (vv2 instanceof Wraps) {
-                    return !((Wraps) v2).hasValue();
-                  }
-                  if ( vv2 == null ) {
-                    // no value is different than null value!
-                    return false;
-                  }
+//                  if (vv2 instanceof Wraps && !((Wraps) vv2).hasValue() ) {
+//                    return true;
+//                  }
+                  // no value is different than null value!
+                  return false;
                 } else if (vv2 instanceof Wraps && !((Wraps) vv2).hasValue()) {
+                  // if vv1 is Wraps, then vv1.hasValue() == true
+                  // if vv1 is not Wraps, then it has a value even if null
                   return false;
                 }
               }
 
-            if ( checkWrap && vv2 instanceof Wraps && ( (Wraps)vv2 ).hasValue() )
-                  vv2 = ((Wraps<?>)vv2).getValue( propagate );
-              else break;
+              if ( checkWrap && vv2 instanceof Wraps && ( (Wraps)vv2 ).hasValue() &&
+                 !( (Wraps)vv2 ).hasMultipleValues() ) {
+                  vv2 = ( (Wraps<?>)vv2 ).getValue( propagate );
+              } else break;
           }
-          if ( checkWrap && vv1 instanceof Wraps && ( (Wraps)vv1 ).hasValue() )
-              vv1 = ((Wraps<?>)vv1).getValue( propagate );
-          else break;
+          if ( checkWrap && vv1 instanceof Wraps && ( (Wraps)vv1 ).hasValue() &&
+               !( (Wraps)vv1 ).hasMultipleValues() ) {
+              vv1 = ( (Wraps<?>)vv1 ).getValue( propagate );
+          } else break;
       }
       return false;
   }

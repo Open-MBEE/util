@@ -33,7 +33,9 @@ public interface Wraps< V > {
    * @param propagate
    *          whether or not to propagate dependencies in order to determine
    *          what object is wrapped
-   * @return the object that is wrapped by this object
+   * @return the object that is wrapped by this object or null if there is no
+   *         object or if there are multiple objects wrapped.
+   *
    */
   public V getValue( boolean propagate );
 
@@ -51,5 +53,12 @@ public interface Wraps< V > {
    * @return true if there is a wrapped value
    */
   public boolean hasValue();
+
+  /**
+   * Return true if there is more than one object wrapped.  getValue() should
+   * return null if this is true unless all of the objects are the same.
+   * @return true if there are multiple wrapped values
+   */
+  public boolean hasMultipleValues();
 
 }
