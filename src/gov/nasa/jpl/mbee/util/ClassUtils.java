@@ -1993,14 +1993,26 @@ public class ClassUtils {
         return isNum;
     }
 
+//    private static String[] simpleTypesArray = new String[] {
+//            "int"
+//    };
+//    private static Set<String> simpleTypes = new HashSet<String>(Utils.arrayAsList(simpleTypesArray, String.class));
+
     public static String dominantType( String argType1, String argType2 ) {
         if ( argType1 == null ) return argType2;
         if ( argType2 == null ) return argType1;
+        String argType1Lower = argType1.toLowerCase();
+        //boolean isPrim1 = getPrimitives().keySet().contains(argType1Lower);
+        String argType2Lower = argType2.toLowerCase();
+        //boolean isPrim2 = getPrimitives().keySet().contains(argType2Lower);
+        boolean isPrim1 = getPrimitives().containsKey(argType1) || getNonPrimitives().containsKey(argType1);
+        boolean isPrim2 = getPrimitives().containsKey(argType2) || getNonPrimitives().containsKey(argType2);
+        if (isPrim1 && !isPrim2) return argType2;
+        if (!isPrim1 && isPrim2) return argType1;
+        if (!isPrim1 && !isPrim2) return "Object";
         if ( argType1.equals( "String" ) ) return argType1;
         if ( argType2.equals( "String" ) ) return argType2;
-        String argType1Lower = argType1.toLowerCase();
         if ( argType1Lower.equals( "double" ) ) return argType1;
-        String argType2Lower = argType2.toLowerCase();
         if ( argType2Lower.equals( "double" ) ) return argType2;
         if ( argType1Lower.equals( "float" ) ) return argType1;
         if ( argType2Lower.equals( "float" ) ) return argType2;
